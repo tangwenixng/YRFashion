@@ -4,6 +4,7 @@ import 'element-plus/dist/index.css'
 
 import App from './App.vue'
 import { router } from './router'
+import { pinia } from './stores'
 import './style.css'
 
-createApp(App).use(router).use(ElementPlus).mount('#app')
+createApp(App).use(pinia).use(router).use(ElementPlus).mount('#app')

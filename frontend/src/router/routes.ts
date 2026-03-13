@@ -1,5 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import AdminLayout from '../layouts/AdminLayout.vue'
+import DashboardView from '../views/DashboardView.vue'
+import LoginView from '../views/LoginView.vue'
 import PlaceholderPage from '../views/PlaceholderPage.vue'
 
 export const routes: RouteRecordRaw[] = [
@@ -10,55 +13,63 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'login',
-    component: PlaceholderPage,
+    component: LoginView,
     meta: {
       title: '登录',
-      section: '后台登录',
+      guestOnly: true,
     },
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: PlaceholderPage,
+    path: '/',
+    component: AdminLayout,
     meta: {
-      title: '概览',
-      section: '仪表盘',
+      requiresAuth: true,
     },
-  },
-  {
-    path: '/products',
-    name: 'products',
-    component: PlaceholderPage,
-    meta: {
-      title: '商品管理',
-      section: '商品管理',
-    },
-  },
-  {
-    path: '/messages',
-    name: 'messages',
-    component: PlaceholderPage,
-    meta: {
-      title: '留言管理',
-      section: '留言管理',
-    },
-  },
-  {
-    path: '/users',
-    name: 'users',
-    component: PlaceholderPage,
-    meta: {
-      title: '用户列表',
-      section: '用户列表',
-    },
-  },
-  {
-    path: '/settings',
-    name: 'settings',
-    component: PlaceholderPage,
-    meta: {
-      title: '店铺设置',
-      section: '店铺设置',
-    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: DashboardView,
+        meta: {
+          title: '概览',
+        },
+      },
+      {
+        path: 'products',
+        name: 'products',
+        component: PlaceholderPage,
+        meta: {
+          title: '商品管理',
+          section: '商品管理',
+        },
+      },
+      {
+        path: 'messages',
+        name: 'messages',
+        component: PlaceholderPage,
+        meta: {
+          title: '留言管理',
+          section: '留言管理',
+        },
+      },
+      {
+        path: 'users',
+        name: 'users',
+        component: PlaceholderPage,
+        meta: {
+          title: '用户列表',
+          section: '用户列表',
+        },
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: PlaceholderPage,
+        meta: {
+          title: '店铺设置',
+          section: '店铺设置',
+        },
+      },
+    ],
   },
 ]
