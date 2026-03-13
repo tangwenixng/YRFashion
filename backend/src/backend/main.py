@@ -5,12 +5,13 @@ from fastapi import FastAPI
 
 from backend.api.router import api_router
 from backend.core.config import settings
-from backend.db.session import init_data_dirs
+from backend.db.session import init_data_dirs, init_db
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_data_dirs()
+    init_db()
     yield
 
 

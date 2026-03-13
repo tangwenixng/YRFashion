@@ -13,7 +13,11 @@ class Settings(BaseSettings):
     upload_dir: Path | None = None
     database_url: str | None = None
     secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
+    bootstrap_admin_username: str = "admin"
+    bootstrap_admin_password: str = "admin123456"
+    bootstrap_admin_display_name: str = "Store Admin"
 
     model_config = SettingsConfigDict(
         env_file=".env",
