@@ -4,6 +4,7 @@ import AdminLayout from '../layouts/AdminLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LoginView from '../views/LoginView.vue'
 import PlaceholderPage from '../views/PlaceholderPage.vue'
+import ProductsView from '../views/ProductsView.vue'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -37,10 +38,9 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'products',
         name: 'products',
-        component: PlaceholderPage,
+        component: ProductsView,
         meta: {
           title: '商品管理',
-          section: '商品管理',
         },
       },
       {
