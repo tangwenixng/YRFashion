@@ -192,7 +192,11 @@ void loadProducts()
                 class="cover-thumb"
                 :preview-src-list="row.images.map((item: ProductItem['images'][number]) => item.image_url)"
                 preview-teleported
-              />
+              >
+                <template #error>
+                  <div class="cover-fallback">IMG</div>
+                </template>
+              </el-image>
               <strong>{{ row.images.length }}</strong>
             </div>
           </template>
@@ -360,7 +364,19 @@ void loadProducts()
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(122, 92, 65, 0.12);
- }
+}
+
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(164, 124, 89, 0.18), rgba(107, 73, 45, 0.24));
+  color: #5c3d25;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 
 @media (max-width: 900px) {
   .page-header {
