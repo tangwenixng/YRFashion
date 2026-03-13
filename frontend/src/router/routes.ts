@@ -3,8 +3,10 @@ import type { RouteRecordRaw } from 'vue-router'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LoginView from '../views/LoginView.vue'
-import PlaceholderPage from '../views/PlaceholderPage.vue'
+import MessagesView from '../views/MessagesView.vue'
 import ProductsView from '../views/ProductsView.vue'
+import SettingsView from '../views/SettingsView.vue'
+import UsersView from '../views/UsersView.vue'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -46,28 +48,25 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'messages',
         name: 'messages',
-        component: PlaceholderPage,
+        component: MessagesView,
         meta: {
           title: '留言管理',
-          section: '留言管理',
         },
       },
       {
         path: 'users',
         name: 'users',
-        component: PlaceholderPage,
+        component: UsersView,
         meta: {
           title: '用户列表',
-          section: '用户列表',
         },
       },
       {
         path: 'settings',
         name: 'settings',
-        component: PlaceholderPage,
+        component: SettingsView,
         meta: {
           title: '店铺设置',
-          section: '店铺设置',
         },
       },
     ],
