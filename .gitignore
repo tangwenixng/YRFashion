@@ -1,0 +1,8 @@
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+
+backend/.venv/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/data/
