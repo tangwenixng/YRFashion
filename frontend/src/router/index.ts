@@ -25,3 +25,8 @@ router.beforeEach(async (to) => {
 
   return true
 })
+
+router.afterEach((to) => {
+  const title = typeof to.meta.title === 'string' ? to.meta.title : '管理后台'
+  document.title = `${title} | YRFasion Admin`
+})

@@ -1,13 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-import AdminLayout from '../layouts/AdminLayout.vue'
-import DashboardView from '../views/DashboardView.vue'
-import LoginView from '../views/LoginView.vue'
-import MessagesView from '../views/MessagesView.vue'
-import ProductsView from '../views/ProductsView.vue'
-import SettingsView from '../views/SettingsView.vue'
-import UsersView from '../views/UsersView.vue'
-
 export const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -16,7 +8,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'login',
-    component: LoginView,
+    component: () => import('../views/LoginView.vue'),
     meta: {
       title: '登录',
       guestOnly: true,
@@ -24,7 +16,7 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
-    component: AdminLayout,
+    component: () => import('../layouts/AdminLayout.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -32,7 +24,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'dashboard',
         name: 'dashboard',
-        component: DashboardView,
+        component: () => import('../views/DashboardView.vue'),
         meta: {
           title: '概览',
         },
@@ -40,7 +32,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'products',
         name: 'products',
-        component: ProductsView,
+        component: () => import('../views/ProductsView.vue'),
         meta: {
           title: '商品管理',
         },
@@ -48,7 +40,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'messages',
         name: 'messages',
-        component: MessagesView,
+        component: () => import('../views/MessagesView.vue'),
         meta: {
           title: '留言管理',
         },
@@ -56,7 +48,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'users',
         name: 'users',
-        component: UsersView,
+        component: () => import('../views/UsersView.vue'),
         meta: {
           title: '用户列表',
         },
@@ -64,7 +56,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'settings',
         name: 'settings',
-        component: SettingsView,
+        component: () => import('../views/SettingsView.vue'),
         meta: {
           title: '店铺设置',
         },

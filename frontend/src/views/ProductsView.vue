@@ -184,7 +184,17 @@ void loadProducts()
         </el-table-column>
         <el-table-column label="图片" width="100">
           <template #default="{ row }">
-            <strong>{{ row.images.length }}</strong>
+            <div class="image-summary">
+              <el-image
+                v-if="row.images[0]"
+                :src="row.images[0].image_url"
+                fit="cover"
+                class="cover-thumb"
+                :preview-src-list="row.images.map((item: ProductItem['images'][number]) => item.image_url)"
+                preview-teleported
+              />
+              <strong>{{ row.images.length }}</strong>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="排序" width="160">
@@ -312,7 +322,8 @@ void loadProducts()
 .header-actions,
 .row-actions,
 .tag-list,
-.sort-box {
+.sort-box,
+.image-summary {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -342,6 +353,14 @@ void loadProducts()
   font-size: 28px;
   color: #7d5535;
 }
+
+.cover-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(122, 92, 65, 0.12);
+ }
 
 @media (max-width: 900px) {
   .page-header {

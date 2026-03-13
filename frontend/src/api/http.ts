@@ -14,3 +14,18 @@ http.interceptors.request.use((config) => {
   }
   return config
 })
+
+http.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)
