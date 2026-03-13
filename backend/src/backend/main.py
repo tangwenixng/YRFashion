@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from backend.api.router import api_router
 from backend.core.config import settings
@@ -16,12 +17,15 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
+    init_data_dirs()
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         lifespan=lifespan,
     )
     app.include_router(api_router, prefix=settings.api_prefix)
+    app.mount("/uploads", StaticFiles(directory=settings.resolved_upload_dir), name="uploads")
 
     return app
 
