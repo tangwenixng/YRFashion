@@ -92,6 +92,39 @@ Run locally with environment variables:
 docker run --rm -p 8000:8000 --env-file backend/.env yrfasion-backend
 ```
 
+## GitHub Actions image build
+
+The repository includes an automated backend image workflow at
+`.github/workflows/backend-docker.yml`.
+
+- `pull_request`: runs backend checks and verifies the Docker build
+- `push` to `master`: runs checks, builds the image, and pushes it to GHCR
+- if `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are configured as repository secrets, the same image is also pushed to Docker Hub
+- `workflow_dispatch`: allows a manual rebuild from the GitHub Actions UI on the selected ref
+
+Published image:
+
+```text
+ghcr.io/<github-owner>/yrfashion-backend
+```
+
+Optional Docker Hub image:
+
+```text
+docker.io/<dockerhub-username>/yrfashion-backend
+```
+
+Generated tags include:
+
+- branch name
+- commit SHA
+- `latest` on the default branch
+
+Required repository secrets for Docker Hub publishing:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
 ## CloudBase deployment notes
 
 This repository is prepared for CloudBase cloud hosting using image deployment.
