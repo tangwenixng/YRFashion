@@ -1,10 +1,58 @@
 ﻿<view class="page">
-  <view class="hero">
-    <text class="title">YRFasion</text>
-    <text class="subtitle">小程序骨架已初始化，下一步接入首页、商品和留言页面。</text>
-  </view>
-  <view class="card">
-    <text class="label">当前登录用户</text>
-    <text class="value">{{userId || '未同步'}}</text>
-  </view>
+  <block wx:if="{{loading}}">
+    <view class="hero skeleton"></view>
+    <view class="panel skeleton"></view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="hero">
+      <text class="title">YRFasion</text>
+      <text class="subtitle">{{error}}</text>
+      <button class="primary-button" bindtap="loadHome">重新加载</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{home}}">
+    <view class="hero">
+      <text class="eyebrow">MVP STORE</text>
+      <text class="title">{{home.shop_name || 'YRFasion'}}</text>
+      <text class="subtitle">{{home.shop_intro || '精选商品展示与咨询服务。'}}</text>
+      <button class="primary-button" bindtap="goToContact">查看联系方式</button>
+    </view>
+
+    <swiper class="banner-swiper" indicator-dots="{{home.homepage_banner_urls.length > 1}}" autoplay="{{home.homepage_banner_urls.length > 1}}" circular="true">
+      <block wx:for="{{home.homepage_banner_urls}}" wx:key="*this">
+        <swiper-item>
+          <image class="banner-image" src="{{item}}" mode="aspectFill"></image>
+        </swiper-item>
+      </block>
+      <swiper-item wx:if="{{!home.homepage_banner_urls.length}}">
+        <view class="banner-empty">店铺 banner 将在后台配置后展示</view>
+      </swiper-item>
+    </swiper>
+
+    <view class="panel">
+      <view class="panel-header">
+        <text class="panel-title">主推商品</text>
+        <text class="panel-caption">已按后台排序展示</text>
+      </view>
+      <block wx:if="{{home.featured_products.length}}">
+        <view class="product-list">
+          <block wx:for="{{home.featured_products}}" wx:key="id">
+            <view class="product-card">
+              <image wx:if="{{item.cover_image_url}}" class="product-image" src="{{item.cover_image_url}}" mode="aspectFill"></image>
+              <view wx:else class="product-image product-placeholder">暂无封面</view>
+              <view class="product-body">
+                <text class="product-name">{{item.name}}</text>
+                <view class="tag-row">
+                  <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </block>
+      <view wx:else class="empty-text">店铺主推商品将在上架后显示。</view>
+    </view>
+  </block>
 </view>

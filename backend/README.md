@@ -1,4 +1,4 @@
-# YRFasion Backend
+﻿# YRFasion Backend
 
 Python admin backend for the YRFasion MVP.
 
@@ -43,6 +43,8 @@ Copy `.env.example` to `.env` and override values as needed.
 ## Main miniapp endpoints
 
 - `POST /api/miniapp/auth/login`
+- `GET /api/miniapp/home`
+- `GET /api/miniapp/shop/contact`
 
 ## Verification
 

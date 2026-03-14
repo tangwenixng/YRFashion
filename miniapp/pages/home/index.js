@@ -1,13 +1,39 @@
-﻿Page({
+﻿const { request } = require("../../utils/http")
+
+Page({
   data: {
-    userId: null,
+    home: null,
+    loading: true,
+    error: "",
   },
 
-  onShow() {
-    const app = getApp()
-    const user = app.globalData.miniappUser
-    this.setData({
-      userId: user ? user.id : null,
-    })
+  onLoad() {
+    this.loadHome()
+  },
+
+  onPullDownRefresh() {
+    this.loadHome({ refresh: true })
+  },
+
+  async loadHome(options = {}) {
+    if (!options.refresh) {
+      this.setData({ loading: true, error: "" })
+    }
+
+    try {
+      const home = await request({ url: "/miniapp/home" })
+      this.setData({ home, loading: false, error: "" })
+    } catch (error) {
+      this.setData({ loading: false, error: "首页加载失败，请稍后重试。" })
+      if (!options.silent) {
+        wx.showToast({ title: "首页加载失败", icon: "none" })
+      }
+    } finally {
+      wx.stopPullDownRefresh()
+    }
+  },
+
+  goToContact() {
+    wx.navigateTo({ url: "/pages/contact/index" })
   },
 })
