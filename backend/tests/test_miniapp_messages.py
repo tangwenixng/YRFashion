@@ -86,7 +86,7 @@ def test_message_history_returns_current_user_messages_only() -> None:
             headers=headers,
             json={"content": "Need sizing details."},
         )
-        second_create = client.post(
+        client.post(
             f"/api/miniapp/products/{product_id}/messages",
             headers=headers,
             json={"content": "Can you share styling advice?"},

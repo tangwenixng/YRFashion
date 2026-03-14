@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.orm import Session, selectinload
 
 from backend.api.deps import get_current_admin
+from backend.core.config import settings
 from backend.db.session import get_db
 from backend.models import AdminUser, Category, Product, ProductImage
 from backend.schemas.product import (
@@ -15,7 +16,7 @@ from backend.schemas.product import (
     ProductSortRequest,
     ProductUpdateRequest,
 )
-from backend.services.local_storage import delete_local_file, save_product_image
+from backend.services.storage import delete_product_image_file, save_product_image
 
 router = APIRouter(prefix="/admin/products")
 
@@ -171,15 +172,13 @@ def delete_product(
     _: AdminUser = Depends(get_current_admin),
 ) -> None:
     product = get_product_or_404(db, product_id)
-    storage_paths = [
-        image.storage_path for image in product.images if image.storage_type == "local"
-    ]
+    storage_paths = [image.storage_path for image in product.images if image.storage_path]
 
     db.delete(product)
     db.commit()
 
     for storage_path in storage_paths:
-        delete_local_file(storage_path)
+        delete_product_image_file(storage_path)
 
 
 @router.post("/{product_id}/images", response_model=ProductImageResponse)
@@ -201,7 +200,7 @@ def upload_product_image(
 
     image = ProductImage(
         product_id=product_id,
-        storage_type="local",
+        storage_type=settings.resolved_storage_type,
         storage_path=storage_path,
         image_url=image_url,
         original_name=Path(file.filename or "").name or "upload",
@@ -287,5 +286,5 @@ def delete_product_image(
             db.add(item)
 
     db.commit()
-    delete_local_file(storage_path)
+    delete_product_image_file(storage_path)
     return get_product(product_id=product_id, db=db)

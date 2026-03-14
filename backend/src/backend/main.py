@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.api.router import api_router
@@ -11,6 +12,7 @@ from backend.db.session import init_data_dirs, init_db
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    settings.validate_runtime_configuration()
     init_data_dirs()
     init_db()
     yield
@@ -24,8 +26,19 @@ def create_app() -> FastAPI:
         version=settings.app_version,
         lifespan=lifespan,
     )
+
+    if settings.resolved_cors_allow_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.resolved_cors_allow_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
     app.include_router(api_router, prefix=settings.api_prefix)
-    app.mount("/uploads", StaticFiles(directory=settings.resolved_upload_dir), name="uploads")
+    if settings.uses_local_storage:
+        app.mount("/uploads", StaticFiles(directory=settings.resolved_upload_dir), name="uploads")
 
     return app
 
