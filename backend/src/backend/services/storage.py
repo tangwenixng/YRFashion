@@ -101,9 +101,10 @@ def _build_cloud_public_url(relative_path: str) -> str:
         base = settings.storage_public_base_url.rstrip("/")
         return f"{base}/{relative_path}"
 
-    return (
-        f"https://{settings.storage_bucket}.cos.{settings.storage_region}.myqcloud.com/{relative_path}"
-    )
+    if settings.storage_bucket:
+        return f"https://{settings.storage_bucket}.tcb.qcloud.la/{relative_path}"
+
+    return f"https://{settings.storage_bucket}.cos.{settings.storage_region}.myqcloud.com/{relative_path}"
 
 
 @lru_cache(maxsize=1)
