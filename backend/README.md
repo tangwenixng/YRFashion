@@ -40,6 +40,10 @@ Copy `.env.example` to `.env` and override values as needed.
 - `GET /api/admin/settings`
 - `PUT /api/admin/settings`
 
+## Main miniapp endpoints
+
+- `POST /api/miniapp/auth/login`
+
 ## Verification
 
 ```bash

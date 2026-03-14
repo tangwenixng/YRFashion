@@ -1,4 +1,5 @@
 from backend.core.security import (
+    extract_token_subject,
     create_access_token,
     decode_token,
     get_password_hash,
@@ -22,3 +23,14 @@ def test_token_roundtrip() -> None:
 
     assert payload is not None
     assert payload["sub"] == "1"
+
+
+def test_scoped_token_roundtrip() -> None:
+    token = create_access_token("2", scope="miniapp")
+
+    payload = decode_token(token)
+
+    assert payload is not None
+    assert payload["sub"] == "miniapp:2"
+    assert extract_token_subject(payload, expected_scope="miniapp") == "2"
+    assert extract_token_subject(payload, expected_scope="admin") is None

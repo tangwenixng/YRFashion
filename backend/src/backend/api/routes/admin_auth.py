@@ -31,7 +31,7 @@ def login(payload: AdminLoginRequest, db: Session = Depends(get_db)) -> AdminTok
     db.add(admin)
     db.commit()
 
-    return AdminTokenResponse(access_token=create_access_token(str(admin.id)))
+    return AdminTokenResponse(access_token=create_access_token(str(admin.id), scope="admin"))
 
 
 @router.get("/me", response_model=AdminProfileResponse)
