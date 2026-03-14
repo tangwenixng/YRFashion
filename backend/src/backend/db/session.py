@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from backend.core.config import settings
 from backend.core.security import get_password_hash
 from backend.db.base import Base
-from backend.models import AdminUser, ShopSetting
+from backend.models import AdminUser, NotificationSetting, ShopSetting
 
 engine = create_engine(settings.resolved_database_url, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
@@ -45,5 +45,8 @@ def init_db() -> None:
 
         if db.get(ShopSetting, 1) is None:
             db.add(ShopSetting(id=1))
+
+        if db.get(NotificationSetting, 1) is None:
+            db.add(NotificationSetting(id=1))
 
         db.commit()

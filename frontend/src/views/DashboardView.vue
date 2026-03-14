@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ChatLineRound, Goods, User } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { onMounted, ref } from 'vue'
 
 import { fetchDashboardSummary, type DashboardSummary } from '../api/modules/dashboard'
+import { sendUnreadSummaryNotification } from '../api/modules/notifications'
 
 const loading = ref(false)
 const summary = ref<DashboardSummary>({
   unread_message_count: 0,
   product_count: 0,
   miniapp_user_count: 0,
+  notification_enabled: false,
+  notification_channel: null,
 })
 
 const statCards = [
@@ -39,6 +43,11 @@ const loadSummary = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const sendSummaryNotification = async () => {
+  await sendUnreadSummaryNotification()
+  ElMessage.success('未读汇总提醒已发送')
 }
 
 onMounted(() => {
@@ -78,6 +87,27 @@ onMounted(() => {
         <li>商品排序建议按“主推款、新上款、稳定款”三层逻辑维护。</li>
       </ul>
     </section>
+
+    <section class="content-card notification-card">
+      <div>
+        <h2>提醒通道</h2>
+        <p class="notification-text">
+          {{
+            summary.notification_enabled
+              ? `当前已启用 ${summary.notification_channel} Webhook，可主动推送未读汇总。`
+              : '当前未启用主动提醒，请先到店铺设置中配置提醒通道。'
+          }}
+        </p>
+      </div>
+
+      <el-button
+        type="primary"
+        :disabled="!summary.notification_enabled"
+        @click="sendSummaryNotification"
+      >
+        发送未读汇总提醒
+      </el-button>
+    </section>
   </section>
 </template>
 
@@ -89,7 +119,8 @@ onMounted(() => {
 }
 
 .hero-strip,
-.tips-card {
+.tips-card,
+.notification-card {
   padding: 28px;
 }
 
@@ -148,6 +179,26 @@ onMounted(() => {
   color: #30251b;
 }
 
+.notification-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-card h2 {
+  margin: 0 0 10px;
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  color: #30251b;
+}
+
+.notification-text {
+  margin: 0;
+  color: #6f5f50;
+  line-height: 1.8;
+}
+
 .tips-card ul {
   margin: 0;
   padding-left: 20px;
@@ -158,6 +209,11 @@ onMounted(() => {
 @media (max-width: 900px) {
   .hero-strip {
     flex-direction: column;
+  }
+
+  .notification-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .stats-grid {

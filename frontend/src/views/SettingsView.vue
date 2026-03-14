@@ -2,9 +2,16 @@
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 
+import {
+  fetchNotificationSettings,
+  sendTestNotification,
+  updateNotificationSettings,
+} from '../api/modules/notifications'
 import { fetchSettings, updateSettings } from '../api/modules/settings'
 
 const loading = ref(false)
+const notificationSaving = ref(false)
+const notificationTesting = ref(false)
 const form = reactive({
   shop_name: '',
   shop_intro: '',
@@ -14,11 +21,20 @@ const form = reactive({
   business_hours: '',
   homepage_banner_text: '',
 })
+const notificationForm = reactive({
+  enabled: false,
+  channel: 'wecom' as 'wecom' | 'feishu' | 'generic',
+  webhook_url: '',
+  message_prefix: 'YRFasion',
+})
 
 const loadSettings = async () => {
   loading.value = true
   try {
-    const data = await fetchSettings()
+    const [data, notificationData] = await Promise.all([
+      fetchSettings(),
+      fetchNotificationSettings(),
+    ])
     form.shop_name = data.shop_name
     form.shop_intro = data.shop_intro
     form.contact_phone = data.contact_phone
@@ -26,6 +42,10 @@ const loadSettings = async () => {
     form.address = data.address
     form.business_hours = data.business_hours
     form.homepage_banner_text = data.homepage_banner_urls.join('\n')
+    notificationForm.enabled = notificationData.enabled
+    notificationForm.channel = notificationData.channel
+    notificationForm.webhook_url = notificationData.webhook_url
+    notificationForm.message_prefix = notificationData.message_prefix
   } finally {
     loading.value = false
   }
@@ -45,6 +65,36 @@ const saveSettings = async () => {
       .filter(Boolean),
   })
   ElMessage.success('店铺设置已保存')
+}
+
+const saveNotificationSettings = async () => {
+  if (notificationForm.enabled && !notificationForm.webhook_url.trim()) {
+    ElMessage.warning('启用提醒时必须填写 Webhook 地址')
+    return
+  }
+
+  notificationSaving.value = true
+  try {
+    await updateNotificationSettings({
+      enabled: notificationForm.enabled,
+      channel: notificationForm.channel,
+      webhook_url: notificationForm.webhook_url.trim(),
+      message_prefix: notificationForm.message_prefix.trim() || 'YRFasion',
+    })
+    ElMessage.success('提醒设置已保存')
+  } finally {
+    notificationSaving.value = false
+  }
+}
+
+const sendNotificationProbe = async () => {
+  notificationTesting.value = true
+  try {
+    const result = await sendTestNotification()
+    ElMessage.success(result.message)
+  } finally {
+    notificationTesting.value = false
+  }
 }
 
 void loadSettings()
@@ -103,6 +153,53 @@ void loadSettings()
         </div>
       </el-form>
     </section>
+
+    <section class="content-card form-card">
+      <div class="section-head">
+        <div>
+          <h2>消息提醒</h2>
+          <p>支持企业微信、飞书或通用 Webhook，先用低成本主动提醒闭环留言处理。</p>
+        </div>
+      </div>
+
+      <el-form label-position="top">
+        <div class="grid-two">
+          <el-form-item label="启用提醒">
+            <el-switch v-model="notificationForm.enabled" />
+          </el-form-item>
+
+          <el-form-item label="通道类型">
+            <el-select v-model="notificationForm.channel">
+              <el-option label="企业微信 Webhook" value="wecom" />
+              <el-option label="飞书 Webhook" value="feishu" />
+              <el-option label="通用 Webhook" value="generic" />
+            </el-select>
+          </el-form-item>
+        </div>
+
+        <el-form-item label="Webhook 地址">
+          <el-input
+            v-model="notificationForm.webhook_url"
+            placeholder="https://example.com/webhook"
+          />
+        </el-form-item>
+
+        <el-form-item label="消息前缀">
+          <el-input v-model="notificationForm.message_prefix" placeholder="例如：YRFasion" />
+        </el-form-item>
+
+        <div class="footer-actions">
+          <el-button :loading="notificationTesting" @click="sendNotificationProbe">发送测试提醒</el-button>
+          <el-button
+            type="primary"
+            :loading="notificationSaving"
+            @click="saveNotificationSettings"
+          >
+            保存提醒设置
+          </el-button>
+        </div>
+      </el-form>
+    </section>
   </section>
 </template>
 
@@ -115,6 +212,19 @@ void loadSettings()
 
 .form-card {
   padding: 28px;
+}
+
+.section-head h2 {
+  margin: 0 0 8px;
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  color: #30251b;
+}
+
+.section-head p {
+  margin: 0 0 18px;
+  color: #7d6955;
+  line-height: 1.8;
 }
 
 .grid-two {
