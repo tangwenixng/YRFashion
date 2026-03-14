@@ -2,10 +2,21 @@ const { getAccessToken } = require("../../utils/auth")
 const { request } = require("../../utils/http")
 const { normalizeProduct } = require("../../utils/media")
 
-const STATUS_LABEL_MAP = {
-  unread: "待店主查看",
-  read: "店主已查看",
-  replied: "店主已回复",
+const MESSAGE_POLL_INTERVAL = 15000
+
+const STATUS_META_MAP = {
+  unread: {
+    label: "待店主查看",
+    tone: "pending",
+  },
+  read: {
+    label: "店主已查看",
+    tone: "read",
+  },
+  replied: {
+    label: "店主已回复",
+    tone: "replied",
+  },
 }
 
 function formatDateTime(value) {
@@ -27,11 +38,25 @@ function formatDateTime(value) {
 }
 
 function normalizeMessage(message) {
+  const statusMeta = STATUS_META_MAP[message.status] || {
+    label: "已提交",
+    tone: "pending",
+  }
+
   return Object.assign({}, message, {
-    status_label: STATUS_LABEL_MAP[message.status] || "已提交",
+    status_label: statusMeta.label,
+    status_tone: statusMeta.tone,
     created_at_text: formatDateTime(message.created_at),
     reply_at_text: formatDateTime(message.reply_at),
+    has_reply: Boolean(message.reply_content),
   })
+}
+
+function buildMessageMap(messages) {
+  return messages.reduce((result, item) => {
+    result[item.id] = item
+    return result
+  }, {})
 }
 
 Page({
@@ -41,20 +66,53 @@ Page({
     messages: [],
     messagesLoading: false,
     messagesError: "",
+    messagesLastUpdatedText: "",
     hasMiniappSession: false,
+    hasUnreadReplies: false,
     loading: true,
     error: "",
   },
 
   onLoad(query) {
-    const productId = Number(query.id || 0)
-    this.setData({ productId })
-    this.loadProduct(productId)
+    this.messagePollTimer = null
+    this.messagesRequesting = false
+    this.setData({
+      productId: Number(query.id || 0),
+    })
+    this.loadProduct(this.data.productId)
   },
 
   onShow() {
-    if (this.data.productId) {
-      this.loadMessageHistory({ silent: true })
+    if (!this.data.productId) {
+      return
+    }
+    this.loadMessageHistory({ silent: true, background: true })
+    this.startMessagePolling()
+  },
+
+  onHide() {
+    this.stopMessagePolling()
+  },
+
+  onUnload() {
+    this.stopMessagePolling()
+  },
+
+  startMessagePolling() {
+    this.stopMessagePolling()
+    if (!this.data.productId || !getAccessToken()) {
+      return
+    }
+
+    this.messagePollTimer = setInterval(() => {
+      this.loadMessageHistory({ silent: true, background: true })
+    }, MESSAGE_POLL_INTERVAL)
+  },
+
+  stopMessagePolling() {
+    if (this.messagePollTimer) {
+      clearInterval(this.messagePollTimer)
+      this.messagePollTimer = null
     }
   },
 
@@ -68,7 +126,7 @@ Page({
       const product = normalizeProduct(await request({ url: `/miniapp/products/${productId}` }))
       this.setData({ product, loading: false, error: "" })
       wx.setNavigationBarTitle({ title: product.name })
-      this.loadMessageHistory({ silent: true })
+      this.loadMessageHistory({ silent: true, background: true })
     } catch (error) {
       this.setData({ loading: false, error: "商品详情加载失败，请稍后重试。" })
       wx.showToast({ title: "加载失败", icon: "none" })
@@ -76,24 +134,29 @@ Page({
   },
 
   async loadMessageHistory(options = {}) {
-    if (!this.data.productId) {
+    if (!this.data.productId || this.messagesRequesting) {
       return
     }
 
     const token = getAccessToken()
     if (!token) {
+      this.stopMessagePolling()
       this.setData({
         hasMiniappSession: false,
+        hasUnreadReplies: false,
         messages: [],
         messagesLoading: false,
         messagesError: "",
+        messagesLastUpdatedText: "",
       })
       return
     }
 
+    const shouldShowLoading = !options.background
+    this.messagesRequesting = true
     this.setData({
       hasMiniappSession: true,
-      messagesLoading: true,
+      messagesLoading: shouldShowLoading,
       messagesError: "",
     })
 
@@ -101,11 +164,27 @@ Page({
       const response = await request({
         url: `/miniapp/products/${this.data.productId}/messages`,
       })
+
+      const nextMessages = response.items.map(normalizeMessage)
+      const previousMessageMap = buildMessageMap(this.data.messages)
+      const hasNewReply = nextMessages.some((item) => {
+        const previous = previousMessageMap[item.id]
+        return item.has_reply && (!previous || !previous.has_reply)
+      })
+
       this.setData({
-        messages: response.items.map(normalizeMessage),
+        messages: nextMessages,
         messagesLoading: false,
         messagesError: "",
+        messagesLastUpdatedText: formatDateTime(new Date()),
+        hasUnreadReplies: hasNewReply || nextMessages.some((item) => item.status === "replied"),
       })
+
+      if (hasNewReply) {
+        wx.showToast({ title: "店主已回复你的留言", icon: "none" })
+      }
+
+      this.startMessagePolling()
     } catch (error) {
       this.setData({
         messagesLoading: false,
@@ -114,6 +193,8 @@ Page({
       if (!options.silent) {
         wx.showToast({ title: "留言记录加载失败", icon: "none" })
       }
+    } finally {
+      this.messagesRequesting = false
     }
   },
 
@@ -122,6 +203,7 @@ Page({
     if (!product) {
       return
     }
+
     const productName = encodeURIComponent(product.name)
     wx.navigateTo({
       url: `/pages/message/index?productId=${product.id}&productName=${productName}`,

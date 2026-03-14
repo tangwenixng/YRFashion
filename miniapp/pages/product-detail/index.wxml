@@ -1,4 +1,4 @@
-﻿<view class="page">
+<view class="page">
   <block wx:if="{{loading}}">
     <view class="hero skeleton"></view>
     <view class="panel skeleton"></view>
@@ -39,19 +39,27 @@
 
     <view class="panel history-panel">
       <view class="history-header">
-        <text class="section-title">我的留言</text>
-        <text class="section-subtitle">提交成功后会显示在这里</text>
+        <view>
+          <text class="section-title">我的留言</text>
+          <text class="section-subtitle">
+            <block wx:if="{{hasMiniappSession}}">
+              自动刷新已开启{{messagesLastUpdatedText ? ' · 最近同步 ' + messagesLastUpdatedText : ''}}
+            </block>
+            <block wx:else>提交成功后会显示在这里</block>
+          </text>
+        </view>
+        <view wx:if="{{hasUnreadReplies}}" class="reply-pill">有回复</view>
       </view>
 
       <view wx:if="{{messagesLoading}}" class="history-placeholder">留言记录加载中...</view>
       <view wx:elif="{{messagesError}}" class="history-placeholder">{{messagesError}}</view>
-      <view wx:elif="{{!hasMiniappSession}}" class="history-placeholder">提交留言后，可在此查看自己的咨询记录。</view>
+      <view wx:elif="{{!hasMiniappSession}}" class="history-placeholder">提交留言后，可在此查看自己的咨询记录和店主回复。</view>
       <view wx:elif="{{!messages.length}}" class="history-placeholder">还没有留言，点击上方按钮开始咨询。</view>
       <view wx:else class="history-list">
-        <view wx:for="{{messages}}" wx:key="id" class="history-item">
+        <view wx:for="{{messages}}" wx:key="id" class="history-item {{item.status_tone === 'replied' ? 'history-item-replied' : ''}}">
           <view class="history-meta">
             <text class="history-time">{{item.created_at_text}}</text>
-            <text class="history-status">{{item.status_label}}</text>
+            <text class="history-status history-status-{{item.status_tone}}">{{item.status_label}}</text>
           </view>
           <text class="history-content">{{item.content}}</text>
 
