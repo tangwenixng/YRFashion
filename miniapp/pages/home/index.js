@@ -1,4 +1,5 @@
-﻿const { request } = require("../../utils/http")
+const { request } = require("../../utils/http")
+const { normalizeHome } = require("../../utils/media")
 
 Page({
   data: {
@@ -21,7 +22,7 @@ Page({
     }
 
     try {
-      const home = await request({ url: "/miniapp/home" })
+      const home = normalizeHome(await request({ url: "/miniapp/home" }))
       this.setData({ home, loading: false, error: "" })
     } catch (error) {
       this.setData({ loading: false, error: "首页加载失败，请稍后重试。" })

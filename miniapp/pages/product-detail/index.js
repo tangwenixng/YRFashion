@@ -1,4 +1,5 @@
-﻿const { request } = require("../../utils/http")
+const { request } = require("../../utils/http")
+const { normalizeProduct } = require("../../utils/media")
 
 Page({
   data: {
@@ -21,7 +22,7 @@ Page({
   async loadProduct(productId = this.data.productId) {
     this.setData({ loading: true, error: "" })
     try {
-      const product = await request({ url: `/miniapp/products/${productId}` })
+      const product = normalizeProduct(await request({ url: `/miniapp/products/${productId}` }))
       this.setData({ product, loading: false, error: "" })
       wx.setNavigationBarTitle({ title: product.name })
     } catch (error) {

@@ -1,4 +1,5 @@
-﻿const { request } = require("../../utils/http")
+const { request } = require("../../utils/http")
+const { normalizeProduct } = require("../../utils/media")
 
 Page({
   data: {
@@ -43,8 +44,11 @@ Page({
       const response = await request({
         url: `/miniapp/products?page=${nextPage}&page_size=${this.data.pageSize}`,
       })
+
       this.setData({
-        items: reset ? response.items : this.data.items.concat(response.items),
+        items: reset
+          ? response.items.map(normalizeProduct)
+          : this.data.items.concat(response.items.map(normalizeProduct)),
         page: response.page + 1,
         total: response.total,
         hasMore: response.has_more,
