@@ -1,4 +1,4 @@
-﻿const { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } = require("./config")
+const { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } = require("./config")
 
 function saveSession(session) {
   wx.setStorageSync(TOKEN_STORAGE_KEY, session.access_token)

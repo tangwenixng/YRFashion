@@ -1,4 +1,4 @@
-﻿const { request } = require("../../utils/http")
+const { request } = require("../../utils/http")
 
 Page({
   data: {

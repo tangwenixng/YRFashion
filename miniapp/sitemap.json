@@ -1,3 +1,9 @@
 {
-  "desc": "YRFasion miniapp sitemap"
+  "desc": "YRFasion miniapp sitemap",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
 }

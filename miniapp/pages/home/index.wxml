@@ -1,4 +1,4 @@
-﻿<view class="page">
+<view class="page">
   <block wx:if="{{loading}}">
     <view class="hero skeleton"></view>
     <view class="panel skeleton"></view>
