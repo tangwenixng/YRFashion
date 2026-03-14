@@ -63,3 +63,60 @@ def test_message_submit_creates_unread_message() -> None:
         assert message is not None
         assert message.status == "unread"
         assert message.created_at is not None
+
+
+def test_message_history_requires_login() -> None:
+    product_id = seed_product()
+
+    with TestClient(app) as client:
+        response = client.get(f"/api/miniapp/products/{product_id}/messages")
+
+    assert response.status_code == 401
+
+
+def test_message_history_returns_current_user_messages_only() -> None:
+    product_id = seed_product()
+
+    with TestClient(app) as client:
+        headers, miniapp_user_id = get_miniapp_headers(client)
+        other_headers, _ = get_miniapp_headers(client)
+
+        first_create = client.post(
+            f"/api/miniapp/products/{product_id}/messages",
+            headers=headers,
+            json={"content": "Need sizing details."},
+        )
+        second_create = client.post(
+            f"/api/miniapp/products/{product_id}/messages",
+            headers=headers,
+            json={"content": "Can you share styling advice?"},
+        )
+        client.post(
+            f"/api/miniapp/products/{product_id}/messages",
+            headers=other_headers,
+            json={"content": "Other user question."},
+        )
+
+        with SessionLocal() as db:
+            first_message = db.get(Message, first_create.json()["id"])
+            first_message.status = "replied"
+            first_message.reply_content = "建议搭配短靴和针织上衣。"
+            db.add(first_message)
+            db.commit()
+
+        response = client.get(f"/api/miniapp/products/{product_id}/messages", headers=headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["items"]) == 2
+    assert [item["content"] for item in payload["items"]] == [
+        "Can you share styling advice?",
+        "Need sizing details.",
+    ]
+    assert payload["items"][1]["status"] == "replied"
+    assert payload["items"][1]["reply_content"] == "建议搭配短靴和针织上衣。"
+    assert all(item["product_id"] == product_id for item in payload["items"])
+
+    with SessionLocal() as db:
+        messages = db.query(Message).filter(Message.miniapp_user_id == miniapp_user_id).all()
+        assert len(messages) == 2

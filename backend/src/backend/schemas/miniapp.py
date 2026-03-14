@@ -72,6 +72,20 @@ class MiniappMessageCreateResponse(BaseModel):
     created_at: datetime
 
 
+class MiniappMessageHistoryItemResponse(BaseModel):
+    id: int
+    product_id: int
+    content: str
+    status: str
+    reply_content: str | None
+    reply_at: datetime | None
+    created_at: datetime
+
+
+class MiniappMessageHistoryResponse(BaseModel):
+    items: list[MiniappMessageHistoryItemResponse]
+
+
 class MiniappHomeResponse(BaseModel):
     shop_name: str
     shop_intro: str
