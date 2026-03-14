@@ -13,6 +13,7 @@ export interface ProductItem {
   id: number
   name: string
   category_id: number | null
+  category_name: string | null
   description: string
   tags: string[]
   status: 'draft' | 'published' | 'archived'

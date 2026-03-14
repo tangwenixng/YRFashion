@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from backend.api.deps import get_current_admin
 from backend.db.session import get_db
-from backend.models import AdminUser, Product, ProductImage
+from backend.models import AdminUser, Category, Product, ProductImage
 from backend.schemas.product import (
     ProductCreateRequest,
     ProductImageResponse,
@@ -24,6 +24,7 @@ def serialize_product(product: Product) -> ProductResponse:
         id=product.id,
         name=product.name,
         category_id=product.category_id,
+        category_name=product.category.name if product.category else None,
         description=product.description,
         tags=product.tags_json or [],
         status=product.status,
@@ -37,6 +38,13 @@ def serialize_product(product: Product) -> ProductResponse:
     )
 
 
+def validate_category(db: Session, category_id: int | None) -> None:
+    if category_id is None:
+        return
+    if db.get(Category, category_id) is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category not found")
+
+
 @router.get("", response_model=ProductListResponse)
 def list_products(
     db: Session = Depends(get_db),
@@ -44,7 +52,7 @@ def list_products(
 ) -> ProductListResponse:
     products = (
         db.query(Product)
-        .options(selectinload(Product.images))
+        .options(selectinload(Product.images), selectinload(Product.category))
         .order_by(Product.sort_order.asc(), Product.id.desc())
         .all()
     )
@@ -57,6 +65,7 @@ def create_product(
     db: Session = Depends(get_db),
     _: AdminUser = Depends(get_current_admin),
 ) -> ProductResponse:
+    validate_category(db, payload.category_id)
     product = Product(
         name=payload.name,
         category_id=payload.category_id,
@@ -79,7 +88,7 @@ def get_product(
 ) -> ProductResponse:
     product = (
         db.query(Product)
-        .options(selectinload(Product.images))
+        .options(selectinload(Product.images), selectinload(Product.category))
         .filter(Product.id == product_id)
         .first()
     )
@@ -99,6 +108,7 @@ def update_product(
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
+    validate_category(db, payload.category_id)
     product.name = payload.name
     product.category_id = payload.category_id
     product.description = payload.description

@@ -43,6 +43,7 @@ class ProductResponse(BaseModel):
     id: int
     name: str
     category_id: int | None
+    category_name: str | None
     description: str
     tags: list[str]
     status: str

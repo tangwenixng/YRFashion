@@ -3,6 +3,7 @@ import { EditPen, Picture, Plus, RefreshRight, Sort } from '@element-plus/icons-
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 
+import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
   createProduct,
   fetchProducts,
@@ -23,6 +24,7 @@ type ProductFormState = {
 
 const loading = ref(false)
 const products = ref<ProductItem[]>([])
+const categories = ref<CategoryItem[]>([])
 const editorVisible = ref(false)
 const uploadVisible = ref(false)
 const editingProductId = ref<number | null>(null)
@@ -57,6 +59,10 @@ const loadProducts = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const loadCategories = async () => {
+  categories.value = await fetchCategories()
 }
 
 const openCreate = () => {
@@ -142,6 +148,7 @@ const submitUpload = async () => {
 }
 
 void loadProducts()
+void loadCategories()
 </script>
 
 <template>
@@ -167,6 +174,11 @@ void loadProducts()
     <section class="content-card table-card">
       <el-table :data="products" v-loading="loading">
         <el-table-column prop="name" label="商品名称" min-width="180" />
+        <el-table-column label="分类" min-width="140">
+          <template #default="{ row }">
+            <span>{{ row.category_name || '未分类' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'warning' : 'info'">
@@ -245,10 +257,23 @@ void loadProducts()
           </el-form-item>
 
           <div class="inline-grid">
+            <el-form-item label="分类">
+              <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                <el-option
+                  v-for="category in categories"
+                  :key="category.id"
+                  :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                  :value="category.id"
+                />
+              </el-select>
+            </el-form-item>
+
             <el-form-item label="标签">
               <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
             </el-form-item>
+          </div>
 
+          <div class="inline-grid">
             <el-form-item label="状态">
               <el-select v-model="form.status">
                 <el-option label="草稿" value="draft" />

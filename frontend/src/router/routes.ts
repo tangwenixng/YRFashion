@@ -30,6 +30,14 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'categories',
+        name: 'categories',
+        component: () => import('../views/CategoriesView.vue'),
+        meta: {
+          title: '分类管理',
+        },
+      },
+      {
         path: 'products',
         name: 'products',
         component: () => import('../views/ProductsView.vue'),

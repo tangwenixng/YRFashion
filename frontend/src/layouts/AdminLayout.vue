@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  CollectionTag,
   ChatLineRound,
   Fold,
   House,
@@ -20,6 +21,7 @@ const collapsed = ref(false)
 
 const menuItems = [
   { index: '/dashboard', label: '概览', icon: House },
+  { index: '/categories', label: '分类管理', icon: CollectionTag },
   { index: '/products', label: '商品管理', icon: Promotion },
   { index: '/messages', label: '留言管理', icon: ChatLineRound },
   { index: '/users', label: '用户列表', icon: User },
