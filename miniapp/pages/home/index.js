@@ -33,6 +33,15 @@ Page({
     }
   },
 
+  goToProducts() {
+    wx.navigateTo({ url: "/pages/products/index" })
+  },
+
+  goToProductDetail(event) {
+    const productId = event.currentTarget.dataset.productId
+    wx.navigateTo({ url: `/pages/product-detail/index?id=${productId}` })
+  },
+
   goToContact() {
     wx.navigateTo({ url: "/pages/contact/index" })
   },

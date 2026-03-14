@@ -26,6 +26,31 @@ class MiniappProductCardResponse(BaseModel):
     cover_image_url: str | None
 
 
+class MiniappProductImageResponse(BaseModel):
+    id: int
+    image_url: str
+    original_name: str
+    sort_order: int
+    is_cover: bool
+
+
+class MiniappProductListResponse(BaseModel):
+    items: list[MiniappProductCardResponse]
+    page: int
+    page_size: int
+    total: int
+    has_more: bool
+
+
+class MiniappProductDetailResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    tags: list[str]
+    cover_image_url: str | None
+    images: list[MiniappProductImageResponse]
+
+
 class MiniappHomeResponse(BaseModel):
     shop_name: str
     shop_intro: str

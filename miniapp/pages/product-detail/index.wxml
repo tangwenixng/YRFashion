@@ -1,0 +1,40 @@
+﻿<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="hero skeleton"></view>
+    <view class="panel skeleton"></view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="panel error-card">
+      <text class="title">商品详情</text>
+      <text class="description">{{error}}</text>
+      <button class="primary-button" bindtap="reloadProduct">重新加载</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{product}}">
+    <swiper class="hero" indicator-dots="{{product.images.length > 1}}" autoplay="{{product.images.length > 1}}" circular="true">
+      <block wx:for="{{product.images}}" wx:key="id">
+        <swiper-item>
+          <image class="hero-image" src="{{item.image_url}}" mode="aspectFill"></image>
+        </swiper-item>
+      </block>
+      <swiper-item wx:if="{{!product.images.length}}">
+        <view class="hero-placeholder">暂无商品图片</view>
+      </swiper-item>
+    </swiper>
+
+    <view class="panel">
+      <text class="title">{{product.name}}</text>
+      <view class="tag-row">
+        <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
+      </view>
+      <text class="description">{{product.description || '店主暂未补充更多介绍。'}}</text>
+    </view>
+
+    <view class="action-bar">
+      <button class="primary-button" bindtap="handleConsult">留言咨询</button>
+      <button class="secondary-button" bindtap="goToContact">联系店主</button>
+    </view>
+  </block>
+</view>

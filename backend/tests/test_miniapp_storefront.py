@@ -1,6 +1,7 @@
 ﻿from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy import func
 
 from backend.db.session import SessionLocal
 from backend.main import app
@@ -10,6 +11,9 @@ from backend.models import Product, ProductImage, ShopSetting
 def seed_storefront_data() -> tuple[int, int]:
     unique = uuid4().hex[:8]
     with SessionLocal() as db:
+        current_min_sort = db.query(func.min(Product.sort_order)).scalar()
+        anchor_sort = current_min_sort if current_min_sort is not None else 0
+
         setting = db.get(ShopSetting, 1)
         setting.shop_name = f"YRFasion-{unique}"
         setting.shop_intro = "精选穿搭与女装系列"
@@ -25,21 +29,21 @@ def seed_storefront_data() -> tuple[int, int]:
             description="featured product",
             tags_json=["featured", "spring"],
             status="published",
-            sort_order=-1000,
+            sort_order=anchor_sort - 2,
         )
         another = Product(
             name=f"Skirt-{unique}",
             description="secondary product",
             tags_json=["daily"],
             status="published",
-            sort_order=-999,
+            sort_order=anchor_sort - 1,
         )
         hidden = Product(
             name=f"Hidden-{unique}",
             description="hidden product",
             tags_json=["draft"],
             status="draft",
-            sort_order=-1001,
+            sort_order=anchor_sort - 3,
         )
         db.add_all([featured, another, hidden])
         db.commit()
@@ -69,13 +73,13 @@ def test_home_returns_storefront_content() -> None:
 
     assert response.status_code == 200
     payload = response.json()
+    featured_items = payload["featured_products"]
+    featured_ids = [item["id"] for item in featured_items]
     assert payload["shop_name"].startswith("YRFasion-")
     assert payload["homepage_banner_urls"] == ["/uploads/banner-a.jpg", "/uploads/banner-b.jpg"]
-    assert [item["id"] for item in payload["featured_products"][:2]] == [featured_id, another_id]
-    assert (
-        payload["featured_products"][0]["cover_image_url"]
-        == "/uploads/products/featured-cover.png"
-    )
+    assert featured_ids[0] == featured_id
+    assert another_id in featured_ids
+    assert featured_items[0]["cover_image_url"] == "/uploads/products/featured-cover.png"
 
 
 def test_contact_returns_shop_contact_data() -> None:

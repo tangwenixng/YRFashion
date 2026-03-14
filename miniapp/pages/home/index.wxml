@@ -17,7 +17,10 @@
       <text class="eyebrow">MVP STORE</text>
       <text class="title">{{home.shop_name || 'YRFasion'}}</text>
       <text class="subtitle">{{home.shop_intro || '精选商品展示与咨询服务。'}}</text>
-      <button class="primary-button" bindtap="goToContact">查看联系方式</button>
+      <view class="hero-actions">
+        <button class="primary-button" bindtap="goToProducts">浏览全部商品</button>
+        <button class="ghost-button" bindtap="goToContact">查看联系方式</button>
+      </view>
     </view>
 
     <swiper class="banner-swiper" indicator-dots="{{home.homepage_banner_urls.length > 1}}" autoplay="{{home.homepage_banner_urls.length > 1}}" circular="true">
@@ -39,7 +42,7 @@
       <block wx:if="{{home.featured_products.length}}">
         <view class="product-list">
           <block wx:for="{{home.featured_products}}" wx:key="id">
-            <view class="product-card">
+            <view class="product-card" bindtap="goToProductDetail" data-product-id="{{item.id}}">
               <image wx:if="{{item.cover_image_url}}" class="product-image" src="{{item.cover_image_url}}" mode="aspectFill"></image>
               <view wx:else class="product-image product-placeholder">暂无封面</view>
               <view class="product-body">
