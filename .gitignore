@@ -8,3 +8,4 @@ backend/.ruff_cache/
 backend/data/
 
 miniapp/project.private.config.json
+miniapp/utils/config.private.js
