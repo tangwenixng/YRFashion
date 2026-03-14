@@ -1,6 +1,6 @@
 ﻿from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class MiniappLoginRequest(BaseModel):
@@ -49,6 +49,27 @@ class MiniappProductDetailResponse(BaseModel):
     tags: list[str]
     cover_image_url: str | None
     images: list[MiniappProductImageResponse]
+
+
+class MiniappMessageCreateRequest(BaseModel):
+    content: str = Field(min_length=1, max_length=500)
+
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Message content cannot be empty")
+        return normalized
+
+
+class MiniappMessageCreateResponse(BaseModel):
+    id: int
+    product_id: int
+    miniapp_user_id: int
+    content: str
+    status: str
+    created_at: datetime
 
 
 class MiniappHomeResponse(BaseModel):

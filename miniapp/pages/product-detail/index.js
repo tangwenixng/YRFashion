@@ -31,7 +31,14 @@ Page({
   },
 
   handleConsult() {
-    wx.showToast({ title: "留言功能下一步接入", icon: "none" })
+    const product = this.data.product
+    if (!product) {
+      return
+    }
+    const productName = encodeURIComponent(product.name)
+    wx.navigateTo({
+      url: `/pages/message/index?productId=${product.id}&productName=${productName}`,
+    })
   },
 
   goToContact() {

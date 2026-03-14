@@ -1,0 +1,25 @@
+﻿<view class="page">
+  <view class="card intro-card">
+    <text class="label">咨询商品</text>
+    <text class="title">{{productName || '当前商品'}}</text>
+    <text class="hint">留言会发送到店主后台，店主可在后台查看并回复。</text>
+  </view>
+
+  <view class="card">
+    <textarea
+      class="textarea"
+      placeholder="请输入你的咨询内容，例如尺码、颜色、库存或试穿需求。"
+      maxlength="{{maxLength}}"
+      value="{{content}}"
+      bindinput="handleInput"
+    ></textarea>
+    <view class="counter-row">
+      <text class="counter">{{content.length}} / {{maxLength}}</text>
+      <text class="counter-tip">请避免填写敏感隐私信息</text>
+    </view>
+  </view>
+
+  <button class="submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitMessage">
+    提交留言
+  </button>
+</view>

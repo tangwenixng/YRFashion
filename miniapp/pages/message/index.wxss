@@ -1,0 +1,59 @@
+﻿.page {
+  min-height: 100vh;
+  padding: 32rpx;
+  background: linear-gradient(180deg, #f9f2ea 0%, #efe2d5 100%);
+}
+
+.card {
+  padding: 30rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+}
+
+.intro-card {
+  background: linear-gradient(135deg, #4a3022 0%, #7a5640 100%);
+}
+
+.label {
+  display: block;
+  color: rgba(255, 248, 242, 0.76);
+  font-size: 22rpx;
+}
+
+.title {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff8f2;
+}
+
+.hint {
+  display: block;
+  margin-top: 16rpx;
+  line-height: 1.8;
+  color: rgba(255, 248, 242, 0.82);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 320rpx;
+  line-height: 1.8;
+  color: #432d21;
+}
+
+.counter-row {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  color: #8c7060;
+  font-size: 22rpx;
+}
+
+.submit-button {
+  margin-top: 28rpx;
+  background: #3f2a1f;
+  color: #fff8f2;
+}

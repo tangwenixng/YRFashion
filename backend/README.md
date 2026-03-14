@@ -46,6 +46,7 @@ Copy `.env.example` to `.env` and override values as needed.
 - `GET /api/miniapp/home`
 - `GET /api/miniapp/products`
 - `GET /api/miniapp/products/{id}`
+- `POST /api/miniapp/products/{id}/messages`
 - `GET /api/miniapp/shop/contact`
 
 ## Verification
