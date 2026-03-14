@@ -25,4 +25,7 @@ def test_miniapp_login_reuses_existing_user() -> None:
     assert first_response.status_code == 200
     assert second_response.status_code == 200
     assert first_response.json()["user"]["id"] == second_response.json()["user"]["id"]
-    assert second_response.json()["user"]["last_visit_at"] >= first_response.json()["user"]["last_visit_at"]
+    assert (
+        second_response.json()["user"]["last_visit_at"]
+        >= first_response.json()["user"]["last_visit_at"]
+    )

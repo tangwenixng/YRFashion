@@ -1,4 +1,4 @@
-from io import BytesIO
+﻿from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
@@ -143,7 +143,10 @@ def test_product_image_management() -> None:
         )
         assert cover_response.status_code == 200
         cover_images = cover_response.json()["images"]
-        assert any(image["id"] == second_image["id"] and image["is_cover"] for image in cover_images)
+        assert any(
+            image["id"] == second_image["id"] and image["is_cover"]
+            for image in cover_images
+        )
 
         sort_response = client.put(
             f"/api/admin/products/{product_id}/images/sort",

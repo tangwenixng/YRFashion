@@ -1,6 +1,7 @@
 ﻿from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy import func
 
 from backend.db.session import SessionLocal
 from backend.main import app
@@ -10,26 +11,29 @@ from backend.models import Product, ProductImage
 def seed_products() -> tuple[int, int, int]:
     unique = uuid4().hex[:8]
     with SessionLocal() as db:
+        current_min_sort = db.query(func.min(Product.sort_order)).scalar()
+        anchor_sort = current_min_sort if current_min_sort is not None else 0
+
         first = Product(
             name=f"Coat-{unique}",
             description="first published product",
             tags_json=["coat", "featured"],
             status="published",
-            sort_order=-2000,
+            sort_order=anchor_sort - 2,
         )
         second = Product(
             name=f"Dress-{unique}",
             description="second published product",
             tags_json=["dress"],
             status="published",
-            sort_order=-1999,
+            sort_order=anchor_sort - 1,
         )
         hidden = Product(
             name=f"Hidden-{unique}",
             description="draft product",
             tags_json=["hidden"],
             status="draft",
-            sort_order=-3000,
+            sort_order=anchor_sort - 3,
         )
         db.add_all([first, second, hidden])
         db.commit()
