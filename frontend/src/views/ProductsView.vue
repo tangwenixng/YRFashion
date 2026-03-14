@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { EditPen, Picture, Plus, RefreshRight, Sort } from '@element-plus/icons-vue'
+import { Delete, EditPen, Picture, Plus, RefreshRight, Sort, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
   createProduct,
+  deleteProductImage,
   fetchProducts,
   updateProduct,
+  updateProductImageCover,
+  updateProductImagesSort,
   updateProductSort,
   uploadProductImage,
   type ProductItem,
@@ -56,6 +59,9 @@ const loadProducts = async () => {
   loading.value = true
   try {
     products.value = await fetchProducts()
+    if (uploadingProduct.value) {
+      uploadingProduct.value = products.value.find((item) => item.id === uploadingProduct.value?.id) ?? null
+    }
   } finally {
     loading.value = false
   }
@@ -143,7 +149,41 @@ const submitUpload = async () => {
     uploadAsCover.value,
   )
   ElMessage.success('图片上传成功')
-  uploadVisible.value = false
+  await loadProducts()
+}
+
+const saveImageSorts = async () => {
+  if (!uploadingProduct.value) {
+    return
+  }
+
+  await updateProductImagesSort(uploadingProduct.value.id, {
+    items: uploadingProduct.value.images.map((image) => ({
+      id: image.id,
+      sort_order: image.sort_order,
+    })),
+  })
+  ElMessage.success('图片排序已更新')
+  await loadProducts()
+}
+
+const setCoverImage = async (imageId: number) => {
+  if (!uploadingProduct.value) {
+    return
+  }
+
+  await updateProductImageCover(uploadingProduct.value.id, imageId)
+  ElMessage.success('封面图已更新')
+  await loadProducts()
+}
+
+const removeImage = async (imageId: number) => {
+  if (!uploadingProduct.value) {
+    return
+  }
+
+  await deleteProductImage(uploadingProduct.value.id, imageId)
+  ElMessage.success('图片已删除')
   await loadProducts()
 }
 
@@ -324,6 +364,59 @@ void loadCategories()
             <div class="el-upload__tip">支持 JPG / PNG / WEBP，文件大小不超过 5MB</div>
           </template>
         </el-upload>
+
+        <div v-if="uploadingProduct?.images.length" class="image-manager">
+          <div class="image-manager-header">
+            <h3>已上传图片</h3>
+            <el-button plain @click="saveImageSorts">
+              <el-icon><Sort /></el-icon>
+              保存图片排序
+            </el-button>
+          </div>
+
+          <div class="image-grid">
+            <article
+              v-for="image in uploadingProduct.images"
+              :key="image.id"
+              class="image-card"
+              :class="{ cover: image.is_cover }"
+            >
+              <el-image
+                :src="image.image_url"
+                fit="cover"
+                class="managed-image"
+                :preview-src-list="uploadingProduct.images.map((item) => item.image_url)"
+                preview-teleported
+              >
+                <template #error>
+                  <div class="cover-fallback">IMG</div>
+                </template>
+              </el-image>
+
+              <div class="image-card-body">
+                <div class="image-card-meta">
+                  <strong>{{ image.is_cover ? '当前封面' : '普通图片' }}</strong>
+                  <span>{{ image.original_name }}</span>
+                </div>
+
+                <el-form-item label="排序值" class="image-sort-field">
+                  <el-input-number v-model="image.sort_order" :min="0" :max="9999" />
+                </el-form-item>
+
+                <div class="image-card-actions">
+                  <el-button plain @click="setCoverImage(image.id)">
+                    <el-icon><Star /></el-icon>
+                    设为封面
+                  </el-button>
+                  <el-button plain type="danger" @click="removeImage(image.id)">
+                    <el-icon><Delete /></el-icon>
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
       </el-form>
 
       <template #footer>
@@ -383,6 +476,76 @@ void loadCategories()
   color: #7d5535;
 }
 
+.image-manager {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(122, 92, 65, 0.12);
+}
+
+.image-manager-header,
+.image-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.image-manager-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #3d2b1f;
+}
+
+.image-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.image-card {
+  border: 1px solid rgba(122, 92, 65, 0.12);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 252, 247, 0.9);
+}
+
+.image-card.cover {
+  border-color: rgba(169, 127, 78, 0.42);
+  box-shadow: 0 12px 24px rgba(117, 86, 53, 0.08);
+}
+
+.managed-image {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+.image-card-body {
+  padding: 14px;
+}
+
+.image-card-meta strong,
+.image-card-meta span {
+  display: block;
+}
+
+.image-card-meta strong {
+  color: #3a291d;
+}
+
+.image-card-meta span {
+  margin-top: 6px;
+  color: #8a755d;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.image-sort-field {
+  margin: 14px 0;
+}
+
 .cover-thumb {
   width: 44px;
   height: 44px;
@@ -409,6 +572,10 @@ void loadCategories()
   }
 
   .inline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .image-grid {
     grid-template-columns: 1fr;
   }
 }

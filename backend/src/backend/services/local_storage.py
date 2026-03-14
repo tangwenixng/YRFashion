@@ -35,3 +35,8 @@ def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
 
     image_url = f"/uploads/{relative_path.as_posix()}"
     return relative_path.as_posix(), image_url
+
+
+def delete_local_file(storage_path: str) -> None:
+    absolute_path = settings.resolved_upload_dir / storage_path
+    absolute_path.unlink(missing_ok=True)

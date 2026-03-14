@@ -26,6 +26,15 @@ class ProductSortRequest(BaseModel):
     sort_order: int
 
 
+class ProductImageSortItem(BaseModel):
+    id: int
+    sort_order: int
+
+
+class ProductImageSortRequest(BaseModel):
+    items: list[ProductImageSortItem]
+
+
 class ProductImageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

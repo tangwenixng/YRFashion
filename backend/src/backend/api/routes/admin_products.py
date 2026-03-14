@@ -9,12 +9,13 @@ from backend.models import AdminUser, Category, Product, ProductImage
 from backend.schemas.product import (
     ProductCreateRequest,
     ProductImageResponse,
+    ProductImageSortRequest,
     ProductListResponse,
     ProductResponse,
     ProductSortRequest,
     ProductUpdateRequest,
 )
-from backend.services.local_storage import save_product_image
+from backend.services.local_storage import delete_local_file, save_product_image
 
 router = APIRouter(prefix="/admin/products")
 
@@ -43,6 +44,37 @@ def validate_category(db: Session, category_id: int | None) -> None:
         return
     if db.get(Category, category_id) is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category not found")
+
+
+def load_product_with_relations(db: Session, product_id: int) -> Product | None:
+    return (
+        db.query(Product)
+        .options(selectinload(Product.images), selectinload(Product.category))
+        .filter(Product.id == product_id)
+        .first()
+    )
+
+
+def get_product_or_404(db: Session, product_id: int) -> Product:
+    product = load_product_with_relations(db, product_id)
+    if product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    return product
+
+
+def assign_cover_from_images(images: list[ProductImage]) -> None:
+    if not images:
+        return
+    next_cover = sorted(images, key=lambda item: (item.sort_order, item.id))[0]
+    for image in images:
+        image.is_cover = image.id == next_cover.id
+
+
+def get_product_image_or_404(product: Product, image_id: int) -> ProductImage:
+    image = next((item for item in product.images if item.id == image_id), None)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product image not found")
+    return image
 
 
 @router.get("", response_model=ProductListResponse)
@@ -86,15 +118,7 @@ def get_product(
     db: Session = Depends(get_db),
     _: AdminUser = Depends(get_current_admin),
 ) -> ProductResponse:
-    product = (
-        db.query(Product)
-        .options(selectinload(Product.images), selectinload(Product.category))
-        .filter(Product.id == product_id)
-        .first()
-    )
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    return serialize_product(product)
+    return serialize_product(get_product_or_404(db, product_id))
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
@@ -149,14 +173,7 @@ def upload_product_image(
     db: Session = Depends(get_db),
     _: AdminUser = Depends(get_current_admin),
 ) -> ProductImageResponse:
-    product = (
-        db.query(Product)
-        .options(selectinload(Product.images))
-        .filter(Product.id == product_id)
-        .first()
-    )
-    if product is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    product = get_product_or_404(db, product_id)
 
     storage_path, image_url = save_product_image(product_id, file)
 
@@ -177,3 +194,80 @@ def upload_product_image(
     db.commit()
     db.refresh(image)
     return ProductImageResponse.model_validate(image)
+
+
+@router.put("/{product_id}/images/sort", response_model=ProductResponse)
+def update_product_images_sort(
+    product_id: int,
+    payload: ProductImageSortRequest,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> ProductResponse:
+    product = get_product_or_404(db, product_id)
+    image_map = {image.id: image for image in product.images}
+
+    if len(payload.items) != len(image_map):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image sort payload does not match product images",
+        )
+
+    for item in payload.items:
+        image = image_map.get(item.id)
+        if image is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Image sort payload contains invalid image id",
+            )
+        image.sort_order = item.sort_order
+        db.add(image)
+
+    if not any(image.is_cover for image in image_map.values()):
+        assign_cover_from_images(list(image_map.values()))
+
+    db.commit()
+    return get_product(product_id=product_id, db=db)
+
+
+@router.post("/{product_id}/images/{image_id}/cover", response_model=ProductResponse)
+def set_product_image_cover(
+    product_id: int,
+    image_id: int,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> ProductResponse:
+    product = get_product_or_404(db, product_id)
+    target_image = get_product_image_or_404(product, image_id)
+
+    for image in product.images:
+        image.is_cover = image.id == target_image.id
+        db.add(image)
+
+    db.commit()
+    return get_product(product_id=product_id, db=db)
+
+
+@router.delete("/{product_id}/images/{image_id}", response_model=ProductResponse)
+def delete_product_image(
+    product_id: int,
+    image_id: int,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> ProductResponse:
+    product = get_product_or_404(db, product_id)
+    image = get_product_image_or_404(product, image_id)
+    was_cover = image.is_cover
+    storage_path = image.storage_path
+
+    db.delete(image)
+    db.flush()
+
+    remaining_images = [item for item in product.images if item.id != image_id]
+    if was_cover:
+        assign_cover_from_images(remaining_images)
+        for item in remaining_images:
+            db.add(item)
+
+    db.commit()
+    delete_local_file(storage_path)
+    return get_product(product_id=product_id, db=db)

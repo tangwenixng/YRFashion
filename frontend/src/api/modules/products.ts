@@ -32,6 +32,13 @@ export interface ProductPayload {
   sort_order?: number
 }
 
+export interface ProductImageSortPayload {
+  items: Array<{
+    id: number
+    sort_order: number
+  }>
+}
+
 export const fetchProducts = async () => {
   const { data } = await http.get<{ items: ProductItem[] }>('/admin/products')
   return data.items
@@ -70,5 +77,23 @@ export const uploadProductImage = async (
       'Content-Type': 'multipart/form-data',
     },
   })
+  return data
+}
+
+export const updateProductImageCover = async (productId: number, imageId: number) => {
+  const { data } = await http.post<ProductItem>(`/admin/products/${productId}/images/${imageId}/cover`)
+  return data
+}
+
+export const updateProductImagesSort = async (
+  productId: number,
+  payload: ProductImageSortPayload,
+) => {
+  const { data } = await http.put<ProductItem>(`/admin/products/${productId}/images/sort`, payload)
+  return data
+}
+
+export const deleteProductImage = async (productId: number, imageId: number) => {
+  const { data } = await http.delete<ProductItem>(`/admin/products/${productId}/images/${imageId}`)
   return data
 }
