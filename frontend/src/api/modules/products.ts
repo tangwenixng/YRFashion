@@ -54,6 +54,10 @@ export const updateProduct = async (id: number, payload: ProductPayload) => {
   return data
 }
 
+export const deleteProduct = async (id: number) => {
+  await http.delete(`/admin/products/${id}`)
+}
+
 export const updateProductSort = async (id: number, sortOrder: number) => {
   const { data } = await http.put<ProductItem>(`/admin/products/${id}/sort`, {
     sort_order: sortOrder,

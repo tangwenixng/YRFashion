@@ -173,3 +173,40 @@ def test_product_image_management() -> None:
     assert remaining_images[0]["id"] == first_image["id"]
     assert remaining_images[0]["is_cover"] is True
     assert not second_image_path.exists()
+
+
+def test_product_delete_removes_product_and_local_images() -> None:
+    product_name = f"Delete-{uuid4().hex[:8]}"
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        create_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": product_name,
+                "description": "delete me",
+                "tags": ["winter"],
+                "status": "published",
+                "sort_order": 0,
+            },
+        )
+        product_id = create_response.json()["id"]
+
+        upload_response = client.post(
+            f"/api/admin/products/{product_id}/images",
+            headers=headers,
+            files={"file": ("cover.png", BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+            data={"sort_order": "0", "is_cover": "true"},
+        )
+        image_path = settings.resolved_upload_dir / Path(
+            upload_response.json()["image_url"].removeprefix("/uploads/")
+        )
+        assert image_path.exists()
+
+        delete_response = client.delete(f"/api/admin/products/{product_id}", headers=headers)
+        list_response = client.get("/api/admin/products", headers=headers)
+
+    assert delete_response.status_code == 204
+    assert all(item["id"] != product_id for item in list_response.json()["items"])
+    assert not image_path.exists()

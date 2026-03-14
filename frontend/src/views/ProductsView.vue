@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Delete, EditPen, Picture, Plus, RefreshRight, Sort, Star } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { reactive, ref } from 'vue'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
   createProduct,
+  deleteProduct,
   deleteProductImage,
   fetchProducts,
   updateProduct,
@@ -35,6 +36,31 @@ const uploadingProduct = ref<ProductItem | null>(null)
 const uploadSortOrder = ref(0)
 const uploadAsCover = ref(true)
 const selectedFile = ref<File | null>(null)
+
+const statusLabelMap: Record<ProductItem['status'], string> = {
+  draft: '草稿',
+  published: '已发布',
+  archived: '已归档',
+}
+
+const tagLabelMap: Record<string, string> = {
+  featured: '精选',
+  spring: '春季',
+  daily: '日常',
+  winter: '冬季',
+  coat: '大衣',
+  dress: '连衣裙',
+  hidden: '隐藏',
+  draft: '草稿',
+  mvp: '演示',
+  bag: '包袋',
+  new: '新品',
+  commute: '通勤',
+  knitwear: '针织',
+  outerwear: '外套',
+  set: '套装',
+  skirt: '半裙',
+}
 
 const form = reactive<ProductFormState>({
   name: '',
@@ -136,6 +162,32 @@ const handleFileChange = (uploadFile: { raw?: File }) => {
   selectedFile.value = uploadFile.raw ?? null
 }
 
+const formatStatusLabel = (status: ProductItem['status']) => statusLabelMap[status] ?? status
+
+const formatTagLabel = (tag: string) => tagLabelMap[tag] ?? tag
+
+const confirmDeleteProduct = async (product: ProductItem) => {
+  try {
+    await ElMessageBox.confirm(`删除后将同时移除商品图片与关联留言：${product.name}`, '删除商品', {
+      type: 'warning',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+    })
+  } catch {
+    return
+  }
+
+  await deleteProduct(product.id)
+  ElMessage.success('商品已删除')
+
+  if (uploadingProduct.value?.id === product.id) {
+    uploadVisible.value = false
+    uploadingProduct.value = null
+  }
+
+  await loadProducts()
+}
+
 const submitUpload = async () => {
   if (!uploadingProduct.value || !selectedFile.value) {
     ElMessage.warning('请先选择图片文件')
@@ -222,14 +274,16 @@ void loadCategories()
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'warning' : 'info'">
-              {{ row.status }}
+              {{ formatStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="标签" min-width="180">
           <template #default="{ row }">
             <div class="tag-list">
-              <el-tag v-for="tag in row.tags" :key="tag" effect="plain">{{ tag }}</el-tag>
+              <el-tag v-for="tag in row.tags" :key="tag" effect="plain">
+                {{ formatTagLabel(tag) }}
+              </el-tag>
               <span v-if="row.tags.length === 0" class="muted">未设置</span>
             </div>
           </template>
@@ -273,6 +327,10 @@ void loadCategories()
               <el-button plain @click="openUpload(row)">
                 <el-icon><Picture /></el-icon>
                 上传图片
+              </el-button>
+              <el-button plain type="danger" @click="confirmDeleteProduct(row)">
+                <el-icon><Delete /></el-icon>
+                删除商品
               </el-button>
             </div>
           </template>

@@ -164,6 +164,24 @@ def update_product_sort(
     return get_product(product_id=product_id, db=db)
 
 
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> None:
+    product = get_product_or_404(db, product_id)
+    storage_paths = [
+        image.storage_path for image in product.images if image.storage_type == "local"
+    ]
+
+    db.delete(product)
+    db.commit()
+
+    for storage_path in storage_paths:
+        delete_local_file(storage_path)
+
+
 @router.post("/{product_id}/images", response_model=ProductImageResponse)
 def upload_product_image(
     product_id: int,

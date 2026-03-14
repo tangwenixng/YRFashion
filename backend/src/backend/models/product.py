@@ -49,7 +49,7 @@ class Product(Base):
         cascade="all, delete-orphan",
         order_by="ProductImage.sort_order",
     )
-    messages = relationship("Message", back_populates="product")
+    messages = relationship("Message", back_populates="product", cascade="all, delete-orphan")
 
 
 class ProductImage(Base):
