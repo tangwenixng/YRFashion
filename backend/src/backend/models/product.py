@@ -29,7 +29,7 @@ class Product(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200), index=True)
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"), nullable=True)
-    description: Mapped[str] = mapped_column(Text(), default="", server_default="")
+    description: Mapped[str] = mapped_column(Text(), default="")
     tags_json: Mapped[list[str]] = mapped_column(JSON, default=list)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, server_default="0", index=True)
     status: Mapped[str] = mapped_column(
