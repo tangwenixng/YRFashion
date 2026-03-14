@@ -19,6 +19,7 @@ def serialize_message(message: Message) -> MessageResponse:
         miniapp_user_id=message.miniapp_user_id,
         miniapp_user_openid=message.miniapp_user.openid,
         miniapp_user_nickname=message.miniapp_user.nickname,
+        miniapp_user_avatar_url=message.miniapp_user.avatar_url,
         content=message.content,
         status=message.status,
         reply_content=message.reply_content,

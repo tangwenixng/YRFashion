@@ -24,6 +24,20 @@ def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
     return relative_path, image_url
 
 
+def save_miniapp_avatar(user_id: int, upload: UploadFile) -> tuple[str, str]:
+    content = _read_and_validate_upload(upload)
+    extension = Path(upload.filename or "avatar.bin").suffix.lower() or ".bin"
+    relative_path = _build_miniapp_avatar_key(user_id, extension)
+    content_type = upload.content_type or "application/octet-stream"
+
+    if settings.uses_cloud_storage:
+        image_url = _save_cloud_file(relative_path, content, content_type)
+    else:
+        image_url = _save_local_file(relative_path, content)
+
+    return relative_path, image_url
+
+
 def delete_product_image_file(storage_path: str) -> None:
     if not storage_path:
         return
@@ -75,6 +89,17 @@ def _read_and_validate_upload(upload: UploadFile) -> bytes:
 
 def _build_product_image_key(product_id: int, extension: str) -> str:
     relative_dir = PurePosixPath("products") / str(product_id)
+    filename = f"{uuid4().hex}{extension}"
+    relative_path = relative_dir / filename
+
+    if settings.uses_cloud_storage and settings.resolved_storage_path_prefix:
+        return str(PurePosixPath(settings.resolved_storage_path_prefix) / relative_path)
+
+    return relative_path.as_posix()
+
+
+def _build_miniapp_avatar_key(user_id: int, extension: str) -> str:
+    relative_dir = PurePosixPath("miniapp-users") / str(user_id) / "avatars"
     filename = f"{uuid4().hex}{extension}"
     relative_path = relative_dir / filename
 

@@ -1,4 +1,20 @@
+const { getMiniappUser, updateMiniappProfile } = require("../../utils/auth")
 const { request } = require("../../utils/http")
+const { normalizeMediaUrl } = require("../../utils/media")
+
+function buildProfileState(user) {
+  const nickname = (user && user.nickname) || ""
+  const avatarUrl = (user && user.avatar_url) || ""
+  const displayAvatarUrl = avatarUrl ? normalizeMediaUrl(avatarUrl) : ""
+
+  return {
+    profileNickname: nickname,
+    profileAvatarUrl: displayAvatarUrl,
+    savedProfileNickname: nickname,
+    savedProfileAvatarUrl: displayAvatarUrl,
+    needsProfileCompletion: !nickname || !avatarUrl,
+  }
+}
 
 Page({
   data: {
@@ -7,16 +23,78 @@ Page({
     content: "",
     maxLength: 300,
     submitting: false,
+    profileNickname: "",
+    profileAvatarUrl: "",
+    savedProfileNickname: "",
+    savedProfileAvatarUrl: "",
+    needsProfileCompletion: true,
   },
 
   onLoad(query) {
     const productId = Number(query.productId || 0)
     const productName = query.productName ? decodeURIComponent(query.productName) : "当前商品"
-    this.setData({ productId, productName })
+    this.setData(
+      Object.assign(
+        {
+          productId,
+          productName,
+        },
+        buildProfileState(getMiniappUser()),
+      ),
+    )
   },
 
   handleInput(event) {
     this.setData({ content: event.detail.value })
+  },
+
+  handleNicknameInput(event) {
+    this.setData({ profileNickname: event.detail.value })
+  },
+
+  handleChooseAvatar(event) {
+    const avatarUrl = event.detail.avatarUrl || ""
+    this.setData({
+      profileAvatarUrl: avatarUrl,
+      needsProfileCompletion: !this.data.profileNickname.trim() || !avatarUrl,
+    })
+  },
+
+  async ensureProfileReady() {
+    const nickname = this.data.profileNickname.trim()
+    const avatarUrl = this.data.profileAvatarUrl
+
+    if (!nickname) {
+      wx.showToast({ title: "请先填写昵称", icon: "none" })
+      return false
+    }
+
+    if (!avatarUrl) {
+      wx.showToast({ title: "请先选择头像", icon: "none" })
+      return false
+    }
+
+    const hasChanges =
+      nickname !== this.data.savedProfileNickname || avatarUrl !== this.data.savedProfileAvatarUrl
+
+    if (!hasChanges && !this.data.needsProfileCompletion) {
+      return true
+    }
+
+    const profile = await updateMiniappProfile({
+      nickname,
+      avatar_url: avatarUrl,
+    })
+    const normalizedAvatarUrl = profile.avatar_url ? normalizeMediaUrl(profile.avatar_url) : avatarUrl
+
+    this.setData({
+      profileNickname: profile.nickname || nickname,
+      profileAvatarUrl: normalizedAvatarUrl,
+      savedProfileNickname: profile.nickname || nickname,
+      savedProfileAvatarUrl: normalizedAvatarUrl,
+      needsProfileCompletion: false,
+    })
+    return true
   },
 
   async submitMessage() {
@@ -36,6 +114,12 @@ Page({
 
     this.setData({ submitting: true })
     try {
+      const ready = await this.ensureProfileReady()
+      if (!ready) {
+        this.setData({ submitting: false })
+        return
+      }
+
       await request({
         url: `/miniapp/products/${this.data.productId}/messages`,
         method: "POST",

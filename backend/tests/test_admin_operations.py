@@ -83,6 +83,7 @@ def test_message_workflow_and_dashboard() -> None:
     assert reply_response.status_code == 200
     assert reply_response.json()["status"] == "replied"
     assert reply_response.json()["reply_content"] == "Yes, available in store."
+    assert reply_response.json()["miniapp_user_avatar_url"] is None
 
 
 def test_user_list_and_settings() -> None:

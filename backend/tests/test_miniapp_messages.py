@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from backend.db.session import SessionLocal
 from backend.main import app
-from backend.models import Message, Product
+from backend.models import Message, MiniappUser, Product
 
 
 def seed_product() -> int:
@@ -120,3 +120,33 @@ def test_message_history_returns_current_user_messages_only() -> None:
     with SessionLocal() as db:
         messages = db.query(Message).filter(Message.miniapp_user_id == miniapp_user_id).all()
         assert len(messages) == 2
+
+
+def test_message_submit_uses_updated_miniapp_profile() -> None:
+    product_id = seed_product()
+
+    with TestClient(app) as client:
+        headers, miniapp_user_id = get_miniapp_headers(client)
+        profile_response = client.put(
+            "/api/miniapp/auth/profile",
+            headers=headers,
+            json={
+                "nickname": "头像用户",
+                "avatar_url": "https://cdn.example.com/avatars/message-user.jpg",
+            },
+        )
+        assert profile_response.status_code == 200
+
+        response = client.post(
+            f"/api/miniapp/products/{product_id}/messages",
+            headers=headers,
+            json={"content": "帮我看看这款有现货吗？"},
+        )
+
+    assert response.status_code == 201
+
+    with SessionLocal() as db:
+        user = db.get(MiniappUser, miniapp_user_id)
+        assert user is not None
+        assert user.nickname == "头像用户"
+        assert user.avatar_url == "https://cdn.example.com/avatars/message-user.jpg"

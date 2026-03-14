@@ -6,6 +6,37 @@
   </view>
 
   <view class="card">
+    <view class="profile-header">
+      <view>
+        <text class="profile-title">留言身份</text>
+        <text class="profile-hint">
+          留言前请补充昵称和头像，店主后台会同时看到你的 openid、昵称和头像。
+        </text>
+      </view>
+      <text wx:if="{{needsProfileCompletion}}" class="profile-badge">首次留言需补充</text>
+    </view>
+
+    <view class="profile-row">
+      <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="handleChooseAvatar">
+        <image wx:if="{{profileAvatarUrl}}" class="avatar-image" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+        <view wx:else class="avatar-placeholder">选头像</view>
+      </button>
+
+      <view class="nickname-block">
+        <text class="nickname-label">昵称</text>
+        <input
+          class="nickname-input"
+          type="nickname"
+          maxlength="100"
+          placeholder="请输入昵称"
+          value="{{profileNickname}}"
+          bindinput="handleNicknameInput"
+        />
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
     <textarea
       class="textarea"
       placeholder="请输入你的咨询内容，例如尺码、颜色、库存或试穿需求。"

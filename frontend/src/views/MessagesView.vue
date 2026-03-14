@@ -100,12 +100,21 @@ void loadMessages()
         <article v-for="message in messages" :key="message.id" class="message-item">
           <div class="message-main">
             <div class="message-head">
-              <div>
+              <div class="message-origin">
+                <div v-if="message.miniapp_user_avatar_url" class="message-avatar-frame">
+                  <img :src="message.miniapp_user_avatar_url" class="message-avatar" alt="" />
+                </div>
+                <div v-else class="message-avatar-fallback">
+                  {{ (message.miniapp_user_nickname || message.miniapp_user_openid).slice(0, 1).toUpperCase() }}
+                </div>
+
+                <div>
                 <strong>{{ message.product_name }}</strong>
                 <p>
                   来自
                   {{ message.miniapp_user_nickname || message.miniapp_user_openid }}
                 </p>
+                </div>
               </div>
               <el-tag :type="message.status === 'unread' ? 'danger' : message.status === 'replied' ? 'success' : 'warning'">
                 {{ message.status }}
@@ -215,6 +224,43 @@ void loadMessages()
 .message-head p {
   margin: 6px 0 0;
   color: #866f58;
+}
+
+.message-origin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.message-avatar-frame,
+.message-avatar-fallback {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.message-avatar-frame {
+  border: 1px solid rgba(126, 97, 69, 0.16);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.message-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.message-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dec0a4 0%, #b48b63 100%);
+  color: #fffaf4;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .message-bubble {

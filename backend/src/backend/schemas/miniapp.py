@@ -9,6 +9,8 @@ class MiniappLoginRequest(BaseModel):
 
 class MiniappProfileResponse(BaseModel):
     id: int
+    nickname: str | None
+    avatar_url: str | None
     created_at: datetime
     last_visit_at: datetime
 
@@ -17,6 +19,23 @@ class MiniappLoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: MiniappProfileResponse
+
+
+class MiniappProfileUpdateRequest(BaseModel):
+    nickname: str = Field(min_length=1, max_length=100)
+    avatar_url: str = Field(min_length=1, max_length=500)
+
+    @field_validator("nickname", "avatar_url")
+    @classmethod
+    def validate_required_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Field cannot be empty")
+        return normalized
+
+
+class MiniappAvatarUploadResponse(BaseModel):
+    avatar_url: str
 
 
 class MiniappProductCardResponse(BaseModel):

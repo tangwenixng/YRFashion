@@ -18,6 +18,7 @@ class MessageResponse(BaseModel):
     miniapp_user_id: int
     miniapp_user_openid: str
     miniapp_user_nickname: str | None
+    miniapp_user_avatar_url: str | None
     content: str
     status: str
     reply_content: str | None
