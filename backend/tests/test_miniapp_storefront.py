@@ -79,7 +79,7 @@ def test_home_returns_storefront_content() -> None:
     assert payload["homepage_banner_urls"] == ["/uploads/banner-a.jpg", "/uploads/banner-b.jpg"]
     assert featured_ids[0] == featured_id
     assert another_id in featured_ids
-    assert featured_items[0]["cover_image_url"] == "/uploads/products/featured-cover.png"
+    assert featured_items[0]["cover_image_url"] == f"/uploads/products/{featured_id}/cover.png"
 
 
 def test_contact_returns_shop_contact_data() -> None:

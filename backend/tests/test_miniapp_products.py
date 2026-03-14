@@ -94,9 +94,9 @@ def test_product_detail_returns_sorted_images() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["id"] == first_id
-    assert payload["cover_image_url"] == "/uploads/products/cover-a.png"
+    assert payload["cover_image_url"] == f"/uploads/products/{first_id}/cover-a.png"
     assert [item["image_url"] for item in payload["images"]] == [
-        "/uploads/products/cover-a.png",
-        "/uploads/products/detail-b.png",
+        f"/uploads/products/{first_id}/cover-a.png",
+        f"/uploads/products/{first_id}/detail-b.png",
     ]
     assert hidden_response.status_code == 404

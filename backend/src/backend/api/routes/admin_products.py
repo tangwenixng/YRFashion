@@ -16,9 +16,24 @@ from backend.schemas.product import (
     ProductSortRequest,
     ProductUpdateRequest,
 )
-from backend.services.storage import delete_product_image_file, save_product_image
+from backend.services.storage import (
+    delete_product_image_file,
+    resolve_public_file_url,
+    save_product_image,
+)
 
 router = APIRouter(prefix="/admin/products")
+
+
+def serialize_product_image(image: ProductImage) -> ProductImageResponse:
+    return ProductImageResponse(
+        id=image.id,
+        image_url=resolve_public_file_url(image.storage_type, image.storage_path, image.image_url),
+        original_name=image.original_name,
+        sort_order=image.sort_order,
+        is_cover=image.is_cover,
+        created_at=image.created_at,
+    )
 
 
 def serialize_product(product: Product) -> ProductResponse:
@@ -34,7 +49,7 @@ def serialize_product(product: Product) -> ProductResponse:
         created_at=product.created_at,
         updated_at=product.updated_at,
         images=[
-            ProductImageResponse.model_validate(image)
+            serialize_product_image(image)
             for image in sorted(product.images, key=lambda item: (item.sort_order, item.id))
         ],
     )
@@ -210,7 +225,7 @@ def upload_product_image(
     db.add(image)
     db.commit()
     db.refresh(image)
-    return ProductImageResponse.model_validate(image)
+    return serialize_product_image(image)
 
 
 @router.put("/{product_id}/images/sort", response_model=ProductResponse)

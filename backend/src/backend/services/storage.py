@@ -36,6 +36,26 @@ def delete_product_image_file(storage_path: str) -> None:
     absolute_path.unlink(missing_ok=True)
 
 
+def resolve_public_file_url(
+    storage_type: str | None,
+    storage_path: str | None,
+    fallback_url: str | None = None,
+) -> str:
+    normalized_storage_type = (storage_type or "").strip().lower()
+    normalized_storage_path = (storage_path or "").strip()
+
+    if normalized_storage_type == "cloudbase" and normalized_storage_path:
+        return _build_cloud_public_url(normalized_storage_path)
+
+    if normalized_storage_type == "local" and normalized_storage_path:
+        return _build_local_public_url(normalized_storage_path)
+
+    if normalized_storage_path.startswith("/uploads/"):
+        return normalized_storage_path
+
+    return (fallback_url or "").strip()
+
+
 def _read_and_validate_upload(upload: UploadFile) -> bytes:
     if upload.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
@@ -74,6 +94,15 @@ def _save_local_file(relative_path: str, content: bytes) -> str:
     absolute_path.write_bytes(content)
 
     return f"/uploads/{local_relative_path.as_posix()}"
+
+
+def _build_local_public_url(relative_path: str) -> str:
+    normalized_path = relative_path.strip()
+    if normalized_path.startswith("/uploads/"):
+        return normalized_path
+    if normalized_path.startswith("uploads/"):
+        return f"/{normalized_path}"
+    return f"/uploads/{normalized_path.lstrip('/')}"
 
 
 def _save_cloud_file(relative_path: str, content: bytes, content_type: str) -> str:
