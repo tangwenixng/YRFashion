@@ -1,5 +1,5 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
 
 from backend.api.deps import get_current_miniapp_user
 from backend.db.session import get_db
@@ -11,11 +11,58 @@ from backend.schemas.miniapp import (
     MiniappMessageHistoryResponse,
 )
 
-router = APIRouter(prefix="/miniapp/products")
+router = APIRouter()
 
 
-@router.get("/{product_id}/messages", response_model=MiniappMessageHistoryResponse)
-def list_messages(
+def serialize_message_history_item(message: Message) -> MiniappMessageHistoryItemResponse:
+    return MiniappMessageHistoryItemResponse(
+        id=message.id,
+        product_id=message.product_id,
+        product_name=message.product.name,
+        content=message.content,
+        status=message.status,
+        reply_content=message.reply_content,
+        reply_at=message.reply_at,
+        created_at=message.created_at,
+    )
+
+
+@router.get("/miniapp/messages", response_model=MiniappMessageHistoryResponse)
+def list_current_user_messages(
+    product_id: int | None = Query(default=None, ge=1),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=20),
+    db: Session = Depends(get_db),
+    current_user: MiniappUser = Depends(get_current_miniapp_user),
+) -> MiniappMessageHistoryResponse:
+    query = (
+        db.query(Message)
+        .options(joinedload(Message.product))
+        .filter(Message.miniapp_user_id == current_user.id)
+    )
+    if product_id is not None:
+        query = query.filter(Message.product_id == product_id)
+
+    total = query.count()
+    messages = (
+        query.order_by(Message.created_at.desc(), Message.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return MiniappMessageHistoryResponse(
+        items=[serialize_message_history_item(message) for message in messages],
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
+
+
+product_router = APIRouter(prefix="/miniapp/products")
+
+
+@product_router.get("/{product_id}/messages", response_model=MiniappMessageHistoryResponse)
+def list_product_messages(
     product_id: int,
     db: Session = Depends(get_db),
     current_user: MiniappUser = Depends(get_current_miniapp_user),
@@ -30,28 +77,21 @@ def list_messages(
 
     messages = (
         db.query(Message)
+        .options(joinedload(Message.product))
         .filter(Message.product_id == product_id, Message.miniapp_user_id == current_user.id)
         .order_by(Message.created_at.desc(), Message.id.desc())
         .all()
     )
 
     return MiniappMessageHistoryResponse(
-        items=[
-            MiniappMessageHistoryItemResponse(
-                id=message.id,
-                product_id=message.product_id,
-                content=message.content,
-                status=message.status,
-                reply_content=message.reply_content,
-                reply_at=message.reply_at,
-                created_at=message.created_at,
-            )
-            for message in messages
-        ]
+        items=[serialize_message_history_item(message) for message in messages],
+        page=1,
+        page_size=len(messages),
+        total=len(messages),
     )
 
 
-@router.post("/{product_id}/messages", response_model=MiniappMessageCreateResponse, status_code=201)
+@product_router.post("/{product_id}/messages", response_model=MiniappMessageCreateResponse, status_code=201)
 def create_message(
     product_id: int,
     payload: MiniappMessageCreateRequest,

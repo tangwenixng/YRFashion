@@ -8,18 +8,25 @@ from backend.models import Message, MiniappUser, Product
 
 
 def seed_product() -> int:
+    return seed_products(1)[0]
+
+
+def seed_products(count: int = 2) -> list[int]:
+    product_ids: list[int] = []
     with SessionLocal() as db:
-        product = Product(
-            name=f"Bag-{uuid4().hex[:8]}",
-            description="product for message submit",
-            tags_json=["bag"],
-            status="published",
-            sort_order=0,
-        )
-        db.add(product)
+        for _ in range(count):
+            product = Product(
+                name=f"Bag-{uuid4().hex[:8]}",
+                description="product for message submit",
+                tags_json=["bag"],
+                status="published",
+                sort_order=0,
+            )
+            db.add(product)
+            db.flush()
+            product_ids.append(product.id)
         db.commit()
-        db.refresh(product)
-        return product.id
+        return product_ids
 
 
 def get_miniapp_headers(client: TestClient) -> tuple[dict[str, str], int]:
@@ -114,6 +121,7 @@ def test_message_history_returns_current_user_messages_only() -> None:
         "Need sizing details.",
     ]
     assert payload["items"][1]["status"] == "replied"
+    assert payload["items"][1]["product_name"]
     assert payload["items"][1]["reply_content"] == "建议搭配短靴和针织上衣。"
     assert all(item["product_id"] == product_id for item in payload["items"])
 
@@ -150,3 +158,40 @@ def test_message_submit_uses_updated_miniapp_profile() -> None:
         assert user is not None
         assert user.nickname == "头像用户"
         assert user.avatar_url == "https://cdn.example.com/avatars/message-user.jpg"
+
+
+def test_message_history_endpoint_supports_all_messages_and_product_filter() -> None:
+    first_product_id, second_product_id = seed_products(2)
+
+    with TestClient(app) as client:
+        headers, _ = get_miniapp_headers(client)
+
+        first_response = client.post(
+            f"/api/miniapp/products/{first_product_id}/messages",
+            headers=headers,
+            json={"content": "First product question."},
+        )
+        second_response = client.post(
+            f"/api/miniapp/products/{second_product_id}/messages",
+            headers=headers,
+            json={"content": "Second product question."},
+        )
+        assert first_response.status_code == 201
+        assert second_response.status_code == 201
+
+        all_response = client.get("/api/miniapp/messages?page=1&page_size=10", headers=headers)
+        filtered_response = client.get(
+            f"/api/miniapp/messages?product_id={first_product_id}&page=1&page_size=10",
+            headers=headers,
+        )
+
+    assert all_response.status_code == 200
+    all_payload = all_response.json()
+    assert all_payload["total"] == 2
+    assert {item["product_id"] for item in all_payload["items"]} == {first_product_id, second_product_id}
+    assert all(item["product_name"] for item in all_payload["items"])
+
+    assert filtered_response.status_code == 200
+    filtered_payload = filtered_response.json()
+    assert filtered_payload["total"] == 1
+    assert [item["product_id"] for item in filtered_payload["items"]] == [first_product_id]

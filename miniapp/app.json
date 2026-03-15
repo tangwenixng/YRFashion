@@ -4,6 +4,7 @@
     "pages/products/index",
     "pages/product-detail/index",
     "pages/message/index",
+    "pages/message-history/index",
     "pages/contact/index"
   ],
   "window": {

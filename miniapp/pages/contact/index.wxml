@@ -6,50 +6,58 @@
 
   <block wx:elif="{{error}}">
     <view class="card error-card">
-      <text class="shop-name">Contact</text>
+      <text class="shop-name">联系方式</text>
       <text class="field-value">{{error}}</text>
-      <button class="action-button secondary" bindtap="loadContact">Reload</button>
+      <button class="action-button secondary" bindtap="loadContact">重新加载</button>
     </view>
   </block>
 
   <block wx:elif="{{contact}}">
     <view class="card intro-card">
-      <text class="label">Store</text>
+      <text class="label">门店联系</text>
       <text class="shop-name">{{contact.shop_name || '伊人Fashion 穿搭馆'}}</text>
-      <text class="field-value">Reach the owner by phone or WeChat.</text>
+      <text class="field-value">可通过电话或微信联系店主，也可以先查看自己的咨询记录。</text>
     </view>
 
     <view class="card">
       <view class="field-row">
-        <text class="field-label">Phone</text>
-        <text class="field-value">{{contact.contact_phone || 'Not set'}}</text>
+        <text class="field-label">联系电话</text>
+        <text class="field-value">{{contact.contact_phone || '暂未设置'}}</text>
       </view>
-      <button class="action-button" bindtap="handleCall">Call</button>
+      <button class="action-button" bindtap="handleCall">拨打电话</button>
     </view>
 
     <view class="card">
       <view class="field-row">
-        <text class="field-label">WeChat</text>
-        <text class="field-value">{{contact.wechat_id || 'Not set'}}</text>
+        <text class="field-label">微信号</text>
+        <text class="field-value">{{contact.wechat_id || '暂未设置'}}</text>
       </view>
-      <button class="action-button secondary" bindtap="handleCopyWechat">Copy WeChat ID</button>
+      <button class="action-button secondary" bindtap="handleCopyWechat">复制微信号</button>
     </view>
 
     <view class="card info-grid">
       <view>
-        <text class="field-label">Address</text>
-        <text class="field-value">{{contact.address || 'Not set'}}</text>
+        <text class="field-label">门店地址</text>
+        <text class="field-value">{{contact.address || '暂未设置'}}</text>
       </view>
       <view>
-        <text class="field-label">Business Hours</text>
-        <text class="field-value">{{contact.business_hours || 'Not set'}}</text>
+        <text class="field-label">营业时间</text>
+        <text class="field-value">{{contact.business_hours || '暂未设置'}}</text>
       </view>
     </view>
 
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">咨询记录</text>
+        <text class="field-value">如果你已经提交过咨询，可以在这里继续查看店主回复。</text>
+      </view>
+      <button class="action-button secondary" bindtap="goToMessageHistory">查看咨询记录</button>
+    </view>
+
     <view class="card admin-entry-card">
-      <text class="field-label">Admin Entry</text>
-      <text class="field-value">Store staff can open the mobile admin from here.</text>
-      <button class="action-button secondary admin-entry-button" bindtap="goToAdminLogin">Open Admin</button>
+      <text class="field-label">店员入口</text>
+      <text class="field-value">门店工作人员可从这里进入移动管理端。</text>
+      <button class="action-button secondary admin-entry-button" bindtap="goToAdminLogin">打开管理端</button>
     </view>
   </block>
 </view>

@@ -12,6 +12,7 @@ from backend.api.routes.admin_users import router as admin_users_router
 from backend.api.routes.health import router as health_router
 from backend.api.routes.miniapp_auth import router as miniapp_auth_router
 from backend.api.routes.miniapp_categories import router as miniapp_categories_router
+from backend.api.routes.miniapp_messages import product_router as miniapp_product_messages_router
 from backend.api.routes.miniapp_messages import router as miniapp_messages_router
 from backend.api.routes.miniapp_products import router as miniapp_products_router
 from backend.api.routes.miniapp_storefront import router as miniapp_storefront_router
@@ -30,5 +31,6 @@ api_router.include_router(health_router, tags=["health"])
 api_router.include_router(miniapp_auth_router, tags=["miniapp-auth"])
 api_router.include_router(miniapp_categories_router, tags=["miniapp-categories"])
 api_router.include_router(miniapp_messages_router, tags=["miniapp-messages"])
+api_router.include_router(miniapp_product_messages_router, tags=["miniapp-product-messages"])
 api_router.include_router(miniapp_products_router, tags=["miniapp-products"])
 api_router.include_router(miniapp_storefront_router, tags=["miniapp-storefront"])

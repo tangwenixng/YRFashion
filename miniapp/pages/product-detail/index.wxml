@@ -34,6 +34,7 @@
 
     <view class="action-bar">
       <button class="primary-button" bindtap="handleConsult">留言咨询</button>
+      <button class="secondary-button" bindtap="goToMessageHistory">查看咨询记录</button>
       <button class="secondary-button" bindtap="goToContact">联系店主</button>
     </view>
 

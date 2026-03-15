@@ -17,15 +17,15 @@ Page({
       const contact = await request({ url: "/miniapp/shop/contact" })
       this.setData({ contact, loading: false, error: "" })
     } catch (_error) {
-      this.setData({ loading: false, error: "Failed to load contact info." })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      this.setData({ loading: false, error: "联系方式加载失败，请稍后重试。" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 
   handleCall() {
     const phone = this.data.contact && this.data.contact.contact_phone
     if (!phone) {
-      wx.showToast({ title: "No phone number", icon: "none" })
+      wx.showToast({ title: "暂未设置联系电话", icon: "none" })
       return
     }
     wx.makePhoneCall({ phoneNumber: phone })
@@ -34,10 +34,16 @@ Page({
   handleCopyWechat() {
     const wechatId = this.data.contact && this.data.contact.wechat_id
     if (!wechatId) {
-      wx.showToast({ title: "No WeChat ID", icon: "none" })
+      wx.showToast({ title: "暂未设置微信号", icon: "none" })
       return
     }
     wx.setClipboardData({ data: wechatId })
+  },
+
+  goToMessageHistory() {
+    wx.navigateTo({
+      url: "/pages/message-history/index",
+    })
   },
 
   goToAdminLogin() {

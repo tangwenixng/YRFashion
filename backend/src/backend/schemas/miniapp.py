@@ -105,6 +105,7 @@ class MiniappMessageCreateResponse(BaseModel):
 class MiniappMessageHistoryItemResponse(BaseModel):
     id: int
     product_id: int
+    product_name: str
     content: str
     status: str
     reply_content: str | None
@@ -114,6 +115,9 @@ class MiniappMessageHistoryItemResponse(BaseModel):
 
 class MiniappMessageHistoryResponse(BaseModel):
     items: list[MiniappMessageHistoryItemResponse]
+    page: int = 1
+    page_size: int = 0
+    total: int = 0
 
 
 class MiniappHomeResponse(BaseModel):

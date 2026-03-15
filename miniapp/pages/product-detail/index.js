@@ -214,6 +214,18 @@ Page({
     wx.navigateTo({ url: "/pages/contact/index" })
   },
 
+  goToMessageHistory() {
+    const product = this.data.product
+    if (!product) {
+      return
+    }
+
+    const productName = encodeURIComponent(product.name)
+    wx.navigateTo({
+      url: `/pages/message-history/index?productId=${product.id}&productName=${productName}`,
+    })
+  },
+
   goToRelatedDetail(event) {
     const productId = Number(event.currentTarget.dataset.productId || 0)
     if (!productId) {

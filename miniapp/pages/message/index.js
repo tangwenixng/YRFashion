@@ -129,7 +129,10 @@ Page({
       wx.showToast({ title: "留言已提交", icon: "success" })
       this.setData({ content: "", submitting: false })
       setTimeout(() => {
-        wx.navigateBack()
+        const productName = encodeURIComponent(this.data.productName || "")
+        wx.redirectTo({
+          url: `/pages/message-history/index?productId=${this.data.productId}&productName=${productName}`,
+        })
       }, 600)
     } catch (error) {
       this.setData({ submitting: false })
