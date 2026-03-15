@@ -15,7 +15,7 @@
   <block wx:elif="{{contact}}">
     <view class="card intro-card">
       <text class="label">Store</text>
-      <text class="shop-name">{{contact.shop_name || 'YRFasion'}}</text>
+      <text class="shop-name">{{contact.shop_name || '伊人Fashion 穿搭馆'}}</text>
       <text class="field-value">Reach the owner by phone or WeChat.</text>
     </view>
 
