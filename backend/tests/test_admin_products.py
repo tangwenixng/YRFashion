@@ -276,3 +276,47 @@ def test_product_list_supports_filters_and_pagination() -> None:
     assert paged_payload["page"] == 1
     assert paged_payload["page_size"] == 1
     assert len(paged_payload["items"]) == 1
+
+
+def test_product_batch_status_update() -> None:
+    unique = uuid4().hex[:8]
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        first_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": f"Batch-Coat-{unique}",
+                "description": "batch publish target",
+                "tags": ["outerwear"],
+                "status": "draft",
+                "sort_order": 1,
+            },
+        )
+        second_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": f"Batch-Dress-{unique}",
+                "description": "batch publish target",
+                "tags": ["dress"],
+                "status": "draft",
+                "sort_order": 2,
+            },
+        )
+        assert first_response.status_code == 201
+        assert second_response.status_code == 201
+        first_id = first_response.json()["id"]
+        second_id = second_response.json()["id"]
+
+        batch_response = client.post(
+            "/api/admin/products/batch-status",
+            headers=headers,
+            json={"ids": [first_id, second_id], "status": "published"},
+        )
+
+    assert batch_response.status_code == 200
+    payload = batch_response.json()
+    assert payload["total"] == 2
+    assert all(item["status"] == "published" for item in payload["items"])

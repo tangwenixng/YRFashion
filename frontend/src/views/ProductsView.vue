@@ -5,6 +5,7 @@ import { reactive, ref } from 'vue'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
+  batchUpdateProductStatus,
   createProduct,
   deleteProduct,
   deleteProductImage,
@@ -36,6 +37,7 @@ const uploadingProduct = ref<ProductItem | null>(null)
 const uploadSortOrder = ref(0)
 const uploadAsCover = ref(true)
 const selectedFile = ref<File | null>(null)
+const selectedProductIds = ref<number[]>([])
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -137,6 +139,10 @@ const handlePageSizeChange = async (nextPageSize: number) => {
   await loadProducts()
 }
 
+const handleSelectionChange = (selection: ProductItem[]) => {
+  selectedProductIds.value = selection.map((item) => item.id)
+}
+
 const openCreate = () => {
   resetForm()
   editorVisible.value = true
@@ -187,6 +193,20 @@ const saveProduct = async () => {
 const saveSort = async (product: ProductItem) => {
   await updateProductSort(product.id, product.sort_order)
   ElMessage.success('排序已更新')
+  await loadProducts()
+}
+
+const batchSetStatus = async (status: 'published' | 'archived') => {
+  if (!selectedProductIds.value.length) {
+    ElMessage.warning('请先选择商品')
+    return
+  }
+
+  await batchUpdateProductStatus({
+    ids: selectedProductIds.value,
+    status,
+  })
+  ElMessage.success(status === 'published' ? '已批量发布商品' : '已批量归档商品')
   await loadProducts()
 }
 
@@ -299,6 +319,12 @@ void loadCategories()
           <el-icon><RefreshRight /></el-icon>
           刷新
         </el-button>
+        <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('published')">
+          批量发布
+        </el-button>
+        <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('archived')">
+          批量归档
+        </el-button>
         <el-button type="primary" @click="openCreate">
           <el-icon><Plus /></el-icon>
           新增商品
@@ -330,7 +356,8 @@ void loadCategories()
     </section>
 
     <section class="content-card table-card">
-      <el-table :data="products" v-loading="loading">
+      <el-table :data="products" v-loading="loading" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" />
         <el-table-column prop="name" label="商品名称" min-width="180" />
         <el-table-column label="分类" min-width="140">
           <template #default="{ row }">

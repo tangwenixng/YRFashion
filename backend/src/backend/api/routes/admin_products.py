@@ -9,6 +9,7 @@ from backend.core.config import settings
 from backend.db.session import get_db
 from backend.models import AdminUser, Category, Product, ProductImage
 from backend.schemas.product import (
+    ProductBatchStatusRequest,
     ProductCreateRequest,
     ProductImageResponse,
     ProductImageSortRequest,
@@ -156,6 +157,37 @@ def create_product(
     db.commit()
     db.refresh(product)
     return serialize_product(product)
+
+
+@router.post("/batch-status", response_model=ProductListResponse)
+def batch_update_product_status(
+    payload: ProductBatchStatusRequest,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> ProductListResponse:
+    product_ids = [product_id for product_id in payload.ids if product_id > 0]
+    if not product_ids:
+        return ProductListResponse(items=[], page=1, page_size=0, total=0)
+
+    products = db.query(Product).filter(Product.id.in_(product_ids)).all()
+    for product in products:
+        product.status = payload.status
+        db.add(product)
+
+    db.commit()
+    refreshed_products = (
+        db.query(Product)
+        .options(selectinload(Product.images), selectinload(Product.category))
+        .filter(Product.id.in_(product_ids))
+        .order_by(Product.sort_order.asc(), Product.id.desc())
+        .all()
+    )
+    return ProductListResponse(
+        items=[serialize_product(product) for product in refreshed_products],
+        page=1,
+        page_size=len(refreshed_products),
+        total=len(refreshed_products),
+    )
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

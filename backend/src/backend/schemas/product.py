@@ -26,6 +26,11 @@ class ProductSortRequest(BaseModel):
     sort_order: int
 
 
+class ProductBatchStatusRequest(BaseModel):
+    ids: list[int] = Field(default_factory=list)
+    status: ProductStatus
+
+
 class ProductImageSortItem(BaseModel):
     id: int
     sort_order: int

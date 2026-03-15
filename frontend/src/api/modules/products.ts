@@ -39,6 +39,11 @@ export interface ProductImageSortPayload {
   }>
 }
 
+export interface ProductBatchStatusPayload {
+  ids: number[]
+  status: 'draft' | 'published' | 'archived'
+}
+
 export interface ProductListParams {
   page?: number
   page_size?: number
@@ -79,6 +84,11 @@ export const updateProduct = async (id: number, payload: ProductPayload) => {
 
 export const deleteProduct = async (id: number) => {
   await http.delete(`/admin/products/${id}`)
+}
+
+export const batchUpdateProductStatus = async (payload: ProductBatchStatusPayload) => {
+  const { data } = await http.post<ProductListResult>('/admin/products/batch-status', payload)
+  return data
 }
 
 export const updateProductSort = async (id: number, sortOrder: number) => {
