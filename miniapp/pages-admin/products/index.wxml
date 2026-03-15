@@ -36,7 +36,7 @@
   <block wx:elif="{{error && !items.length}}">
     <view class="card empty-card">
       <text class="empty-title">{{error}}</text>
-      <button class="ghost-button" bindtap="loadProducts">重新加载</button>
+      <view class="ghost-button action-button" bindtap="loadProducts">重新加载</view>
     </view>
   </block>
 
@@ -69,15 +69,15 @@
                 data-product-id="{{item.id}}"
                 bindinput="handleSortInput"
               />
-              <button class="mini-button" data-product-id="{{item.id}}" catchtap="saveSort">保存排序</button>
+              <view class="mini-button action-button" data-product-id="{{item.id}}" catchtap="saveSort">保存排序</view>
             </view>
 
             <view class="action-row">
-              <button class="mini-button" data-product-id="{{item.id}}" catchtap="openEdit">编辑</button>
-              <button class="mini-button secondary" data-product-id="{{item.id}}" catchtap="openImages">图片</button>
-              <button class="mini-button ghost" data-product-id="{{item.id}}" catchtap="toggleStatus">
+              <view class="mini-button action-button" data-product-id="{{item.id}}" catchtap="openEdit">编辑</view>
+              <view class="mini-button secondary action-button" data-product-id="{{item.id}}" catchtap="openImages">图片</view>
+              <view class="mini-button ghost action-button" data-product-id="{{item.id}}" catchtap="toggleStatus">
                 {{item.status === 'published' ? '下架' : '发布'}}
-              </button>
+              </view>
             </view>
           </view>
         </view>
