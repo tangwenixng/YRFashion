@@ -6,7 +6,7 @@
 
   <block wx:elif="{{error}}">
     <view class="hero">
-      <text class="title">YRFasion</text>
+      <text class="title">伊人Fashion 穿搭馆</text>
       <text class="subtitle">{{error}}</text>
       <button class="primary-button" bindtap="loadHome">重新加载</button>
     </view>
@@ -14,12 +14,12 @@
 
   <block wx:elif="{{home}}">
     <view class="hero">
-      <text class="eyebrow">MVP STORE</text>
-      <text class="title">{{home.shop_name || 'YRFasion'}}</text>
-      <text class="subtitle">{{home.shop_intro || '精选商品展示与咨询服务。'}}</text>
+      <text class="eyebrow">STYLE SHOWROOM</text>
+      <text class="title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
+      <text class="subtitle">{{home.shop_intro || '分享轻时尚女装搭配与穿搭灵感，欢迎到店体验或联系店主了解更多。'}}</text>
       <view class="hero-actions">
-        <button class="primary-button" bindtap="goToProducts">浏览全部商品</button>
-        <button class="ghost-button" bindtap="goToContact">查看联系方式</button>
+        <button class="primary-button" bindtap="goToProducts">查看穿搭</button>
+        <button class="ghost-button" bindtap="goToContact">联系店主</button>
       </view>
     </view>
 
@@ -30,14 +30,14 @@
         </swiper-item>
       </block>
       <swiper-item wx:if="{{!home.homepage_banner_urls.length}}">
-        <view class="banner-empty">店铺 banner 将在后台配置后展示</view>
+        <view class="banner-empty">门店展示图将在后台配置后显示</view>
       </swiper-item>
     </swiper>
 
     <view class="panel">
       <view class="panel-header">
-        <text class="panel-title">主推商品</text>
-        <text class="panel-caption">已按后台排序展示</text>
+        <text class="panel-title">本周推荐</text>
+        <text class="panel-caption">展示本店精选穿搭搭配</text>
       </view>
       <block wx:if="{{home.featured_products.length}}">
         <view class="product-list">
@@ -55,7 +55,7 @@
           </block>
         </view>
       </block>
-      <view wx:else class="empty-text">店铺主推商品将在上架后显示。</view>
+      <view wx:else class="empty-text">门店推荐穿搭将在整理后显示</view>
     </view>
   </block>
 </view>

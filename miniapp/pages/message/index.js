@@ -32,7 +32,7 @@ Page({
 
   onLoad(query) {
     const productId = Number(query.productId || 0)
-    const productName = query.productName ? decodeURIComponent(query.productName) : "当前商品"
+    const productName = query.productName ? decodeURIComponent(query.productName) : "当前穿搭"
     this.setData(
       Object.assign(
         {
@@ -100,7 +100,7 @@ Page({
   async submitMessage() {
     const content = this.data.content.trim()
     if (!this.data.productId) {
-      wx.showToast({ title: "商品信息缺失", icon: "none" })
+      wx.showToast({ title: "穿搭信息缺失", icon: "none" })
       return
     }
     if (!content) {

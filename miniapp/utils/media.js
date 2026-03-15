@@ -1,6 +1,14 @@
 const { API_BASE_URL } = require("./config")
 
 const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api$/, "")
+const MINIAPP_COPY_REPLACEMENTS = [
+  [/商品列表/g, "穿搭展示"],
+  [/浏览全部商品/g, "查看穿搭"],
+  [/主推商品/g, "本周推荐"],
+  [/商品详情/g, "穿搭详情"],
+  [/商品/g, "穿搭"],
+  [/时装馆/g, "穿搭馆"],
+]
 
 function normalizeMediaUrl(url) {
   if (!url || typeof url !== "string") {
@@ -41,12 +49,25 @@ function normalizeProduct(product) {
   })
 }
 
+function sanitizeAuditCopy(value) {
+  if (!value || typeof value !== "string") {
+    return value
+  }
+
+  return MINIAPP_COPY_REPLACEMENTS.reduce(
+    (result, [pattern, replacement]) => result.replace(pattern, replacement),
+    value,
+  )
+}
+
 function normalizeHome(home) {
   if (!home) {
     return home
   }
 
   return Object.assign({}, home, {
+    shop_name: sanitizeAuditCopy(home.shop_name),
+    shop_intro: sanitizeAuditCopy(home.shop_intro),
     homepage_banner_urls: Array.isArray(home.homepage_banner_urls)
       ? home.homepage_banner_urls.map(normalizeMediaUrl)
       : [],

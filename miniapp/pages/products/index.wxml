@@ -1,7 +1,7 @@
 <view class="page">
   <view class="page-header">
-    <text class="title">商品列表</text>
-    <text class="subtitle">按后台上架状态与排序展示</text>
+    <text class="title">穿搭展示</text>
+    <text class="subtitle">展示本店精选穿搭搭配</text>
   </view>
 
   <block wx:if="{{loading}}">
@@ -31,13 +31,13 @@
         </view>
       </block>
     </view>
-    <view class="footer-text">{{hasMore ? (loadingMore ? '加载更多中...' : '上滑继续加载') : '已经到底了'}}</view>
+    <view class="footer-text">{{hasMore ? (loadingMore ? '加载更多中...' : '上滑继续查看') : '已经到底了'}}</view>
   </block>
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">当前还没有上架商品</text>
-      <text class="empty-subtitle">店主上架后会在这里展示。</text>
+      <text class="empty-title">当前还没有可展示的穿搭</text>
+      <text class="empty-subtitle">店主整理完成后会在这里展示</text>
     </view>
   </block>
 </view>

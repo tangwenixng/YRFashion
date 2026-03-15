@@ -6,7 +6,7 @@
 
   <block wx:elif="{{error}}">
     <view class="panel error-card">
-      <text class="title">商品详情</text>
+      <text class="title">穿搭详情</text>
       <text class="description">{{error}}</text>
       <button class="primary-button" bindtap="reloadProduct">重新加载</button>
     </view>
@@ -20,7 +20,7 @@
         </swiper-item>
       </block>
       <swiper-item wx:if="{{!product.images.length}}">
-        <view class="hero-placeholder">暂无商品图片</view>
+        <view class="hero-placeholder">暂无展示图片</view>
       </swiper-item>
     </swiper>
 
@@ -29,7 +29,7 @@
       <view class="tag-row">
         <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
       </view>
-      <text class="description">{{product.description || '店主暂未补充更多介绍。'}}</text>
+      <text class="description">{{product.description || '店主暂未补充更多穿搭介绍。'}}</text>
     </view>
 
     <view class="action-bar">

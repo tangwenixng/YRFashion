@@ -128,7 +128,7 @@ Page({
       wx.setNavigationBarTitle({ title: product.name })
       this.loadMessageHistory({ silent: true, background: true })
     } catch (error) {
-      this.setData({ loading: false, error: "商品详情加载失败，请稍后重试。" })
+      this.setData({ loading: false, error: "穿搭详情加载失败，请稍后重试。" })
       wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
@@ -218,7 +218,7 @@ Page({
     const product = this.data.product
     if (!product) {
       return {
-        title: "YRFasion",
+        title: "伊人Fashion 穿搭馆",
         path: "/pages/home/index",
       }
     }

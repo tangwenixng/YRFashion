@@ -60,7 +60,7 @@ Page({
       this.setData({
         loading: false,
         loadingMore: false,
-        error: "商品列表加载失败，请稍后重试。",
+        error: "穿搭展示加载失败，请稍后重试。",
       })
       wx.showToast({ title: "加载失败", icon: "none" })
     } finally {
