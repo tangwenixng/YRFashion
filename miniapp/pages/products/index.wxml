@@ -4,6 +4,19 @@
     <text class="subtitle">展示本店精选穿搭搭配</text>
   </view>
 
+  <view class="search-bar">
+    <input
+      class="search-input"
+      placeholder="搜索穿搭名称或关键词"
+      confirm-type="search"
+      value="{{draftKeyword}}"
+      bindinput="onKeywordInput"
+      bindconfirm="submitSearch"
+    />
+    <button class="search-button" bindtap="submitSearch">搜索</button>
+    <button wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</button>
+  </view>
+
   <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
     <view
       wx:for="{{categories}}"
@@ -48,8 +61,8 @@
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">{{activeCategoryId ? '当前分类下还没有可展示的穿搭' : '当前还没有可展示的穿搭'}}</text>
-      <text class="empty-subtitle">{{activeCategoryId ? '试试切换其他分类看看' : '店主整理完成后会在这里展示'}}</text>
+      <text class="empty-title">{{keyword ? '没有找到匹配的穿搭' : (activeCategoryId ? '当前分类下还没有可展示的穿搭' : '当前还没有可展示的穿搭')}}</text>
+      <text class="empty-subtitle">{{keyword ? '换个关键词，或者切换分类再试试' : (activeCategoryId ? '试试切换其他分类看看' : '店主整理完成后会在这里展示')}}</text>
     </view>
   </block>
 </view>

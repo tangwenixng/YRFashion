@@ -178,3 +178,19 @@ def test_product_list_supports_category_filter_and_active_category_list() -> Non
     disabled_filtered_payload = disabled_filtered_response.json()
     assert disabled_filtered_payload["items"] == []
     assert disabled_filtered_payload["total"] == 0
+
+
+def test_product_list_supports_keyword_search() -> None:
+    first_id, second_id, _ = seed_products()
+
+    with TestClient(app) as client:
+        name_response = client.get("/api/miniapp/products?keyword=Coat")
+        tag_response = client.get("/api/miniapp/products?keyword=dress")
+
+    assert name_response.status_code == 200
+    name_payload = name_response.json()
+    assert [item["id"] for item in name_payload["items"]] == [first_id]
+
+    assert tag_response.status_code == 200
+    tag_payload = tag_response.json()
+    assert [item["id"] for item in tag_payload["items"]] == [second_id]

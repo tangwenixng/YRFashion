@@ -5,6 +5,8 @@ Page({
   data: {
     categories: [{ id: 0, name: "全部" }],
     activeCategoryId: 0,
+    keyword: "",
+    draftKeyword: "",
     items: [],
     page: 1,
     pageSize: 10,
@@ -31,6 +33,44 @@ Page({
   },
 
   reloadProducts() {
+    this.loadProducts({ reset: true })
+  },
+
+  onKeywordInput(event) {
+    this.setData({ draftKeyword: event.detail.value })
+  },
+
+  submitSearch() {
+    const keyword = (this.data.draftKeyword || "").trim()
+    if (keyword === this.data.keyword) {
+      return
+    }
+
+    this.setData({
+      keyword,
+      items: [],
+      page: 1,
+      total: 0,
+      hasMore: true,
+      error: "",
+    })
+    this.loadProducts({ reset: true })
+  },
+
+  clearSearch() {
+    if (!this.data.keyword && !this.data.draftKeyword) {
+      return
+    }
+
+    this.setData({
+      keyword: "",
+      draftKeyword: "",
+      items: [],
+      page: 1,
+      total: 0,
+      hasMore: true,
+      error: "",
+    })
     this.loadProducts({ reset: true })
   },
 
@@ -81,6 +121,9 @@ Page({
     const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
     if (this.data.activeCategoryId > 0) {
       query.push(`category_id=${this.data.activeCategoryId}`)
+    }
+    if (this.data.keyword) {
+      query.push(`keyword=${encodeURIComponent(this.data.keyword)}`)
     }
 
     this.setData({

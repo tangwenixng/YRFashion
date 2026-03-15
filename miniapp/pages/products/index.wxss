@@ -8,6 +8,42 @@
   margin-bottom: 24rpx;
 }
 
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin-bottom: 22rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 84rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12rpx 20rpx rgba(90, 60, 47, 0.06);
+  color: #3c271d;
+}
+
+.search-button,
+.search-reset {
+  height: 84rpx;
+  line-height: 84rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+}
+
+.search-button {
+  background: #3f2a1f;
+  color: #fff7ef;
+}
+
+.search-reset {
+  background: rgba(255, 255, 255, 0.72);
+  color: #7a5e4e;
+}
+
 .category-strip {
   display: flex;
   white-space: nowrap;

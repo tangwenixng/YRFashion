@@ -1,4 +1,5 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import String, cast, or_
 from sqlalchemy.orm import Session, selectinload
 
 from backend.db.session import get_db
@@ -14,6 +15,7 @@ def list_products(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=20),
     category_id: int | None = Query(default=None, ge=1),
+    keyword: str | None = Query(default=None, min_length=1, max_length=100),
     db: Session = Depends(get_db),
 ) -> MiniappProductListResponse:
     query = (
@@ -36,6 +38,15 @@ def list_products(
                 has_more=False,
             )
         query = query.filter(Product.category_id == category_id)
+    if keyword is not None and keyword.strip():
+        normalized_keyword = f"%{keyword.strip()}%"
+        query = query.filter(
+            or_(
+                Product.name.ilike(normalized_keyword),
+                Product.description.ilike(normalized_keyword),
+                cast(Product.tags_json, String).ilike(normalized_keyword),
+            )
+        )
     total = query.count()
     items = (
         query.order_by(Product.sort_order.asc(), Product.id.desc())
