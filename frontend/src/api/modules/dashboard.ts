@@ -6,6 +6,15 @@ export interface DashboardSummary {
   miniapp_user_count: number
   notification_enabled: boolean
   notification_channel: string | null
+  recent_message_trend: Array<{
+    date: string
+    count: number
+  }>
+  top_products: Array<{
+    product_id: number
+    product_name: string
+    message_count: number
+  }>
 }
 
 export const fetchDashboardSummary = async () => {

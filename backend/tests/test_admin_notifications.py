@@ -90,6 +90,8 @@ def test_notification_settings_and_send(monkeypatch) -> None:
     assert dashboard_response.status_code == 200
     assert dashboard_response.json()["notification_enabled"] is True
     assert dashboard_response.json()["notification_channel"] == "wecom"
+    assert len(dashboard_response.json()["recent_message_trend"]) == 7
+    assert isinstance(dashboard_response.json()["top_products"], list)
     assert len(sent_messages) == 2
     assert "Webhook 通道已连通" in sent_messages[0]
     assert "当前未读留言" in sent_messages[1]

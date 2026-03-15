@@ -61,6 +61,8 @@ def test_message_workflow_and_dashboard() -> None:
         summary_response = client.get("/api/admin/dashboard/summary", headers=headers)
         assert summary_response.status_code == 200
         assert summary_response.json()["unread_message_count"] >= 1
+        assert len(summary_response.json()["recent_message_trend"]) == 7
+        assert isinstance(summary_response.json()["top_products"], list)
 
         list_response = client.get("/api/admin/messages?status=unread", headers=headers)
         assert list_response.status_code == 200

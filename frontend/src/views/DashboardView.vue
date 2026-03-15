@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChatLineRound, Goods, User } from '@element-plus/icons-vue'
+import { ChatLineRound, Goods, TrendCharts, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { onMounted, ref } from 'vue'
 
@@ -13,6 +13,8 @@ const summary = ref<DashboardSummary>({
   miniapp_user_count: 0,
   notification_enabled: false,
   notification_channel: null,
+  recent_message_trend: [],
+  top_products: [],
 })
 
 const statCards = [
@@ -79,6 +81,47 @@ onMounted(() => {
       </article>
     </section>
 
+    <section class="insight-grid">
+      <article class="content-card insight-card">
+        <div class="insight-header">
+          <div class="stat-icon">
+            <el-icon><TrendCharts /></el-icon>
+          </div>
+          <div>
+            <h2>最近 7 天咨询趋势</h2>
+            <p>按天查看咨询变化，方便判断内容热度是否上升。</p>
+          </div>
+        </div>
+
+        <div class="trend-list">
+          <div v-for="item in summary.recent_message_trend" :key="item.date" class="trend-row">
+            <span>{{ item.date }}</span>
+            <strong>{{ item.count }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="content-card insight-card">
+        <div class="insight-header">
+          <div class="stat-icon">
+            <el-icon><ChatLineRound /></el-icon>
+          </div>
+          <div>
+            <h2>咨询最多的商品</h2>
+            <p>优先关注高咨询商品，适合继续优化图文和推荐位。</p>
+          </div>
+        </div>
+
+        <div v-if="summary.top_products.length" class="top-product-list">
+          <div v-for="item in summary.top_products" :key="item.product_id" class="top-product-row">
+            <span class="top-product-name">{{ item.product_name }}</span>
+            <strong>{{ item.message_count }} 条咨询</strong>
+          </div>
+        </div>
+        <p v-else class="empty-note">当前还没有可统计的咨询数据。</p>
+      </article>
+    </section>
+
     <section class="content-card tips-card">
       <h2>当前阶段建议</h2>
       <ul>
@@ -120,7 +163,8 @@ onMounted(() => {
 
 .hero-strip,
 .tips-card,
-.notification-card {
+.notification-card,
+.insight-card {
   padding: 28px;
 }
 
@@ -131,10 +175,15 @@ onMounted(() => {
   gap: 16px;
 }
 
-.stats-grid {
+.stats-grid,
+.insight-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+.insight-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-card {
@@ -172,11 +221,55 @@ onMounted(() => {
   line-height: 1.7;
 }
 
-.tips-card h2 {
-  margin: 0 0 16px;
+.insight-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.insight-header h2,
+.tips-card h2,
+.notification-card h2 {
+  margin: 0 0 10px;
   font-family: 'Fraunces', serif;
   font-size: 28px;
   color: #30251b;
+}
+
+.insight-header p,
+.notification-text,
+.tips-card ul,
+.empty-note {
+  margin: 0;
+  color: #6f5f50;
+  line-height: 1.8;
+}
+
+.trend-list,
+.top-product-list {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-row,
+.top-product-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(139, 94, 60, 0.06);
+  color: #4b3728;
+}
+
+.top-product-name {
+  font-weight: 600;
+}
+
+.tips-card ul {
+  padding-left: 20px;
 }
 
 .notification-card {
@@ -186,37 +279,15 @@ onMounted(() => {
   gap: 16px;
 }
 
-.notification-card h2 {
-  margin: 0 0 10px;
-  font-family: 'Fraunces', serif;
-  font-size: 28px;
-  color: #30251b;
-}
-
-.notification-text {
-  margin: 0;
-  color: #6f5f50;
-  line-height: 1.8;
-}
-
-.tips-card ul {
-  margin: 0;
-  padding-left: 20px;
-  color: #6f5f50;
-  line-height: 1.9;
-}
-
 @media (max-width: 900px) {
-  .hero-strip {
-    flex-direction: column;
-  }
-
+  .hero-strip,
   .notification-card {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .stats-grid {
+  .stats-grid,
+  .insight-grid {
     grid-template-columns: 1fr;
   }
 }
