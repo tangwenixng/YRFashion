@@ -356,22 +356,22 @@ void loadCategories()
     </section>
 
     <section class="content-card table-card">
-      <el-table :data="products" v-loading="loading" @selection-change="handleSelectionChange">
+      <el-table :data="products" v-loading="loading" table-layout="auto" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="48" />
-        <el-table-column prop="name" label="商品名称" min-width="180" />
-        <el-table-column label="分类" min-width="140">
+        <el-table-column prop="name" label="商品名称" min-width="140" />
+        <el-table-column label="分类" min-width="88">
           <template #default="{ row }">
             <span>{{ row.category_name || '未分类' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="120">
+        <el-table-column label="状态" min-width="88">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'warning' : 'info'">
               {{ formatStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="标签" min-width="180">
+        <el-table-column label="标签" min-width="112">
           <template #default="{ row }">
             <div class="tag-list">
               <el-tag v-for="tag in row.tags" :key="tag" effect="plain">
@@ -381,7 +381,7 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="图片" width="100">
+        <el-table-column label="图片" min-width="190">
           <template #default="{ row }">
             <div class="image-summary">
               <el-image
@@ -400,30 +400,27 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="排序" width="160">
+        <el-table-column label="排序" min-width="196">
           <template #default="{ row }">
             <div class="sort-box">
-              <el-input-number v-model="row.sort_order" :min="0" :max="9999" />
-              <el-button plain circle @click="saveSort(row)">
+              <el-input-number v-model="row.sort_order" :min="0" :max="9999" controls-position="right" />
+              <el-button plain circle class="sort-save-button" @click="saveSort(row)">
                 <el-icon><Sort /></el-icon>
               </el-button>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="210" fixed="right">
+        <el-table-column label="操作" min-width="210" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
-              <el-button plain @click="openEdit(row)">
+              <el-button text class="action-link" title="编辑" @click="openEdit(row)">
                 <el-icon><EditPen /></el-icon>
-                编辑
               </el-button>
-              <el-button plain @click="openUpload(row)">
+              <el-button text class="action-link" title="上传图片" @click="openUpload(row)">
                 <el-icon><Picture /></el-icon>
-                上传图片
               </el-button>
-              <el-button plain type="danger" @click="confirmDeleteProduct(row)">
+              <el-button text class="action-link danger-link" title="删除商品" @click="confirmDeleteProduct(row)">
                 <el-icon><Delete /></el-icon>
-                删除商品
               </el-button>
             </div>
           </template>
@@ -607,9 +604,7 @@ void loadCategories()
 }
 
 .header-actions,
-.row-actions,
 .tag-list,
-.sort-box,
 .image-summary,
 .filter-actions,
 .pagination-bar {
@@ -617,6 +612,28 @@ void loadCategories()
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.tag-list {
+  gap: 6px;
+}
+
+.tag-list :deep(.el-tag) {
+  margin: 0;
+}
+
+.image-summary {
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.image-summary :deep(.el-image) {
+  flex-shrink: 0;
+}
+
+.image-summary strong {
+  font-size: 15px;
+  color: #4a372b;
 }
 
 .table-card,
@@ -743,6 +760,57 @@ void loadCategories()
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.sort-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-box :deep(.el-input-number) {
+  width: 112px;
+}
+
+.sort-box :deep(.el-input-number .el-input__wrapper) {
+  padding-left: 8px;
+  padding-right: 30px;
+}
+
+.sort-save-button {
+  flex-shrink: 0;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.action-link {
+  margin: 0;
+  min-width: 0;
+  padding: 6px;
+  width: 32px;
+  height: 32px;
+  justify-content: center;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.action-link :deep(span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-link :deep(.el-icon) {
+  font-size: 16px;
+}
+
+.danger-link {
+  color: var(--el-color-danger);
 }
 
 @media (max-width: 1100px) {
