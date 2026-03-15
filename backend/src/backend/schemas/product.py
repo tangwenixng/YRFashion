@@ -64,3 +64,6 @@ class ProductResponse(BaseModel):
 
 class ProductListResponse(BaseModel):
     items: list[ProductResponse]
+    page: int
+    page_size: int
+    total: int

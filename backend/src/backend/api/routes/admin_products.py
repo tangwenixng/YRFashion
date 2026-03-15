@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy import String, cast, or_
 from sqlalchemy.orm import Session, selectinload
 
 from backend.api.deps import get_current_admin
@@ -95,16 +96,45 @@ def get_product_image_or_404(product: Product, image_id: int) -> ProductImage:
 
 @router.get("", response_model=ProductListResponse)
 def list_products(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    keyword: str | None = Query(default=None, min_length=1, max_length=100),
+    status_filter: str | None = Query(default=None, alias="status"),
+    category_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
     _: AdminUser = Depends(get_current_admin),
 ) -> ProductListResponse:
-    products = (
+    query = (
         db.query(Product)
         .options(selectinload(Product.images), selectinload(Product.category))
-        .order_by(Product.sort_order.asc(), Product.id.desc())
+    )
+    if keyword is not None and keyword.strip():
+        normalized_keyword = f"%{keyword.strip()}%"
+        query = query.filter(
+            or_(
+                Product.name.ilike(normalized_keyword),
+                Product.description.ilike(normalized_keyword),
+                cast(Product.tags_json, String).ilike(normalized_keyword),
+            )
+        )
+    if status_filter in {"draft", "published", "archived"}:
+        query = query.filter(Product.status == status_filter)
+    if category_id is not None:
+        query = query.filter(Product.category_id == category_id)
+
+    total = query.count()
+    products = (
+        query.order_by(Product.sort_order.asc(), Product.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
         .all()
     )
-    return ProductListResponse(items=[serialize_product(product) for product in products])
+    return ProductListResponse(
+        items=[serialize_product(product) for product in products],
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
 
 
 @router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)

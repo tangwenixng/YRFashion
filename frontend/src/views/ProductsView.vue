@@ -36,6 +36,14 @@ const uploadingProduct = ref<ProductItem | null>(null)
 const uploadSortOrder = ref(0)
 const uploadAsCover = ref(true)
 const selectedFile = ref<File | null>(null)
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const filters = reactive({
+  keyword: '',
+  status: '' as '' | 'draft' | 'published' | 'archived',
+  category_id: null as number | null,
+})
 
 const statusLabelMap: Record<ProductItem['status'], string> = {
   draft: '草稿',
@@ -84,7 +92,15 @@ const resetForm = () => {
 const loadProducts = async () => {
   loading.value = true
   try {
-    products.value = await fetchProducts()
+    const result = await fetchProducts({
+      page: page.value,
+      page_size: pageSize.value,
+      keyword: filters.keyword.trim(),
+      status: filters.status,
+      category_id: filters.category_id,
+    })
+    products.value = result.items
+    total.value = result.total
     if (uploadingProduct.value) {
       uploadingProduct.value = products.value.find((item) => item.id === uploadingProduct.value?.id) ?? null
     }
@@ -95,6 +111,30 @@ const loadProducts = async () => {
 
 const loadCategories = async () => {
   categories.value = await fetchCategories()
+}
+
+const applyFilters = async () => {
+  page.value = 1
+  await loadProducts()
+}
+
+const resetFilters = async () => {
+  filters.keyword = ''
+  filters.status = ''
+  filters.category_id = null
+  page.value = 1
+  await loadProducts()
+}
+
+const handlePageChange = async (nextPage: number) => {
+  page.value = nextPage
+  await loadProducts()
+}
+
+const handlePageSizeChange = async (nextPageSize: number) => {
+  pageSize.value = nextPageSize
+  page.value = 1
+  await loadProducts()
 }
 
 const openCreate = () => {
@@ -185,6 +225,9 @@ const confirmDeleteProduct = async (product: ProductItem) => {
     uploadingProduct.value = null
   }
 
+  if (products.value.length === 1 && page.value > 1) {
+    page.value -= 1
+  }
   await loadProducts()
 }
 
@@ -263,6 +306,29 @@ void loadCategories()
       </div>
     </div>
 
+    <section class="content-card filter-card">
+      <div class="filter-grid">
+        <el-input
+          v-model="filters.keyword"
+          placeholder="按名称、标签或描述搜索"
+          clearable
+          @keyup.enter="applyFilters"
+        />
+        <el-select v-model="filters.status" clearable placeholder="全部状态">
+          <el-option label="草稿" value="draft" />
+          <el-option label="已发布" value="published" />
+          <el-option label="已归档" value="archived" />
+        </el-select>
+        <el-select v-model="filters.category_id" clearable placeholder="全部分类">
+          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+        </el-select>
+        <div class="filter-actions">
+          <el-button type="primary" @click="applyFilters">筛选</el-button>
+          <el-button plain @click="resetFilters">重置</el-button>
+        </div>
+      </div>
+    </section>
+
     <section class="content-card table-card">
       <el-table :data="products" v-loading="loading">
         <el-table-column prop="name" label="商品名称" min-width="180" />
@@ -336,6 +402,20 @@ void loadCategories()
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-bar">
+        <span class="muted">共 {{ total }} 条</span>
+        <el-pagination
+          background
+          layout="prev, pager, next, sizes"
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
+        />
+      </div>
     </section>
 
     <el-dialog
@@ -503,15 +583,29 @@ void loadCategories()
 .row-actions,
 .tag-list,
 .sort-box,
-.image-summary {
+.image-summary,
+.filter-actions,
+.pagination-bar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.table-card {
+.table-card,
+.filter-card {
   padding: 14px;
+}
+
+.filter-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(180px, 1fr)) auto;
+}
+
+.pagination-bar {
+  justify-content: space-between;
+  margin-top: 16px;
 }
 
 .muted {
@@ -624,17 +718,29 @@ void loadCategories()
   text-transform: uppercase;
 }
 
+@media (max-width: 1100px) {
+  .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .page-header {
     flex-direction: column;
   }
 
-  .inline-grid {
+  .inline-grid,
+  .filter-grid {
     grid-template-columns: 1fr;
   }
 
   .image-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

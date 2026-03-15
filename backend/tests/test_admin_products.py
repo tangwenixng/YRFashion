@@ -5,7 +5,9 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from backend.core.config import settings
+from backend.db.session import SessionLocal
 from backend.main import app
+from backend.models import Category
 
 
 def get_admin_headers(client: TestClient) -> dict[str, str]:
@@ -210,3 +212,67 @@ def test_product_delete_removes_product_and_local_images() -> None:
     assert delete_response.status_code == 204
     assert all(item["id"] != product_id for item in list_response.json()["items"])
     assert not image_path.exists()
+
+
+def test_product_list_supports_filters_and_pagination() -> None:
+    unique = uuid4().hex[:8]
+    category_id: int
+
+    with SessionLocal() as db:
+        category = Category(name=f"Outerwear-{unique}", sort_order=1, status="active")
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+        category_id = category.id
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        first_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": f"Filter-Coat-{unique}",
+                "category_id": category_id,
+                "description": "spring outerwear",
+                "tags": ["outerwear", "spring"],
+                "status": "published",
+                "sort_order": 1,
+            },
+        )
+        second_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": f"Filter-Draft-{unique}",
+                "description": "draft look",
+                "tags": ["draft"],
+                "status": "draft",
+                "sort_order": 2,
+            },
+        )
+        assert first_response.status_code == 201
+        assert second_response.status_code == 201
+
+        filtered_response = client.get(
+            f"/api/admin/products?keyword=Coat-{unique}&status=published&category_id={category_id}&page=1&page_size=10",
+            headers=headers,
+        )
+        paged_response = client.get(
+            "/api/admin/products?page=1&page_size=1",
+            headers=headers,
+        )
+
+    assert filtered_response.status_code == 200
+    filtered_payload = filtered_response.json()
+    assert filtered_payload["total"] >= 1
+    assert filtered_payload["page"] == 1
+    assert filtered_payload["page_size"] == 10
+    assert all(item["status"] == "published" for item in filtered_payload["items"])
+    assert all(item["category_id"] == category_id for item in filtered_payload["items"])
+    assert any(item["name"] == f"Filter-Coat-{unique}" for item in filtered_payload["items"])
+
+    assert paged_response.status_code == 200
+    paged_payload = paged_response.json()
+    assert paged_payload["page"] == 1
+    assert paged_payload["page_size"] == 1
+    assert len(paged_payload["items"]) == 1

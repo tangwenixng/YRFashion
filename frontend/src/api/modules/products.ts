@@ -39,9 +39,32 @@ export interface ProductImageSortPayload {
   }>
 }
 
-export const fetchProducts = async () => {
-  const { data } = await http.get<{ items: ProductItem[] }>('/admin/products')
-  return data.items
+export interface ProductListParams {
+  page?: number
+  page_size?: number
+  keyword?: string
+  status?: 'draft' | 'published' | 'archived' | ''
+  category_id?: number | null
+}
+
+export interface ProductListResult {
+  items: ProductItem[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export const fetchProducts = async (params: ProductListParams = {}) => {
+  const { data } = await http.get<ProductListResult>('/admin/products', {
+    params: {
+      page: params.page ?? 1,
+      page_size: params.page_size ?? 10,
+      keyword: params.keyword || undefined,
+      status: params.status || undefined,
+      category_id: params.category_id || undefined,
+    },
+  })
+  return data
 }
 
 export const createProduct = async (payload: ProductPayload) => {
