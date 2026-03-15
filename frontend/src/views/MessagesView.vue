@@ -3,7 +3,9 @@ import { ChatDotRound, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, reactive, ref } from 'vue'
 
+import { fetchProducts, type ProductItem } from '../api/modules/products'
 import {
+  batchMarkMessageRead,
   fetchMessages,
   markMessageRead,
   markMessageUnread,
@@ -13,9 +15,15 @@ import {
 
 const loading = ref(false)
 const messages = ref<MessageItem[]>([])
+const products = ref<ProductItem[]>([])
 const statusFilter = ref<'all' | 'unread' | 'read' | 'replied'>('all')
+const productFilter = ref<number | null>(null)
 const replyVisible = ref(false)
 const replyingMessage = ref<MessageItem | null>(null)
+const selectedMessageIds = ref<number[]>([])
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 const replyForm = reactive({
   reply_content: '',
 })
@@ -23,18 +31,36 @@ const replyForm = reactive({
 const loadMessages = async () => {
   loading.value = true
   try {
-    messages.value = await fetchMessages(statusFilter.value === 'all' ? undefined : statusFilter.value)
+    const result = await fetchMessages({
+      page: page.value,
+      page_size: pageSize.value,
+      status: statusFilter.value === 'all' ? undefined : statusFilter.value,
+      product_id: productFilter.value,
+    })
+    messages.value = result.items
+    total.value = result.total
+    selectedMessageIds.value = []
   } finally {
     loading.value = false
   }
 }
 
+const loadProducts = async () => {
+  const result = await fetchProducts({ page: 1, page_size: 50 })
+  products.value = result.items
+}
+
 const filteredCountLabel = computed(() => {
   if (statusFilter.value === 'all') {
-    return `共 ${messages.value.length} 条留言`
+    return `共 ${total.value} 条留言`
   }
-  return `${statusFilter.value} 状态 ${messages.value.length} 条`
+  return `${statusFilter.value} 状态 ${total.value} 条`
 })
+
+const applyFilters = async () => {
+  page.value = 1
+  await loadMessages()
+}
 
 const openReply = (message: MessageItem) => {
   replyingMessage.value = message
@@ -66,6 +92,33 @@ const setUnread = async (message: MessageItem) => {
   await loadMessages()
 }
 
+const batchSetRead = async () => {
+  if (!selectedMessageIds.value.length) {
+    ElMessage.warning('请先选择留言')
+    return
+  }
+
+  await batchMarkMessageRead(selectedMessageIds.value)
+  ElMessage.success('已批量标记为已读')
+  await loadMessages()
+}
+
+const handleSelectionChange = (selection: MessageItem[]) => {
+  selectedMessageIds.value = selection.map((item) => item.id)
+}
+
+const handlePageChange = async (nextPage: number) => {
+  page.value = nextPage
+  await loadMessages()
+}
+
+const handlePageSizeChange = async (nextPageSize: number) => {
+  pageSize.value = nextPageSize
+  page.value = 1
+  await loadMessages()
+}
+
+void loadProducts()
 void loadMessages()
 </script>
 
@@ -78,11 +131,14 @@ void loadMessages()
       </div>
 
       <div class="header-actions">
-        <el-select v-model="statusFilter" style="width: 160px" @change="loadMessages">
+        <el-select v-model="statusFilter" style="width: 160px" @change="applyFilters">
           <el-option label="全部状态" value="all" />
           <el-option label="未读" value="unread" />
           <el-option label="已读" value="read" />
           <el-option label="已回复" value="replied" />
+        </el-select>
+        <el-select v-model="productFilter" clearable style="width: 220px" placeholder="按商品筛选" @change="applyFilters">
+          <el-option v-for="product in products" :key="product.id" :label="product.name" :value="product.id" />
         </el-select>
         <el-button plain @click="loadMessages">
           <el-icon><RefreshRight /></el-icon>
@@ -94,64 +150,85 @@ void loadMessages()
     <section class="content-card messages-card">
       <div class="messages-meta">
         <span>{{ filteredCountLabel }}</span>
+        <el-button plain :disabled="!selectedMessageIds.length" @click="batchSetRead">批量标为已读</el-button>
       </div>
 
-      <div v-loading="loading" class="message-list">
-        <article v-for="message in messages" :key="message.id" class="message-item">
-          <div class="message-main">
-            <div class="message-head">
-              <div class="message-origin">
-                <div v-if="message.miniapp_user_avatar_url" class="message-avatar-frame">
-                  <img :src="message.miniapp_user_avatar_url" class="message-avatar" alt="" />
-                </div>
-                <div v-else class="message-avatar-fallback">
-                  {{ (message.miniapp_user_nickname || message.miniapp_user_openid).slice(0, 1).toUpperCase() }}
+      <el-table :data="messages" v-loading="loading" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" />
+        <el-table-column label="留言内容" min-width="520">
+          <template #default="{ row }">
+            <article class="message-item">
+              <div class="message-main">
+                <div class="message-head">
+                  <div class="message-origin">
+                    <div v-if="row.miniapp_user_avatar_url" class="message-avatar-frame">
+                      <img :src="row.miniapp_user_avatar_url" class="message-avatar" alt="" />
+                    </div>
+                    <div v-else class="message-avatar-fallback">
+                      {{ (row.miniapp_user_nickname || row.miniapp_user_openid).slice(0, 1).toUpperCase() }}
+                    </div>
+
+                    <div>
+                      <strong>{{ row.product_name }}</strong>
+                      <p>来自 {{ row.miniapp_user_nickname || row.miniapp_user_openid }}</p>
+                    </div>
+                  </div>
+                  <el-tag :type="row.status === 'unread' ? 'danger' : row.status === 'replied' ? 'success' : 'warning'">
+                    {{ row.status }}
+                  </el-tag>
                 </div>
 
-                <div>
-                <strong>{{ message.product_name }}</strong>
-                <p>
-                  来自
-                  {{ message.miniapp_user_nickname || message.miniapp_user_openid }}
-                </p>
+                <div class="message-bubble">
+                  <el-icon><ChatDotRound /></el-icon>
+                  <p>{{ row.content }}</p>
+                </div>
+
+                <div v-if="row.reply_content" class="reply-block">
+                  <label>已回复</label>
+                  <p>{{ row.reply_content }}</p>
                 </div>
               </div>
-              <el-tag :type="message.status === 'unread' ? 'danger' : message.status === 'replied' ? 'success' : 'warning'">
-                {{ message.status }}
-              </el-tag>
+            </article>
+          </template>
+        </el-table-column>
+        <el-table-column prop="created_at" label="提交时间" width="180" />
+        <el-table-column label="操作" width="220" fixed="right">
+          <template #default="{ row }">
+            <div class="message-actions">
+              <el-button size="small" plain @click="openReply(row)">回复</el-button>
+              <el-button
+                v-if="row.status === 'unread'"
+                size="small"
+                plain
+                @click="setRead(row)"
+              >
+                标为已读
+              </el-button>
+              <el-button
+                v-else
+                size="small"
+                plain
+                @click="setUnread(row)"
+              >
+                标为未读
+              </el-button>
             </div>
+          </template>
+        </el-table-column>
+      </el-table>
 
-            <div class="message-bubble">
-              <el-icon><ChatDotRound /></el-icon>
-              <p>{{ message.content }}</p>
-            </div>
-
-            <div v-if="message.reply_content" class="reply-block">
-              <label>已回复</label>
-              <p>{{ message.reply_content }}</p>
-            </div>
-          </div>
-
-          <div class="message-actions">
-            <el-button size="small" plain @click="openReply(message)">回复</el-button>
-            <el-button
-              v-if="message.status === 'unread'"
-              size="small"
-              plain
-              @click="setRead(message)"
-            >
-              标为已读
-            </el-button>
-            <el-button
-              v-else
-              size="small"
-              plain
-              @click="setUnread(message)"
-            >
-              标为未读
-            </el-button>
-          </div>
-        </article>
+      <div class="pagination-bar">
+        <span class="messages-meta">{{ filteredCountLabel }}</span>
+        <el-pagination
+          background
+          layout="prev, pager, next, sizes"
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
+        />
       </div>
     </section>
 
@@ -184,7 +261,9 @@ void loadMessages()
 .header-actions,
 .message-head,
 .message-actions,
-.message-bubble {
+.message-bubble,
+.messages-meta,
+.pagination-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -198,22 +277,11 @@ void loadMessages()
 .messages-meta {
   margin-bottom: 16px;
   color: #7f6d59;
-}
-
-.message-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
 }
 
 .message-item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 18px;
-  padding: 20px;
-  border-radius: 20px;
-  background: rgba(255, 251, 245, 0.86);
-  border: 1px solid rgba(126, 97, 69, 0.12);
+  padding: 4px 0;
 }
 
 .message-head strong {
@@ -300,16 +368,21 @@ void loadMessages()
 }
 
 .message-actions {
-  flex-direction: column;
-  align-items: stretch;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.pagination-bar {
+  margin-top: 18px;
+  align-items: center;
 }
 
 @media (max-width: 900px) {
   .page-header,
   .header-actions,
-  .message-item {
-    grid-template-columns: 1fr;
+  .pagination-bar {
     flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

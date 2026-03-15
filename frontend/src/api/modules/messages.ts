@@ -32,14 +32,38 @@ export interface MessageItem {
   created_at: string
 }
 
-export const fetchMessages = async (status?: string) => {
-  const { data } = await http.get<{ items: MessageItem[] }>('/admin/messages', {
-    params: status ? { status } : undefined,
+export interface MessageListParams {
+  page?: number
+  page_size?: number
+  status?: string
+  product_id?: number | null
+}
+
+export interface MessageListResult {
+  items: MessageItem[]
+  page: number
+  page_size: number
+  total: number
+}
+
+const normalizeMessage = (item: MessageItem) => ({
+  ...item,
+  miniapp_user_avatar_url: normalizeMediaUrl(item.miniapp_user_avatar_url),
+})
+
+export const fetchMessages = async (params: MessageListParams = {}) => {
+  const { data } = await http.get<MessageListResult>('/admin/messages', {
+    params: {
+      page: params.page ?? 1,
+      page_size: params.page_size ?? 10,
+      status: params.status || undefined,
+      product_id: params.product_id || undefined,
+    },
   })
-  return data.items.map((item) => ({
-    ...item,
-    miniapp_user_avatar_url: normalizeMediaUrl(item.miniapp_user_avatar_url),
-  }))
+  return {
+    ...data,
+    items: data.items.map(normalizeMessage),
+  }
 }
 
 export const markMessageRead = async (id: number) => {
@@ -56,5 +80,13 @@ export const replyMessage = async (id: number, replyContent: string) => {
   const { data } = await http.post<MessageItem>(`/admin/messages/${id}/reply`, {
     reply_content: replyContent,
   })
-  return data
+  return normalizeMessage(data)
+}
+
+export const batchMarkMessageRead = async (ids: number[]) => {
+  const { data } = await http.post<MessageListResult>('/admin/messages/batch-read', { ids })
+  return {
+    ...data,
+    items: data.items.map(normalizeMessage),
+  }
 }

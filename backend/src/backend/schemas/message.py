@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class MessageReplyRequest(BaseModel):
@@ -9,6 +9,10 @@ class MessageReplyRequest(BaseModel):
 
 class MessageStatusRequest(BaseModel):
     status: str
+
+
+class MessageBatchReadRequest(BaseModel):
+    ids: list[int] = Field(default_factory=list)
 
 
 class MessageResponse(BaseModel):
@@ -29,3 +33,6 @@ class MessageResponse(BaseModel):
 
 class MessageListResponse(BaseModel):
     items: list[MessageResponse]
+    page: int
+    page_size: int
+    total: int

@@ -17,7 +17,7 @@ def get_admin_headers(client: TestClient) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def seed_message() -> tuple[int, int]:
+def seed_message() -> tuple[int, int, int]:
     now = datetime.now(UTC)
     with SessionLocal() as db:
         user = MiniappUser(
@@ -49,11 +49,11 @@ def seed_message() -> tuple[int, int]:
         db.add(message)
         db.commit()
         db.refresh(message)
-        return message.id, user.id
+        return message.id, user.id, product.id
 
 
 def test_message_workflow_and_dashboard() -> None:
-    message_id, _ = seed_message()
+    message_id, _, product_id = seed_message()
 
     with TestClient(app) as client:
         headers = get_admin_headers(client)
@@ -64,7 +64,16 @@ def test_message_workflow_and_dashboard() -> None:
 
         list_response = client.get("/api/admin/messages?status=unread", headers=headers)
         assert list_response.status_code == 200
+        assert list_response.json()["page"] == 1
+        assert list_response.json()["page_size"] == 10
         assert any(item["id"] == message_id for item in list_response.json()["items"])
+
+        filtered_response = client.get(
+            f"/api/admin/messages?product_id={product_id}&page=1&page_size=10",
+            headers=headers,
+        )
+        assert filtered_response.status_code == 200
+        assert all(item["product_id"] == product_id for item in filtered_response.json()["items"])
 
         read_response = client.post(f"/api/admin/messages/{message_id}/read", headers=headers)
         assert read_response.status_code == 200
@@ -87,7 +96,7 @@ def test_message_workflow_and_dashboard() -> None:
 
 
 def test_user_list_and_settings() -> None:
-    _, user_id = seed_message()
+    _, user_id, _ = seed_message()
 
     with TestClient(app) as client:
         headers = get_admin_headers(client)
@@ -116,3 +125,21 @@ def test_user_list_and_settings() -> None:
 
     assert get_response.status_code == 200
     assert get_response.json()["homepage_banner_urls"] == ["/uploads/banner-1.jpg"]
+
+
+def test_message_batch_read() -> None:
+    first_message_id, _, _ = seed_message()
+    second_message_id, _, _ = seed_message()
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        batch_response = client.post(
+            "/api/admin/messages/batch-read",
+            headers=headers,
+            json={"ids": [first_message_id, second_message_id]},
+        )
+
+    assert batch_response.status_code == 200
+    payload = batch_response.json()
+    assert payload["total"] == 2
+    assert all(item["status"] == "read" for item in payload["items"])
