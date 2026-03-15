@@ -5,13 +5,18 @@
   </view>
 
   <view class="toolbar">
-    <input
-      class="search-input"
-      placeholder="搜索展示名称或分类"
-      value="{{keyword}}"
-      bindinput="handleKeywordInput"
-    />
-    <button class="create-button" bindtap="openCreate">新增展示</button>
+    <view class="toolbar-main-row">
+      <input
+        class="search-input"
+        placeholder="搜索展示名称或分类"
+        value="{{keyword}}"
+        bindinput="handleKeywordInput"
+      />
+      <view class="create-button action-button" bindtap="openCreate">
+        <text class="create-icon">+</text>
+        <text>新增展示</text>
+      </view>
+    </view>
   </view>
 
   <scroll-view class="status-scroll" scroll-x="true" enable-flex="true">
