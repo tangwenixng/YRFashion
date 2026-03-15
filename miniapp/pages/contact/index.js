@@ -47,6 +47,11 @@ Page({
   },
 
   goToAdminLogin() {
+    wx.showToast({
+      title: "正在进入管理端",
+      icon: "none",
+      duration: 1200,
+    })
     wx.navigateTo({
       url: "/pages-admin/login/index",
     })

@@ -54,10 +54,8 @@
       <button class="action-button secondary" bindtap="goToMessageHistory">查看咨询记录</button>
     </view>
 
-    <view class="card admin-entry-card">
-      <text class="field-label">店员入口</text>
-      <text class="field-value">门店工作人员可从这里进入移动管理端。</text>
-      <button class="action-button secondary admin-entry-button" bindtap="goToAdminLogin">打开管理端</button>
+    <view class="page-footer" bindlongpress="goToAdminLogin">
+      <text class="footer-text">YRFashion</text>
     </view>
   </block>
 </view>
