@@ -4,6 +4,18 @@
     <text class="subtitle">展示本店精选穿搭搭配</text>
   </view>
 
+  <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view
+      wx:for="{{categories}}"
+      wx:key="id"
+      class="category-chip {{item.id === activeCategoryId ? 'category-chip-active' : ''}}"
+      data-category-id="{{item.id}}"
+      bindtap="selectCategory"
+    >
+      {{item.name}}
+    </view>
+  </scroll-view>
+
   <block wx:if="{{loading}}">
     <view class="card skeleton"></view>
     <view class="card skeleton"></view>
@@ -36,8 +48,8 @@
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">当前还没有可展示的穿搭</text>
-      <text class="empty-subtitle">店主整理完成后会在这里展示</text>
+      <text class="empty-title">{{activeCategoryId ? '当前分类下还没有可展示的穿搭' : '当前还没有可展示的穿搭'}}</text>
+      <text class="empty-subtitle">{{activeCategoryId ? '试试切换其他分类看看' : '店主整理完成后会在这里展示'}}</text>
     </view>
   </block>
 </view>

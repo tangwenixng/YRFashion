@@ -45,6 +45,16 @@ class MiniappProductCardResponse(BaseModel):
     cover_image_url: str | None
 
 
+class MiniappCategoryResponse(BaseModel):
+    id: int
+    name: str
+    sort_order: int
+
+
+class MiniappCategoryListResponse(BaseModel):
+    items: list[MiniappCategoryResponse]
+
+
 class MiniappProductImageResponse(BaseModel):
     id: int
     image_url: str

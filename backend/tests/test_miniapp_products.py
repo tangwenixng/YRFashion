@@ -5,7 +5,7 @@ from sqlalchemy import func
 
 from backend.db.session import SessionLocal
 from backend.main import app
-from backend.models import Product, ProductImage
+from backend.models import Category, Product, ProductImage
 
 
 def seed_products() -> tuple[int, int, int]:
@@ -67,6 +67,56 @@ def seed_products() -> tuple[int, int, int]:
         return first.id, second.id, hidden.id
 
 
+def seed_products_with_categories() -> tuple[int, int, int]:
+    unique = uuid4().hex[:8]
+    with SessionLocal() as db:
+        active_category = Category(
+            name=f"Outerwear-{unique}",
+            sort_order=-2,
+            status="active",
+        )
+        disabled_category = Category(
+            name=f"Archive-{unique}",
+            sort_order=-1,
+            status="disabled",
+        )
+        db.add_all([active_category, disabled_category])
+        db.commit()
+        db.refresh(active_category)
+        db.refresh(disabled_category)
+
+        active_product = Product(
+            name=f"Jacket-{unique}",
+            category_id=active_category.id,
+            description="active category product",
+            tags_json=["outerwear"],
+            status="published",
+            sort_order=-2,
+        )
+        disabled_product = Product(
+            name=f"Skirt-{unique}",
+            category_id=disabled_category.id,
+            description="disabled category product",
+            tags_json=["archive"],
+            status="published",
+            sort_order=-1,
+        )
+        uncategorized_product = Product(
+            name=f"Scarf-{unique}",
+            description="uncategorized product",
+            tags_json=["scarf"],
+            status="published",
+            sort_order=0,
+        )
+        db.add_all([active_product, disabled_product, uncategorized_product])
+        db.commit()
+        db.refresh(active_product)
+        db.refresh(disabled_product)
+        db.refresh(uncategorized_product)
+
+        return active_category.id, disabled_category.id, active_product.id
+
+
 def test_product_list_returns_published_products_only() -> None:
     first_id, second_id, hidden_id = seed_products()
 
@@ -100,3 +150,31 @@ def test_product_detail_returns_sorted_images() -> None:
         f"/uploads/products/{first_id}/detail-b.png",
     ]
     assert hidden_response.status_code == 404
+
+
+def test_product_list_supports_category_filter_and_active_category_list() -> None:
+    active_category_id, disabled_category_id, active_product_id = seed_products_with_categories()
+
+    with TestClient(app) as client:
+        categories_response = client.get("/api/miniapp/categories")
+        filtered_response = client.get(f"/api/miniapp/products?category_id={active_category_id}")
+        disabled_filtered_response = client.get(
+            f"/api/miniapp/products?category_id={disabled_category_id}"
+        )
+
+    assert categories_response.status_code == 200
+    categories_payload = categories_response.json()
+    category_ids = [item["id"] for item in categories_payload["items"]]
+    assert active_category_id in category_ids
+    assert disabled_category_id not in category_ids
+
+    assert filtered_response.status_code == 200
+    filtered_payload = filtered_response.json()
+    assert [item["id"] for item in filtered_payload["items"]] == [active_product_id]
+    assert filtered_payload["total"] == 1
+    assert filtered_payload["has_more"] is False
+
+    assert disabled_filtered_response.status_code == 200
+    disabled_filtered_payload = disabled_filtered_response.json()
+    assert disabled_filtered_payload["items"] == []
+    assert disabled_filtered_payload["total"] == 0

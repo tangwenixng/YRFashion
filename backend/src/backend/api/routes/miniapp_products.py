@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session, selectinload
 
 from backend.db.session import get_db
-from backend.models import Product
+from backend.models import Category, Product
 from backend.schemas.miniapp import MiniappProductDetailResponse, MiniappProductListResponse
 from backend.services.miniapp_catalog import serialize_product_card, serialize_product_detail
 
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/miniapp/products")
 def list_products(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=20),
+    category_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
 ) -> MiniappProductListResponse:
     query = (
@@ -20,6 +21,21 @@ def list_products(
         .options(selectinload(Product.images))
         .filter(Product.status == "published")
     )
+    if category_id is not None:
+        category = (
+            db.query(Category)
+            .filter(Category.id == category_id, Category.status == "active")
+            .first()
+        )
+        if category is None:
+            return MiniappProductListResponse(
+                items=[],
+                page=page,
+                page_size=page_size,
+                total=0,
+                has_more=False,
+            )
+        query = query.filter(Product.category_id == category_id)
     total = query.count()
     items = (
         query.order_by(Product.sort_order.asc(), Product.id.desc())

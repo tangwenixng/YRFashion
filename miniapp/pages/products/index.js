@@ -3,18 +3,21 @@ const { normalizeProduct } = require("../../utils/media")
 
 Page({
   data: {
+    categories: [{ id: 0, name: "全部" }],
+    activeCategoryId: 0,
     items: [],
     page: 1,
     pageSize: 10,
     total: 0,
     hasMore: true,
     loading: true,
+    loadingCategories: true,
     loadingMore: false,
     error: "",
   },
 
   onLoad() {
-    this.loadProducts({ reset: true })
+    this.loadInitialData()
   },
 
   onPullDownRefresh() {
@@ -31,9 +34,55 @@ Page({
     this.loadProducts({ reset: true })
   },
 
+  async loadInitialData() {
+    this.setData({ loading: true, loadingCategories: true, error: "" })
+
+    try {
+      await Promise.all([this.loadCategories(), this.loadProducts({ reset: true })])
+    } finally {
+      this.setData({ loadingCategories: false })
+    }
+  },
+
+  async loadCategories() {
+    try {
+      const response = await request({ url: "/miniapp/categories" })
+      this.setData({
+        categories: [{ id: 0, name: "全部" }].concat(response.items || []),
+      })
+    } catch (error) {
+      this.setData({
+        categories: [{ id: 0, name: "全部" }],
+      })
+      wx.showToast({ title: "分类加载失败", icon: "none" })
+    }
+  },
+
+  selectCategory(event) {
+    const categoryId = Number(event.currentTarget.dataset.categoryId || 0)
+    if (categoryId === this.data.activeCategoryId) {
+      return
+    }
+
+    this.setData({
+      activeCategoryId: categoryId,
+      items: [],
+      page: 1,
+      total: 0,
+      hasMore: true,
+      error: "",
+    })
+    this.loadProducts({ reset: true })
+  },
+
   async loadProducts(options = {}) {
     const reset = Boolean(options.reset)
     const nextPage = reset ? 1 : this.data.page
+    const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
+    if (this.data.activeCategoryId > 0) {
+      query.push(`category_id=${this.data.activeCategoryId}`)
+    }
+
     this.setData({
       loading: reset,
       loadingMore: !reset,
@@ -42,7 +91,7 @@ Page({
 
     try {
       const response = await request({
-        url: `/miniapp/products?page=${nextPage}&page_size=${this.data.pageSize}`,
+        url: `/miniapp/products?${query.join("&")}`,
       })
 
       this.setData({

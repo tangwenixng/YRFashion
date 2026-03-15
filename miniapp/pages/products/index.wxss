@@ -8,6 +8,31 @@
   margin-bottom: 24rpx;
 }
 
+.category-strip {
+  display: flex;
+  white-space: nowrap;
+  margin-bottom: 24rpx;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132rpx;
+  margin-right: 16rpx;
+  padding: 16rpx 26rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.76);
+  color: #7a5e4e;
+  box-shadow: 0 10rpx 18rpx rgba(90, 60, 47, 0.06);
+  font-size: 26rpx;
+}
+
+.category-chip-active {
+  background: #3f2a1f;
+  color: #fff4ea;
+}
+
 .title {
   display: block;
   font-size: 46rpx;
