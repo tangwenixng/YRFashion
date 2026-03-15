@@ -117,6 +117,66 @@ def seed_products_with_categories() -> tuple[int, int, int]:
         return active_category.id, disabled_category.id, active_product.id
 
 
+def seed_products_with_related() -> tuple[int, int, int, int]:
+    unique = uuid4().hex[:8]
+    with SessionLocal() as db:
+        category = Category(
+            name=f"Recommend-{unique}",
+            sort_order=-5,
+            status="active",
+        )
+        other_category = Category(
+            name=f"Other-{unique}",
+            sort_order=-4,
+            status="active",
+        )
+        db.add_all([category, other_category])
+        db.commit()
+        db.refresh(category)
+        db.refresh(other_category)
+
+        target = Product(
+            name=f"Blazer-{unique}",
+            category_id=category.id,
+            description="target product",
+            tags_json=["blazer", "spring"],
+            status="published",
+            sort_order=-4,
+        )
+        same_category = Product(
+            name=f"Coat-{unique}",
+            category_id=category.id,
+            description="same category related",
+            tags_json=["coat", "spring"],
+            status="published",
+            sort_order=-3,
+        )
+        same_tag = Product(
+            name=f"Knit-{unique}",
+            category_id=other_category.id,
+            description="same tag related",
+            tags_json=["spring", "knit"],
+            status="published",
+            sort_order=-2,
+        )
+        fallback = Product(
+            name=f"Scarf-{unique}",
+            category_id=other_category.id,
+            description="fallback related",
+            tags_json=["scarf"],
+            status="published",
+            sort_order=-1,
+        )
+        db.add_all([target, same_category, same_tag, fallback])
+        db.commit()
+        db.refresh(target)
+        db.refresh(same_category)
+        db.refresh(same_tag)
+        db.refresh(fallback)
+
+        return target.id, same_category.id, same_tag.id, fallback.id
+
+
 def test_product_list_returns_published_products_only() -> None:
     first_id, second_id, hidden_id = seed_products()
 
@@ -150,6 +210,22 @@ def test_product_detail_returns_sorted_images() -> None:
         f"/uploads/products/{first_id}/detail-b.png",
     ]
     assert hidden_response.status_code == 404
+
+
+def test_product_detail_returns_related_products() -> None:
+    target_id, same_category_id, same_tag_id, fallback_id = seed_products_with_related()
+
+    with TestClient(app) as client:
+        response = client.get(f"/api/miniapp/products/{target_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    related_ids = [item["id"] for item in payload["related_products"]]
+    assert same_category_id in related_ids
+    assert same_tag_id in related_ids
+    assert fallback_id in related_ids
+    assert target_id not in related_ids
+    assert related_ids.index(same_category_id) < related_ids.index(same_tag_id)
 
 
 def test_product_list_supports_category_filter_and_active_category_list() -> None:

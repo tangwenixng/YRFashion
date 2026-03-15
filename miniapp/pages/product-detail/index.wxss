@@ -119,6 +119,61 @@
   gap: 20rpx;
 }
 
+.related-panel {
+  margin-top: 20rpx;
+}
+
+.related-list {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.related-card {
+  display: flex;
+  gap: 18rpx;
+  padding: 18rpx;
+  border-radius: 24rpx;
+  background: #f8f1ea;
+}
+
+.related-cover,
+.related-cover-placeholder {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.related-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eadccc;
+  color: #8d7262;
+  font-size: 22rpx;
+}
+
+.related-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.related-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #34231a;
+}
+
+.related-tag-row {
+  margin-top: 14rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
 .history-item {
   padding: 24rpx;
   border-radius: 24rpx;

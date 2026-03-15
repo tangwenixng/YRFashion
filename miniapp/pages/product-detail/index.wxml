@@ -73,5 +73,33 @@
         </view>
       </view>
     </view>
+
+    <view wx:if="{{product.related_products && product.related_products.length}}" class="panel related-panel">
+      <view class="history-header">
+        <view>
+          <text class="section-title">相关推荐</text>
+          <text class="section-subtitle">继续看看同风格或同分类的精选穿搭</text>
+        </view>
+      </view>
+
+      <view class="related-list">
+        <view
+          wx:for="{{product.related_products}}"
+          wx:key="id"
+          class="related-card"
+          data-product-id="{{item.id}}"
+          bindtap="goToRelatedDetail"
+        >
+          <image wx:if="{{item.cover_image_url}}" class="related-cover" src="{{item.cover_image_url}}" mode="aspectFill"></image>
+          <view wx:else class="related-cover related-cover-placeholder">暂无封面</view>
+          <view class="related-content">
+            <text class="related-name">{{item.name}}</text>
+            <view class="related-tag-row">
+              <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
   </block>
 </view>

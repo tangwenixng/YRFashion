@@ -214,6 +214,15 @@ Page({
     wx.navigateTo({ url: "/pages/contact/index" })
   },
 
+  goToRelatedDetail(event) {
+    const productId = Number(event.currentTarget.dataset.productId || 0)
+    if (!productId) {
+      return
+    }
+
+    wx.navigateTo({ url: `/pages/product-detail/index?id=${productId}` })
+  },
+
   onShareAppMessage() {
     const product = this.data.product
     if (!product) {

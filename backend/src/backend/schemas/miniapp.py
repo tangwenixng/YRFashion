@@ -78,6 +78,7 @@ class MiniappProductDetailResponse(BaseModel):
     tags: list[str]
     cover_image_url: str | None
     images: list[MiniappProductImageResponse]
+    related_products: list[MiniappProductCardResponse] = Field(default_factory=list)
 
 
 class MiniappMessageCreateRequest(BaseModel):

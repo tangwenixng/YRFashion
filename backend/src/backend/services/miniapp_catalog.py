@@ -33,6 +33,13 @@ def serialize_product_card(product: Product) -> MiniappProductCardResponse:
 
 
 def serialize_product_detail(product: Product) -> MiniappProductDetailResponse:
+    return serialize_product_detail_with_related(product, [])
+
+
+def serialize_product_detail_with_related(
+    product: Product,
+    related_products: list[Product],
+) -> MiniappProductDetailResponse:
     images = sort_product_images(list(product.images))
     return MiniappProductDetailResponse(
         id=product.id,
@@ -50,4 +57,5 @@ def serialize_product_detail(product: Product) -> MiniappProductDetailResponse:
             )
             for image in images
         ],
+        related_products=[serialize_product_card(item) for item in related_products],
     )

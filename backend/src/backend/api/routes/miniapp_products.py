@@ -5,9 +5,38 @@ from sqlalchemy.orm import Session, selectinload
 from backend.db.session import get_db
 from backend.models import Category, Product
 from backend.schemas.miniapp import MiniappProductDetailResponse, MiniappProductListResponse
-from backend.services.miniapp_catalog import serialize_product_card, serialize_product_detail
+from backend.services.miniapp_catalog import (
+    get_cover_image_url,
+    serialize_product_card,
+    serialize_product_detail_with_related,
+)
 
 router = APIRouter(prefix="/miniapp/products")
+
+
+def pick_related_products(db: Session, product: Product, limit: int = 6) -> list[Product]:
+    base_tags = set(product.tags_json or [])
+    candidates = (
+        db.query(Product)
+        .options(selectinload(Product.images))
+        .filter(Product.status == "published", Product.id != product.id)
+        .all()
+    )
+
+    def sort_key(item: Product) -> tuple[int, int, int, int, int]:
+        item_tags = set(item.tags_json or [])
+        shared_tags = len(base_tags & item_tags)
+        same_category = product.category_id is not None and item.category_id == product.category_id
+        has_cover = get_cover_image_url(item) is not None
+        return (
+            0 if same_category else 1,
+            -shared_tags,
+            0 if has_cover else 1,
+            item.sort_order,
+            -item.id,
+        )
+
+    return sorted(candidates, key=sort_key)[:limit]
 
 
 @router.get("", response_model=MiniappProductListResponse)
@@ -76,4 +105,4 @@ def get_product_detail(
     )
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    return serialize_product_detail(product)
+    return serialize_product_detail_with_related(product, pick_related_products(db, product))

@@ -42,10 +42,14 @@ function normalizeProduct(product) {
         }),
       )
     : []
+  const relatedProducts = Array.isArray(product.related_products)
+    ? product.related_products.map((item) => normalizeProduct(item))
+    : []
 
   return Object.assign({}, product, {
     cover_image_url: normalizeMediaUrl(product.cover_image_url),
     images,
+    related_products: relatedProducts,
   })
 }
 
