@@ -3,6 +3,7 @@ const { ensureMiniappLogin } = require("./utils/auth")
 App({
   globalData: {
     miniappUser: null,
+    adminProfile: null,
   },
 
   onLaunch() {

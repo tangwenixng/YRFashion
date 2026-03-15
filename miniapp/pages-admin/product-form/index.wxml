@@ -1,0 +1,51 @@
+<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="card skeleton"></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="field">
+        <text class="label">Product Name</text>
+        <input class="input" placeholder="Example: Wool Coat" value="{{name}}" bindinput="handleNameInput" />
+      </view>
+
+      <view class="field">
+        <text class="label">Description</text>
+        <textarea
+          class="textarea"
+          maxlength="1000"
+          placeholder="Enter product description"
+          value="{{description}}"
+          bindinput="handleDescriptionInput"
+        ></textarea>
+      </view>
+
+      <view class="field">
+        <text class="label">Category</text>
+        <picker range="{{categoryOptions}}" range-key="name" value="{{categoryIndex}}" bindchange="handleCategoryChange">
+          <view class="picker">{{categoryOptions[categoryIndex].name}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <text class="label">Status</text>
+        <picker range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="handleStatusChange">
+          <view class="picker">{{statusOptions[statusIndex].label}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <text class="label">Tags</text>
+        <input class="input" placeholder="Separate tags with commas" value="{{tagsText}}" bindinput="handleTagsInput" />
+      </view>
+
+      <view class="field">
+        <text class="label">Sort Order</text>
+        <input class="input" type="number" placeholder="Default 0" value="{{sortOrder}}" bindinput="handleSortInput" />
+      </view>
+    </view>
+
+    <button class="primary-button" loading="{{saving}}" bindtap="submit">Save Product</button>
+  </block>
+</view>

@@ -67,6 +67,14 @@
   gap: 24rpx;
 }
 
+.admin-entry-card {
+  border: 1rpx dashed rgba(98, 68, 52, 0.18);
+}
+
+.admin-entry-button {
+  margin-top: 18rpx;
+}
+
 .error-card {
   text-align: center;
 }

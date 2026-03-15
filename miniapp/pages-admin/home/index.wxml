@@ -1,0 +1,36 @@
+<view class="page">
+  <view class="hero">
+    <text class="eyebrow">ADMIN CENTER</text>
+    <text class="title">Hi, {{profile ? profile.display_name : 'Admin'}}</text>
+    <text class="subtitle">{{profile ? profile.username : ''}}</text>
+  </view>
+
+  <view class="summary-grid">
+    <view class="summary-card">
+      <text class="summary-label">Products</text>
+      <text class="summary-value">{{loading ? '--' : productCount}}</text>
+    </view>
+    <view class="summary-card">
+      <text class="summary-label">Unread</text>
+      <text class="summary-value">{{loading ? '--' : unreadMessageCount}}</text>
+    </view>
+    <view class="summary-card">
+      <text class="summary-label">Replied</text>
+      <text class="summary-value">{{loading ? '--' : repliedMessageCount}}</text>
+    </view>
+  </view>
+
+  <view class="action-list">
+    <view class="action-card" bindtap="goToProducts">
+      <text class="action-title">Product Management</text>
+      <text class="action-desc">Create, edit, publish and manage images.</text>
+    </view>
+
+    <view class="action-card" bindtap="goToMessages">
+      <text class="action-title">Message Management</text>
+      <text class="action-desc">Review user messages and send replies.</text>
+    </view>
+  </view>
+
+  <button class="logout-button" bindtap="logout">Logout</button>
+</view>

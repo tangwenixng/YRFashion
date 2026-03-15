@@ -1,0 +1,39 @@
+<view class="page">
+  <view class="hero">
+    <text class="eyebrow">ADMIN MINIAPP</text>
+    <text class="title">Mobile Admin</text>
+    <text class="subtitle">Manage products and messages from your phone.</text>
+  </view>
+
+  <view class="panel">
+    <view class="field">
+      <text class="label">Username</text>
+      <input
+        class="input"
+        placeholder="Enter admin username"
+        value="{{username}}"
+        bindinput="handleUsernameInput"
+      />
+    </view>
+
+    <view class="field">
+      <text class="label">Password</text>
+      <input
+        class="input"
+        password="true"
+        placeholder="Enter admin password"
+        value="{{password}}"
+        bindinput="handlePasswordInput"
+      />
+    </view>
+
+    <text wx:if="{{error}}" class="error-text">{{error}}</text>
+
+    <button class="primary-button" loading="{{submitting}}" bindtap="submit">Login</button>
+
+    <view class="tips">
+      <text>Use the existing web admin account here.</text>
+      <text>The admin token is separate from the shopper token.</text>
+    </view>
+  </view>
+</view>

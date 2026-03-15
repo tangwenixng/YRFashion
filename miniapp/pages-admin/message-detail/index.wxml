@@ -1,0 +1,57 @@
+<view class="page">
+  <block wx:if="{{loading}}">
+    <view class="card skeleton"></view>
+    <view class="card skeleton"></view>
+  </block>
+
+  <block wx:elif="{{error}}">
+    <view class="card empty-card">
+      <text class="empty-title">{{error}}</text>
+      <button class="secondary-button" bindtap="loadDetail">Reload</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{message}}">
+    <view class="card user-card">
+      <view class="user-row">
+        <image wx:if="{{message.miniapp_user_avatar_url}}" class="avatar" src="{{message.miniapp_user_avatar_url}}" mode="aspectFill"></image>
+        <view wx:else class="avatar avatar-fallback">{{message.avatar_initial}}</view>
+
+        <view class="user-meta">
+          <text class="user-name">{{message.user_display}}</text>
+          <text class="sub-text">Product: {{message.product_name}}</text>
+          <text class="sub-text">Created: {{message.created_at_text}}</text>
+        </view>
+      </view>
+
+      <view class="status-row">
+        <text class="status-badge status-{{message.status}}">{{message.status_label}}</text>
+        <button wx:if="{{message.status === 'unread'}}" class="mini-button" bindtap="markRead">Mark Read</button>
+        <button wx:else class="mini-button secondary" bindtap="markUnread">Mark Unread</button>
+      </view>
+    </view>
+
+    <view class="card content-card">
+      <text class="section-title">User Message</text>
+      <text class="content-text">{{message.content}}</text>
+    </view>
+
+    <view class="card">
+      <text class="section-title">Reply</text>
+      <textarea
+        class="textarea"
+        maxlength="1000"
+        placeholder="Enter reply text"
+        value="{{replyContent}}"
+        bindinput="handleReplyInput"
+      ></textarea>
+      <button class="primary-button" loading="{{saving}}" bindtap="submitReply">Send Reply</button>
+
+      <view wx:if="{{message.reply_content}}" class="reply-history">
+        <text class="section-title">Current Reply</text>
+        <text class="content-text">{{message.reply_content}}</text>
+        <text wx:if="{{message.reply_at_text}}" class="sub-text">Replied: {{message.reply_at_text}}</text>
+      </view>
+    </view>
+  </block>
+</view>

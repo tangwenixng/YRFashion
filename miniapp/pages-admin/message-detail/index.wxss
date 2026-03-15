@@ -1,0 +1,155 @@
+.page {
+  min-height: 100vh;
+  padding: 32rpx;
+  background: linear-gradient(180deg, #fbf6f0 0%, #ede2d7 100%);
+}
+
+.card {
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+}
+
+.card + .card {
+  margin-top: 22rpx;
+}
+
+.user-row,
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.status-row {
+  margin-top: 20rpx;
+  justify-content: space-between;
+}
+
+.avatar,
+.avatar-fallback {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  background: #e8d8ca;
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d4c36;
+  font-weight: 700;
+}
+
+.user-meta {
+  flex: 1;
+}
+
+.user-name,
+.section-title,
+.empty-title {
+  display: block;
+}
+
+.user-name {
+  color: #342219;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.sub-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a6f5d;
+  font-size: 24rpx;
+}
+
+.status-badge {
+  padding: 8rpx 16rpx;
+  border-radius: 999px;
+  font-size: 22rpx;
+}
+
+.status-unread {
+  background: #f6e0cc;
+  color: #8d5b25;
+}
+
+.status-read {
+  background: #e7ecef;
+  color: #58656d;
+}
+
+.status-replied {
+  background: #dceddf;
+  color: #2e6e43;
+}
+
+.section-title {
+  color: #6e5445;
+  font-size: 24rpx;
+}
+
+.content-text {
+  display: block;
+  margin-top: 18rpx;
+  color: #2d1d14;
+  line-height: 1.8;
+}
+
+.textarea {
+  margin-top: 16rpx;
+  width: 100%;
+  min-height: 240rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: #f6ede4;
+  color: #2f1f16;
+}
+
+.primary-button,
+.mini-button,
+.secondary-button {
+  background: #2f2018;
+  color: #fff8f2;
+}
+
+.primary-button {
+  margin-top: 24rpx;
+}
+
+.mini-button.secondary,
+.secondary-button {
+  background: #ead8c7;
+  color: #4a3022;
+}
+
+.reply-history {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid rgba(105, 75, 56, 0.12);
+}
+
+.empty-card {
+  text-align: center;
+}
+
+.skeleton {
+  height: 320rpx;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.65;
+  }
+}

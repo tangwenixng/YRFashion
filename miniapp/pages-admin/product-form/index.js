@@ -1,0 +1,178 @@
+const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
+const { fetchAdminCategories } = require("../../utils/admin-api/categories")
+const {
+  createAdminProduct,
+  fetchAdminProduct,
+  updateAdminProduct,
+} = require("../../utils/admin-api/products")
+
+const STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Published" },
+  { value: "archived", label: "Archived" },
+]
+
+function buildCategoryOptions(categories) {
+  return [{ id: null, name: "Uncategorized" }].concat(
+    (categories || []).map((item) => ({
+      id: item.id,
+      name: item.status === "active" ? item.name : `${item.name} (disabled)`,
+    })),
+  )
+}
+
+function goBackToProducts() {
+  wx.navigateBack({
+    fail: () => {
+      wx.reLaunch({
+        url: "/pages-admin/products/index",
+      })
+    },
+  })
+}
+
+Page({
+  data: {
+    productId: null,
+    loading: true,
+    saving: false,
+    categoryOptions: [{ id: null, name: "Uncategorized" }],
+    categoryIndex: 0,
+    statusOptions: STATUS_OPTIONS,
+    statusIndex: 0,
+    name: "",
+    description: "",
+    tagsText: "",
+    sortOrder: "0",
+  },
+
+  onLoad(query) {
+    const productId = Number(query.id || 0) || null
+    this.setData({ productId })
+    wx.setNavigationBarTitle({
+      title: productId ? "Edit Product" : "New Product",
+    })
+  },
+
+  onShow() {
+    ensureAdminLogin()
+      .then(() => this.loadPage())
+      .catch(() => redirectToAdminLogin())
+  },
+
+  async loadPage() {
+    this.setData({ loading: true })
+
+    try {
+      const [categories, product] = await Promise.all([
+        fetchAdminCategories(),
+        this.data.productId ? fetchAdminProduct(this.data.productId) : Promise.resolve(null),
+      ])
+
+      const categoryOptions = buildCategoryOptions(categories)
+      const categoryIndex = categoryOptions.findIndex((item) => item.id === (product ? product.category_id : null))
+      const statusIndex = STATUS_OPTIONS.findIndex((item) => item.value === (product ? product.status : "draft"))
+
+      this.setData({
+        loading: false,
+        categoryOptions,
+        categoryIndex: categoryIndex >= 0 ? categoryIndex : 0,
+        statusIndex: statusIndex >= 0 ? statusIndex : 0,
+        name: product ? product.name : "",
+        description: product ? product.description : "",
+        tagsText: product ? product.tags.join(", ") : "",
+        sortOrder: product ? String(product.sort_order) : "0",
+      })
+    } catch (_error) {
+      this.setData({ loading: false })
+      wx.showToast({ title: "Load failed", icon: "none" })
+    }
+  },
+
+  handleNameInput(event) {
+    this.setData({ name: event.detail.value })
+  },
+
+  handleDescriptionInput(event) {
+    this.setData({ description: event.detail.value })
+  },
+
+  handleTagsInput(event) {
+    this.setData({ tagsText: event.detail.value })
+  },
+
+  handleSortInput(event) {
+    this.setData({ sortOrder: event.detail.value })
+  },
+
+  handleCategoryChange(event) {
+    this.setData({
+      categoryIndex: Number(event.detail.value),
+    })
+  },
+
+  handleStatusChange(event) {
+    this.setData({
+      statusIndex: Number(event.detail.value),
+    })
+  },
+
+  async submit() {
+    const name = this.data.name.trim()
+    if (!name) {
+      wx.showToast({ title: "Name is required", icon: "none" })
+      return
+    }
+
+    const selectedCategory = this.data.categoryOptions[this.data.categoryIndex] || this.data.categoryOptions[0]
+    const selectedStatus = this.data.statusOptions[this.data.statusIndex] || this.data.statusOptions[0]
+
+    const payload = {
+      name,
+      category_id: selectedCategory.id,
+      description: this.data.description.trim(),
+      tags: this.data.tagsText
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      status: selectedStatus.value,
+      sort_order: Number(this.data.sortOrder) || 0,
+    }
+
+    this.setData({ saving: true })
+
+    try {
+      if (this.data.productId) {
+        await updateAdminProduct(this.data.productId, payload)
+        wx.showToast({ title: "Saved", icon: "success" })
+        setTimeout(() => {
+          goBackToProducts()
+        }, 300)
+      } else {
+        const product = await createAdminProduct(payload)
+        this.setData({ saving: false })
+        wx.showModal({
+          title: "Product created",
+          content: "Upload images now?",
+          confirmText: "Upload",
+          cancelText: "Later",
+          success: (result) => {
+            if (result.confirm) {
+              wx.redirectTo({
+                url: `/pages-admin/product-images/index?id=${product.id}`,
+              })
+              return
+            }
+
+            goBackToProducts()
+          },
+        })
+        return
+      }
+    } catch (_error) {
+      wx.showToast({ title: "Save failed", icon: "none" })
+    }
+
+    this.setData({ saving: false })
+  },
+})

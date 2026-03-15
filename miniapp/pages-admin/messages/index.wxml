@@ -1,0 +1,79 @@
+<view class="page">
+  <scroll-view class="status-scroll" scroll-x="true" enable-flex="true">
+    <view class="status-tabs">
+      <block wx:for="{{statusTabs}}" wx:key="value">
+        <view
+          class="status-tab {{statusFilter === item.value ? 'active' : ''}}"
+          data-status="{{item.value}}"
+          bindtap="switchStatus"
+        >
+          {{item.label}}
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+
+  <block wx:if="{{loading}}">
+    <view class="card skeleton"></view>
+    <view class="card skeleton"></view>
+  </block>
+
+  <block wx:elif="{{error && !items.length}}">
+    <view class="card empty-card">
+      <text class="empty-title">{{error}}</text>
+      <button class="secondary-button" bindtap="loadMessages">Reload</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{items.length}}">
+    <view class="list">
+      <block wx:for="{{items}}" wx:key="id">
+        <view class="card message-card" bindtap="openDetail" data-message-id="{{item.id}}">
+          <view class="user-row">
+            <image wx:if="{{item.miniapp_user_avatar_url}}" class="avatar" src="{{item.miniapp_user_avatar_url}}" mode="aspectFill"></image>
+            <view wx:else class="avatar avatar-fallback">{{item.avatar_initial}}</view>
+
+            <view class="user-meta">
+              <text class="user-name">{{item.user_display}}</text>
+              <text class="user-time">{{item.created_at_text}}</text>
+            </view>
+
+            <text class="status-badge status-{{item.status}}">{{item.status_label}}</text>
+          </view>
+
+          <text class="product-name">Product: {{item.product_name}}</text>
+          <text class="content">{{item.content}}</text>
+
+          <text wx:if="{{item.reply_content}}" class="reply-text">Reply: {{item.reply_content}}</text>
+
+          <view class="action-row">
+            <button
+              wx:if="{{item.status === 'unread'}}"
+              class="mini-button"
+              data-message-id="{{item.id}}"
+              catchtap="markRead"
+            >
+              Mark Read
+            </button>
+            <button
+              wx:else
+              class="mini-button secondary"
+              data-message-id="{{item.id}}"
+              catchtap="markUnread"
+            >
+              Mark Unread
+            </button>
+            <button class="mini-button ghost" data-message-id="{{item.id}}" catchtap="openDetail">View Detail</button>
+          </view>
+        </view>
+      </block>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="card empty-card">
+      <text class="empty-title">No messages yet</text>
+      <text class="empty-subtitle">User messages will appear here.</text>
+    </view>
+  </block>
+</view>

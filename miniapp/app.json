@@ -13,6 +13,20 @@
     "backgroundColor": "#f7f2eb",
     "backgroundTextStyle": "light"
   },
+  "subpackages": [
+    {
+      "root": "pages-admin",
+      "pages": [
+        "login/index",
+        "home/index",
+        "products/index",
+        "product-form/index",
+        "product-images/index",
+        "messages/index",
+        "message-detail/index"
+      ]
+    }
+  ],
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }
