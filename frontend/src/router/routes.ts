@@ -30,6 +30,14 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'accounts',
+        name: 'accounts',
+        component: () => import('../views/AccountsView.vue'),
+        meta: {
+          title: '账号管理',
+        },
+      },
+      {
         path: 'categories',
         name: 'categories',
         component: () => import('../views/CategoriesView.vue'),

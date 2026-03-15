@@ -1,5 +1,6 @@
 ﻿from fastapi import APIRouter
 
+from backend.api.routes.admin_accounts import router as admin_accounts_router
 from backend.api.routes.admin_auth import router as admin_auth_router
 from backend.api.routes.admin_categories import router as admin_categories_router
 from backend.api.routes.admin_dashboard import router as admin_dashboard_router
@@ -16,6 +17,7 @@ from backend.api.routes.miniapp_products import router as miniapp_products_route
 from backend.api.routes.miniapp_storefront import router as miniapp_storefront_router
 
 api_router = APIRouter()
+api_router.include_router(admin_accounts_router, tags=["admin-accounts"])
 api_router.include_router(admin_auth_router, tags=["admin-auth"])
 api_router.include_router(admin_categories_router, tags=["admin-categories"])
 api_router.include_router(admin_dashboard_router, tags=["admin-dashboard"])

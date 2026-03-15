@@ -8,6 +8,7 @@ import {
   Setting,
   SwitchButton,
   User,
+  UserFilled,
 } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -21,6 +22,7 @@ const collapsed = ref(false)
 
 const menuItems = [
   { index: '/dashboard', label: '概览', icon: House },
+  { index: '/accounts', label: '账号管理', icon: UserFilled },
   { index: '/categories', label: '分类管理', icon: CollectionTag },
   { index: '/products', label: '商品管理', icon: Promotion },
   { index: '/messages', label: '留言管理', icon: ChatLineRound },
