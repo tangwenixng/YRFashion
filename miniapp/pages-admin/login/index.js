@@ -37,8 +37,8 @@ Page({
     const password = this.data.password
 
     if (!username || !password) {
-      this.setData({ error: "Please enter username and password." })
-      wx.showToast({ title: "Missing credentials", icon: "none" })
+      this.setData({ error: "请输入账号和密码。" })
+      wx.showToast({ title: "请先填写登录信息", icon: "none" })
       return
     }
 
@@ -49,7 +49,7 @@ Page({
 
     try {
       await loginAdmin(username, password)
-      wx.showToast({ title: "Login ok", icon: "success" })
+      wx.showToast({ title: "登录成功", icon: "success" })
       setTimeout(() => {
         wx.reLaunch({
           url: "/pages-admin/home/index",
@@ -59,13 +59,13 @@ Page({
       const detail =
         (error && error.data && error.data.detail) ||
         (error && error.detail) ||
-        "Login failed."
+        "登录失败。"
 
       this.setData({
         submitting: false,
         error: detail,
       })
-      wx.showToast({ title: "Login failed", icon: "none" })
+      wx.showToast({ title: "登录失败", icon: "none" })
       return
     }
 

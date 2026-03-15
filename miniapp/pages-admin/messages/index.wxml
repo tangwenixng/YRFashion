@@ -21,7 +21,7 @@
   <block wx:elif="{{error && !items.length}}">
     <view class="card empty-card">
       <text class="empty-title">{{error}}</text>
-      <button class="secondary-button" bindtap="loadMessages">Reload</button>
+      <button class="secondary-button" bindtap="loadMessages">重新加载</button>
     </view>
   </block>
 
@@ -41,10 +41,10 @@
             <text class="status-badge status-{{item.status}}">{{item.status_label}}</text>
           </view>
 
-          <text class="product-name">Product: {{item.product_name}}</text>
+          <text class="product-name">相关展示：{{item.product_name}}</text>
           <text class="content">{{item.content}}</text>
 
-          <text wx:if="{{item.reply_content}}" class="reply-text">Reply: {{item.reply_content}}</text>
+          <text wx:if="{{item.reply_content}}" class="reply-text">回复内容：{{item.reply_content}}</text>
 
           <view class="action-row">
             <button
@@ -53,7 +53,7 @@
               data-message-id="{{item.id}}"
               catchtap="markRead"
             >
-              Mark Read
+              标记已读
             </button>
             <button
               wx:else
@@ -61,9 +61,9 @@
               data-message-id="{{item.id}}"
               catchtap="markUnread"
             >
-              Mark Unread
+              标记未读
             </button>
-            <button class="mini-button ghost" data-message-id="{{item.id}}" catchtap="openDetail">View Detail</button>
+            <button class="mini-button ghost" data-message-id="{{item.id}}" catchtap="openDetail">查看详情</button>
           </view>
         </view>
       </block>
@@ -72,8 +72,8 @@
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">No messages yet</text>
-      <text class="empty-subtitle">User messages will appear here.</text>
+      <text class="empty-title">暂时还没有咨询记录</text>
+      <text class="empty-subtitle">用户提交的咨询会显示在这里。</text>
     </view>
   </block>
 </view>

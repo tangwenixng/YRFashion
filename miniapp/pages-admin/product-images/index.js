@@ -32,7 +32,7 @@ Page({
     if (!this.data.productId) {
       this.setData({
         loading: false,
-        error: "Missing product id.",
+        error: "缺少展示编号。",
       })
       return
     }
@@ -49,14 +49,14 @@ Page({
         loading: false,
       })
       wx.setNavigationBarTitle({
-        title: `${product.name} Images`,
+        title: `${product.name} 图片`,
       })
     } catch (_error) {
       this.setData({
         loading: false,
-        error: "Failed to load product images.",
+        error: "图片加载失败。",
       })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 
@@ -86,11 +86,11 @@ Page({
               this.data.product.images.length === 0 && index === 0,
             )
           }
-          wx.showToast({ title: "Upload done", icon: "success" })
+          wx.showToast({ title: "上传完成", icon: "success" })
           this.loadProduct()
         } catch (_error) {
           this.setData({ uploading: false })
-          wx.showToast({ title: "Upload failed", icon: "none" })
+          wx.showToast({ title: "上传失败", icon: "none" })
           return
         }
 
@@ -134,10 +134,10 @@ Page({
         product,
         savingSort: false,
       })
-      wx.showToast({ title: "Sort saved", icon: "success" })
+      wx.showToast({ title: "排序已保存", icon: "success" })
     } catch (_error) {
       this.setData({ savingSort: false })
-      wx.showToast({ title: "Save failed", icon: "none" })
+      wx.showToast({ title: "保存失败", icon: "none" })
     }
   },
 
@@ -146,9 +146,9 @@ Page({
     try {
       const product = await setAdminProductCover(this.data.productId, imageId)
       this.setData({ product })
-      wx.showToast({ title: "Cover updated", icon: "success" })
+      wx.showToast({ title: "封面已更新", icon: "success" })
     } catch (_error) {
-      wx.showToast({ title: "Update failed", icon: "none" })
+      wx.showToast({ title: "更新失败", icon: "none" })
     }
   },
 
@@ -157,9 +157,9 @@ Page({
     try {
       const product = await deleteAdminProductImage(this.data.productId, imageId)
       this.setData({ product })
-      wx.showToast({ title: "Deleted", icon: "success" })
+      wx.showToast({ title: "删除成功", icon: "success" })
     } catch (_error) {
-      wx.showToast({ title: "Delete failed", icon: "none" })
+      wx.showToast({ title: "删除失败", icon: "none" })
     }
   },
 })

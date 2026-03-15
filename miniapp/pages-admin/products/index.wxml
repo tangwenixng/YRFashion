@@ -1,17 +1,17 @@
 <view class="page">
   <view class="page-header">
-    <text class="title">Product Management</text>
-    <text class="subtitle">Create, edit and manage product images from mobile.</text>
+    <text class="title">展示管理</text>
+    <text class="subtitle">在手机上管理展示内容、状态与图片。</text>
   </view>
 
   <view class="toolbar">
     <input
       class="search-input"
-      placeholder="Search by product or category"
+      placeholder="搜索展示名称或分类"
       value="{{keyword}}"
       bindinput="handleKeywordInput"
     />
-    <button class="create-button" bindtap="openCreate">New Product</button>
+    <button class="create-button" bindtap="openCreate">新增展示</button>
   </view>
 
   <scroll-view class="status-scroll" scroll-x="true" enable-flex="true">
@@ -36,7 +36,7 @@
   <block wx:elif="{{error && !items.length}}">
     <view class="card empty-card">
       <text class="empty-title">{{error}}</text>
-      <button class="ghost-button" bindtap="loadProducts">Reload</button>
+      <button class="ghost-button" bindtap="loadProducts">重新加载</button>
     </view>
   </block>
 
@@ -45,7 +45,7 @@
       <block wx:for="{{items}}" wx:key="id">
         <view class="card product-card">
           <image wx:if="{{item.cover_image_url}}" class="cover" src="{{item.cover_image_url}}" mode="aspectFill"></image>
-          <view wx:else class="cover cover-placeholder">No cover</view>
+          <view wx:else class="cover cover-placeholder">暂无封面</view>
 
           <view class="content">
             <view class="content-header">
@@ -53,15 +53,15 @@
               <text class="status-badge status-{{item.status}}">{{item.status_label}}</text>
             </view>
 
-            <text class="meta-text">Category: {{item.category_name || 'Uncategorized'}}</text>
-            <text class="meta-text">Images: {{item.images.length}}</text>
+            <text class="meta-text">分类：{{item.category_name || '未分类'}}</text>
+            <text class="meta-text">图片数：{{item.images.length}}</text>
 
             <view wx:if="{{item.tags.length}}" class="tag-row">
               <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
             </view>
 
             <view class="sort-row">
-              <text class="meta-label">Sort</text>
+              <text class="meta-label">排序</text>
               <input
                 class="sort-input"
                 type="number"
@@ -69,14 +69,14 @@
                 data-product-id="{{item.id}}"
                 bindinput="handleSortInput"
               />
-              <button class="mini-button" data-product-id="{{item.id}}" catchtap="saveSort">Save Sort</button>
+              <button class="mini-button" data-product-id="{{item.id}}" catchtap="saveSort">保存排序</button>
             </view>
 
             <view class="action-row">
-              <button class="mini-button" data-product-id="{{item.id}}" catchtap="openEdit">Edit</button>
-              <button class="mini-button secondary" data-product-id="{{item.id}}" catchtap="openImages">Images</button>
+              <button class="mini-button" data-product-id="{{item.id}}" catchtap="openEdit">编辑</button>
+              <button class="mini-button secondary" data-product-id="{{item.id}}" catchtap="openImages">图片</button>
               <button class="mini-button ghost" data-product-id="{{item.id}}" catchtap="toggleStatus">
-                {{item.status === 'published' ? 'Unpublish' : 'Publish'}}
+                {{item.status === 'published' ? '下架' : '发布'}}
               </button>
             </view>
           </view>
@@ -87,8 +87,8 @@
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">No products yet</text>
-      <text class="empty-subtitle">Create a product first, then upload images.</text>
+      <text class="empty-title">暂时还没有展示内容</text>
+      <text class="empty-subtitle">先新增展示，再上传对应图片。</text>
     </view>
   </block>
 </view>

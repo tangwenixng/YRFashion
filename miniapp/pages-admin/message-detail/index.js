@@ -46,7 +46,7 @@ Page({
     if (!this.data.messageId) {
       this.setData({
         loading: false,
-        error: "Missing message id.",
+        error: "缺少咨询记录编号。",
       })
       return
     }
@@ -62,7 +62,7 @@ Page({
       if (!current) {
         this.setData({
           loading: false,
-          error: "Message not found.",
+          error: "未找到对应咨询记录。",
         })
         return
       }
@@ -76,9 +76,9 @@ Page({
     } catch (_error) {
       this.setData({
         loading: false,
-        error: "Failed to load message detail.",
+        error: "咨询详情加载失败。",
       })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 
@@ -97,9 +97,9 @@ Page({
       this.setData({
         message: decorateMessage(message),
       })
-      wx.showToast({ title: "Marked read", icon: "success" })
+      wx.showToast({ title: "已标记为已读", icon: "success" })
     } catch (_error) {
-      wx.showToast({ title: "Action failed", icon: "none" })
+      wx.showToast({ title: "操作失败", icon: "none" })
     }
   },
 
@@ -112,9 +112,9 @@ Page({
       this.setData({
         message: decorateMessage(message),
       })
-      wx.showToast({ title: "Marked unread", icon: "success" })
+      wx.showToast({ title: "已标记为未读", icon: "success" })
     } catch (_error) {
-      wx.showToast({ title: "Action failed", icon: "none" })
+      wx.showToast({ title: "操作失败", icon: "none" })
     }
   },
 
@@ -124,7 +124,7 @@ Page({
       return
     }
     if (!replyContent) {
-      wx.showToast({ title: "Reply cannot be empty", icon: "none" })
+      wx.showToast({ title: "回复内容不能为空", icon: "none" })
       return
     }
 
@@ -136,10 +136,10 @@ Page({
         message: decorateMessage(message),
         replyContent: message.reply_content || replyContent,
       })
-      wx.showToast({ title: "Reply sent", icon: "success" })
+      wx.showToast({ title: "回复已发送", icon: "success" })
     } catch (_error) {
       this.setData({ saving: false })
-      wx.showToast({ title: "Reply failed", icon: "none" })
+      wx.showToast({ title: "回复失败", icon: "none" })
     }
   },
 })

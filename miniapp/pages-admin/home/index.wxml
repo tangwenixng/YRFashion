@@ -1,36 +1,36 @@
 <view class="page">
   <view class="hero">
-    <text class="eyebrow">ADMIN CENTER</text>
-    <text class="title">Hi, {{profile ? profile.display_name : 'Admin'}}</text>
+    <text class="eyebrow">管理中心</text>
+    <text class="title">你好，{{profile ? profile.display_name : '管理员'}}</text>
     <text class="subtitle">{{profile ? profile.username : ''}}</text>
   </view>
 
   <view class="summary-grid">
     <view class="summary-card">
-      <text class="summary-label">Products</text>
+      <text class="summary-label">展示数量</text>
       <text class="summary-value">{{loading ? '--' : productCount}}</text>
     </view>
     <view class="summary-card">
-      <text class="summary-label">Unread</text>
+      <text class="summary-label">未读咨询</text>
       <text class="summary-value">{{loading ? '--' : unreadMessageCount}}</text>
     </view>
     <view class="summary-card">
-      <text class="summary-label">Replied</text>
+      <text class="summary-label">已回复</text>
       <text class="summary-value">{{loading ? '--' : repliedMessageCount}}</text>
     </view>
   </view>
 
   <view class="action-list">
     <view class="action-card" bindtap="goToProducts">
-      <text class="action-title">Product Management</text>
-      <text class="action-desc">Create, edit, publish and manage images.</text>
+      <text class="action-title">展示管理</text>
+      <text class="action-desc">新增、编辑、发布展示内容并维护图片。</text>
     </view>
 
     <view class="action-card" bindtap="goToMessages">
-      <text class="action-title">Message Management</text>
-      <text class="action-desc">Review user messages and send replies.</text>
+      <text class="action-title">咨询管理</text>
+      <text class="action-desc">查看用户咨询并及时进行回复。</text>
     </view>
   </view>
 
-  <button class="logout-button" bindtap="logout">Logout</button>
+  <button class="logout-button" bindtap="logout">退出登录</button>
 </view>

@@ -7,19 +7,19 @@
   <block wx:elif="{{error}}">
     <view class="card empty-card">
       <text class="empty-title">{{error}}</text>
-      <button class="secondary-button" bindtap="loadProduct">Reload</button>
+      <button class="secondary-button" bindtap="loadProduct">重新加载</button>
     </view>
   </block>
 
   <block wx:elif="{{product}}">
     <view class="hero">
       <text class="title">{{product.name}}</text>
-      <text class="subtitle">{{product.images.length}} image(s)</text>
+      <text class="subtitle">共 {{product.images.length}} 张图片</text>
     </view>
 
     <view class="toolbar">
-      <button class="primary-button" loading="{{uploading}}" bindtap="chooseImages">Upload Images</button>
-      <button class="secondary-button" loading="{{savingSort}}" bindtap="saveSorts">Save Sort</button>
+      <button class="primary-button" loading="{{uploading}}" bindtap="chooseImages">上传图片</button>
+      <button class="secondary-button" loading="{{savingSort}}" bindtap="saveSorts">保存排序</button>
     </view>
 
     <block wx:if="{{product.images.length}}">
@@ -31,11 +31,11 @@
             <view class="content">
               <view class="row">
                 <text class="image-name">{{item.original_name}}</text>
-                <text wx:if="{{item.is_cover}}" class="cover-badge">Cover</text>
+                <text wx:if="{{item.is_cover}}" class="cover-badge">封面</text>
               </view>
 
               <view class="sort-row">
-                <text class="meta-label">Sort</text>
+                <text class="meta-label">排序</text>
                 <input
                   class="sort-input"
                   type="number"
@@ -46,8 +46,8 @@
               </view>
 
               <view class="action-row">
-                <button class="mini-button" data-image-id="{{item.id}}" bindtap="setCover">Set Cover</button>
-                <button class="mini-button danger" data-image-id="{{item.id}}" bindtap="removeImage">Delete</button>
+                <button class="mini-button" data-image-id="{{item.id}}" bindtap="setCover">设为封面</button>
+                <button class="mini-button danger" data-image-id="{{item.id}}" bindtap="removeImage">删除</button>
               </view>
             </view>
           </view>
@@ -56,8 +56,8 @@
     </block>
 
     <view wx:else class="card empty-card">
-      <text class="empty-title">No images yet</text>
-      <text class="empty-subtitle">Upload 1-3 images and pick a cover.</text>
+      <text class="empty-title">暂时还没有图片</text>
+      <text class="empty-subtitle">先上传图片，再设置封面。</text>
     </view>
   </block>
 </view>

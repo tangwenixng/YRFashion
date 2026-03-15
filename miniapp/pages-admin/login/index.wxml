@@ -1,27 +1,27 @@
 <view class="page">
   <view class="hero">
-    <text class="eyebrow">ADMIN MINIAPP</text>
-    <text class="title">Mobile Admin</text>
-    <text class="subtitle">Manage products and messages from your phone.</text>
+    <text class="eyebrow">门店管理端</text>
+    <text class="title">移动管理台</text>
+    <text class="subtitle">可在手机上管理穿搭展示与咨询消息。</text>
   </view>
 
   <view class="panel">
     <view class="field">
-      <text class="label">Username</text>
+      <text class="label">账号</text>
       <input
         class="input"
-        placeholder="Enter admin username"
+        placeholder="请输入管理账号"
         value="{{username}}"
         bindinput="handleUsernameInput"
       />
     </view>
 
     <view class="field">
-      <text class="label">Password</text>
+      <text class="label">密码</text>
       <input
         class="input"
         password="true"
-        placeholder="Enter admin password"
+        placeholder="请输入管理密码"
         value="{{password}}"
         bindinput="handlePasswordInput"
       />
@@ -29,11 +29,11 @@
 
     <text wx:if="{{error}}" class="error-text">{{error}}</text>
 
-    <button class="primary-button" loading="{{submitting}}" bindtap="submit">Login</button>
+    <button class="primary-button" loading="{{submitting}}" bindtap="submit">登录</button>
 
     <view class="tips">
-      <text>Use the existing web admin account here.</text>
-      <text>The admin token is separate from the shopper token.</text>
+      <text>这里使用现有后台管理账号登录。</text>
+      <text>管理端登录态与用户端登录态彼此独立。</text>
     </view>
   </view>
 </view>

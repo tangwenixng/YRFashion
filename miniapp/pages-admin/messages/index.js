@@ -21,10 +21,10 @@ Page({
   data: {
     statusFilter: "all",
     statusTabs: [
-      { value: "all", label: "All" },
-      { value: "unread", label: "Unread" },
-      { value: "read", label: "Read" },
-      { value: "replied", label: "Replied" },
+      { value: "all", label: "全部" },
+      { value: "unread", label: "未读" },
+      { value: "read", label: "已读" },
+      { value: "replied", label: "已回复" },
     ],
     items: [],
     loading: true,
@@ -53,9 +53,9 @@ Page({
     } catch (_error) {
       this.setData({
         loading: false,
-        error: "Failed to load messages.",
+        error: "咨询列表加载失败。",
       })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 
@@ -77,10 +77,10 @@ Page({
     const messageId = Number(event.currentTarget.dataset.messageId)
     try {
       await markAdminMessageRead(messageId)
-      wx.showToast({ title: "Marked read", icon: "success" })
+      wx.showToast({ title: "已标记为已读", icon: "success" })
       this.loadMessages()
     } catch (_error) {
-      wx.showToast({ title: "Action failed", icon: "none" })
+      wx.showToast({ title: "操作失败", icon: "none" })
     }
   },
 
@@ -88,10 +88,10 @@ Page({
     const messageId = Number(event.currentTarget.dataset.messageId)
     try {
       await markAdminMessageUnread(messageId)
-      wx.showToast({ title: "Marked unread", icon: "success" })
+      wx.showToast({ title: "已标记为未读", icon: "success" })
       this.loadMessages()
     } catch (_error) {
-      wx.showToast({ title: "Action failed", icon: "none" })
+      wx.showToast({ title: "操作失败", icon: "none" })
     }
   },
 })

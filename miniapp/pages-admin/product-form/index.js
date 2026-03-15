@@ -7,16 +7,16 @@ const {
 } = require("../../utils/admin-api/products")
 
 const STATUS_OPTIONS = [
-  { value: "draft", label: "Draft" },
-  { value: "published", label: "Published" },
-  { value: "archived", label: "Archived" },
+  { value: "draft", label: "草稿" },
+  { value: "published", label: "已发布" },
+  { value: "archived", label: "已归档" },
 ]
 
 function buildCategoryOptions(categories) {
-  return [{ id: null, name: "Uncategorized" }].concat(
+  return [{ id: null, name: "未分类" }].concat(
     (categories || []).map((item) => ({
       id: item.id,
-      name: item.status === "active" ? item.name : `${item.name} (disabled)`,
+      name: item.status === "active" ? item.name : `${item.name}（已停用）`,
     })),
   )
 }
@@ -36,7 +36,7 @@ Page({
     productId: null,
     loading: true,
     saving: false,
-    categoryOptions: [{ id: null, name: "Uncategorized" }],
+    categoryOptions: [{ id: null, name: "未分类" }],
     categoryIndex: 0,
     statusOptions: STATUS_OPTIONS,
     statusIndex: 0,
@@ -50,7 +50,7 @@ Page({
     const productId = Number(query.id || 0) || null
     this.setData({ productId })
     wx.setNavigationBarTitle({
-      title: productId ? "Edit Product" : "New Product",
+      title: productId ? "编辑展示" : "新增展示",
     })
   },
 
@@ -85,7 +85,7 @@ Page({
       })
     } catch (_error) {
       this.setData({ loading: false })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 
@@ -120,7 +120,7 @@ Page({
   async submit() {
     const name = this.data.name.trim()
     if (!name) {
-      wx.showToast({ title: "Name is required", icon: "none" })
+      wx.showToast({ title: "请填写展示名称", icon: "none" })
       return
     }
 
@@ -144,7 +144,7 @@ Page({
     try {
       if (this.data.productId) {
         await updateAdminProduct(this.data.productId, payload)
-        wx.showToast({ title: "Saved", icon: "success" })
+        wx.showToast({ title: "保存成功", icon: "success" })
         setTimeout(() => {
           goBackToProducts()
         }, 300)
@@ -152,10 +152,10 @@ Page({
         const product = await createAdminProduct(payload)
         this.setData({ saving: false })
         wx.showModal({
-          title: "Product created",
-          content: "Upload images now?",
-          confirmText: "Upload",
-          cancelText: "Later",
+          title: "展示已创建",
+          content: "现在去上传图片吗？",
+          confirmText: "去上传",
+          cancelText: "稍后",
           success: (result) => {
             if (result.confirm) {
               wx.redirectTo({
@@ -170,7 +170,7 @@ Page({
         return
       }
     } catch (_error) {
-      wx.showToast({ title: "Save failed", icon: "none" })
+      wx.showToast({ title: "保存失败", icon: "none" })
     }
 
     this.setData({ saving: false })

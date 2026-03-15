@@ -45,7 +45,7 @@ Page({
       })
     } catch (_error) {
       this.setData({ loading: false })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     }
   },
 

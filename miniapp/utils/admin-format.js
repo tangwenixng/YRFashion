@@ -17,22 +17,22 @@ function formatDateTime(value) {
 
 function getProductStatusLabel(status) {
   if (status === "published") {
-    return "Published"
+    return "已发布"
   }
   if (status === "archived") {
-    return "Archived"
+    return "已归档"
   }
-  return "Draft"
+  return "草稿"
 }
 
 function getMessageStatusLabel(status) {
   if (status === "read") {
-    return "Read"
+    return "已读"
   }
   if (status === "replied") {
-    return "Replied"
+    return "已回复"
   }
-  return "Unread"
+  return "未读"
 }
 
 module.exports = {

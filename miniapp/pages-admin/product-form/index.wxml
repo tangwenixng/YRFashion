@@ -6,46 +6,46 @@
   <block wx:else>
     <view class="card">
       <view class="field">
-        <text class="label">Product Name</text>
-        <input class="input" placeholder="Example: Wool Coat" value="{{name}}" bindinput="handleNameInput" />
+        <text class="label">展示名称</text>
+        <input class="input" placeholder="例如：春季通勤穿搭" value="{{name}}" bindinput="handleNameInput" />
       </view>
 
       <view class="field">
-        <text class="label">Description</text>
+        <text class="label">展示说明</text>
         <textarea
           class="textarea"
           maxlength="1000"
-          placeholder="Enter product description"
+          placeholder="请输入展示说明"
           value="{{description}}"
           bindinput="handleDescriptionInput"
         ></textarea>
       </view>
 
       <view class="field">
-        <text class="label">Category</text>
+        <text class="label">分类</text>
         <picker range="{{categoryOptions}}" range-key="name" value="{{categoryIndex}}" bindchange="handleCategoryChange">
           <view class="picker">{{categoryOptions[categoryIndex].name}}</view>
         </picker>
       </view>
 
       <view class="field">
-        <text class="label">Status</text>
+        <text class="label">状态</text>
         <picker range="{{statusOptions}}" range-key="label" value="{{statusIndex}}" bindchange="handleStatusChange">
           <view class="picker">{{statusOptions[statusIndex].label}}</view>
         </picker>
       </view>
 
       <view class="field">
-        <text class="label">Tags</text>
-        <input class="input" placeholder="Separate tags with commas" value="{{tagsText}}" bindinput="handleTagsInput" />
+        <text class="label">标签</text>
+        <input class="input" placeholder="多个标签请用逗号分隔" value="{{tagsText}}" bindinput="handleTagsInput" />
       </view>
 
       <view class="field">
-        <text class="label">Sort Order</text>
-        <input class="input" type="number" placeholder="Default 0" value="{{sortOrder}}" bindinput="handleSortInput" />
+        <text class="label">排序值</text>
+        <input class="input" type="number" placeholder="默认 0" value="{{sortOrder}}" bindinput="handleSortInput" />
       </view>
     </view>
 
-    <button class="primary-button" loading="{{saving}}" bindtap="submit">Save Product</button>
+    <button class="primary-button" loading="{{saving}}" bindtap="submit">保存展示</button>
   </block>
 </view>

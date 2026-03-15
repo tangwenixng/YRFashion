@@ -35,10 +35,10 @@ Page({
     keyword: "",
     statusFilter: "all",
     statusTabs: [
-      { value: "all", label: "All" },
-      { value: "published", label: "Published" },
-      { value: "draft", label: "Draft" },
-      { value: "archived", label: "Archived" },
+      { value: "all", label: "全部" },
+      { value: "published", label: "已发布" },
+      { value: "draft", label: "草稿" },
+      { value: "archived", label: "已归档" },
     ],
   },
 
@@ -68,9 +68,9 @@ Page({
     } catch (_error) {
       this.setData({
         loading: false,
-        error: "Failed to load products.",
+        error: "展示列表加载失败。",
       })
-      wx.showToast({ title: "Load failed", icon: "none" })
+      wx.showToast({ title: "加载失败", icon: "none" })
     } finally {
       wx.stopPullDownRefresh()
     }
@@ -134,10 +134,10 @@ Page({
 
     try {
       await updateAdminProductSort(productId, Number(product.sort_order) || 0)
-      wx.showToast({ title: "Sort updated", icon: "success" })
+      wx.showToast({ title: "排序已更新", icon: "success" })
       this.loadProducts()
     } catch (_error) {
-      wx.showToast({ title: "Save failed", icon: "none" })
+      wx.showToast({ title: "保存失败", icon: "none" })
     }
   },
 
@@ -160,12 +160,12 @@ Page({
         sort_order: Number(product.sort_order) || 0,
       })
       wx.showToast({
-        title: nextStatus === "published" ? "Published" : "Draft",
+        title: nextStatus === "published" ? "已发布" : "已下架",
         icon: "success",
       })
       this.loadProducts()
     } catch (_error) {
-      wx.showToast({ title: "Status update failed", icon: "none" })
+      wx.showToast({ title: "状态更新失败", icon: "none" })
     }
   },
 })
