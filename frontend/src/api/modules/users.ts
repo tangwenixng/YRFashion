@@ -11,7 +11,28 @@ export interface MiniappUserItem {
   created_at: string
 }
 
-export const fetchMiniappUsers = async () => {
-  const { data } = await http.get<{ items: MiniappUserItem[] }>('/admin/users')
-  return data.items
+export interface MiniappUserListParams {
+  page?: number
+  page_size?: number
+  keyword?: string
+  sort?: 'last_visit_desc' | 'first_visit_desc'
+}
+
+export interface MiniappUserListResult {
+  items: MiniappUserItem[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export const fetchMiniappUsers = async (params: MiniappUserListParams = {}) => {
+  const { data } = await http.get<MiniappUserListResult>('/admin/users', {
+    params: {
+      page: params.page ?? 1,
+      page_size: params.page_size ?? 10,
+      keyword: params.keyword || undefined,
+      sort: params.sort ?? 'last_visit_desc',
+    },
+  })
+  return data
 }

@@ -103,7 +103,16 @@ def test_user_list_and_settings() -> None:
 
         users_response = client.get("/api/admin/users", headers=headers)
         assert users_response.status_code == 200
+        assert users_response.json()["page"] == 1
         assert any(item["id"] == user_id for item in users_response.json()["items"])
+
+        filtered_users_response = client.get(
+            "/api/admin/users?keyword=guest&page=1&page_size=10&sort=last_visit_desc",
+            headers=headers,
+        )
+        assert filtered_users_response.status_code == 200
+        assert filtered_users_response.json()["page_size"] == 10
+        assert any(item["id"] == user_id for item in filtered_users_response.json()["items"])
 
         update_response = client.put(
             "/api/admin/settings",

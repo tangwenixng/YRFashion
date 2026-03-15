@@ -16,3 +16,6 @@ class MiniappUserResponse(BaseModel):
 
 class MiniappUserListResponse(BaseModel):
     items: list[MiniappUserResponse]
+    page: int
+    page_size: int
+    total: int
