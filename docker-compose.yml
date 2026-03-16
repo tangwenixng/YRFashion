@@ -1,0 +1,27 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/tangwenixng/yrfashion-backend:latest}
+    pull_policy: always
+    environment:
+      DATA_DIR: /app/data
+      UPLOAD_DIR: /app/data/uploads
+      DATABASE_URL: sqlite:////app/data/app.db
+      STORAGE_BACKEND: local
+      SECRET_KEY: change-me-in-production
+    volumes:
+      - backend_data:/app/data
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/tangwenixng/yrfashion-frontend:latest}
+    pull_policy: always
+    depends_on:
+      - backend
+    environment:
+      BACKEND_UPSTREAM: backend:8000
+    ports:
+      - "8080:80"
+
+volumes:
+  backend_data:
