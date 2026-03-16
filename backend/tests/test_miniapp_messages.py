@@ -188,7 +188,9 @@ def test_message_history_endpoint_supports_all_messages_and_product_filter() -> 
     assert all_response.status_code == 200
     all_payload = all_response.json()
     assert all_payload["total"] == 2
-    assert {item["product_id"] for item in all_payload["items"]} == {first_product_id, second_product_id}
+    assert {
+        item["product_id"] for item in all_payload["items"]
+    } == {first_product_id, second_product_id}
     assert all(item["product_name"] for item in all_payload["items"])
 
     assert filtered_response.status_code == 200

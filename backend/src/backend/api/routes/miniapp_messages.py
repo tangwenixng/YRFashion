@@ -91,7 +91,11 @@ def list_product_messages(
     )
 
 
-@product_router.post("/{product_id}/messages", response_model=MiniappMessageCreateResponse, status_code=201)
+@product_router.post(
+    "/{product_id}/messages",
+    response_model=MiniappMessageCreateResponse,
+    status_code=201,
+)
 def create_message(
     product_id: int,
     payload: MiniappMessageCreateRequest,

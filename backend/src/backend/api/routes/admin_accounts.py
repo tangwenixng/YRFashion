@@ -35,7 +35,11 @@ def load_admin_or_404(db: Session, admin_id: int) -> AdminUser:
     return admin
 
 
-def ensure_username_available(db: Session, username: str, exclude_admin_id: int | None = None) -> None:
+def ensure_username_available(
+    db: Session,
+    username: str,
+    exclude_admin_id: int | None = None,
+) -> None:
     query = db.query(AdminUser).filter(AdminUser.username == username)
     if exclude_admin_id is not None:
         query = query.filter(AdminUser.id != exclude_admin_id)
