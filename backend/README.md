@@ -125,6 +125,10 @@ docker.io/<dockerhub-username>/yrfashion-backend
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_TOKEN`
 
+生产环境如果需要自动部署，建议在服务器侧使用 `systemd timer` 定时执行
+`docker compose pull && docker compose up -d`。可参考文档：
+`docs/11-CentOS7-systemd-timer自动部署说明.md`
+
 ## CloudBase 部署说明
 
 当前仓库已经为基于镜像部署的 CloudBase 云托管场景做好准备。
