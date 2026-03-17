@@ -10,6 +10,7 @@ from backend.schemas.miniapp import (
     MiniappMessageHistoryItemResponse,
     MiniappMessageHistoryResponse,
 )
+from backend.services.content_safety import ensure_safe_text
 
 router = APIRouter()
 
@@ -113,7 +114,7 @@ def create_message(
     message = Message(
         product_id=product_id,
         miniapp_user_id=current_user.id,
-        content=payload.content,
+        content=ensure_safe_text(payload.content, field_label="留言内容"),
         status="unread",
     )
     db.add(message)

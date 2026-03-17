@@ -93,3 +93,36 @@ def test_contact_returns_shop_contact_data() -> None:
     assert payload["contact_phone"] == "18800001111"
     assert payload["wechat_id"] == "yrfasion-shop"
     assert payload["address"] == "上海市静安区南京西路"
+
+
+def test_storefront_only_reads_published_settings() -> None:
+    seed_storefront_data()
+
+    with TestClient(app) as client:
+        admin_login = client.post(
+            "/api/admin/auth/login",
+            json={"username": "admin", "password": "admin123456"},
+        )
+        headers = {"Authorization": f"Bearer {admin_login.json()['access_token']}"}
+        draft_response = client.put(
+            "/api/admin/settings",
+            headers=headers,
+            json={
+                "shop_name": "仅草稿店铺",
+                "shop_intro": "仅草稿介绍",
+                "contact_phone": "19900002222",
+                "wechat_id": "draft-only",
+                "address": "草稿地址",
+                "business_hours": "09:00-18:00",
+                "homepage_banner_urls": ["/uploads/draft-banner.jpg"],
+            },
+        )
+        assert draft_response.status_code == 200
+        assert draft_response.json()["has_unpublished_changes"] is True
+
+        response = client.get("/api/miniapp/home")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["shop_name"] != "仅草稿店铺"
+    assert payload["homepage_banner_urls"] != ["/uploads/draft-banner.jpg"]

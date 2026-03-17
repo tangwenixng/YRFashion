@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from backend.core.config import settings
@@ -42,8 +42,67 @@ def init_data_dirs() -> None:
         settings.resolved_upload_dir.mkdir(parents=True, exist_ok=True)
 
 
+def ensure_runtime_schema() -> None:
+    inspector = inspect(engine)
+
+    if inspector.has_table("miniapp_users"):
+        miniapp_user_columns = {
+            column["name"] for column in inspector.get_columns("miniapp_users")
+        }
+        statements: list[str] = []
+        if "pending_avatar_url" not in miniapp_user_columns:
+            statements.append(
+                "ALTER TABLE miniapp_users ADD COLUMN pending_avatar_url VARCHAR(500)"
+            )
+        if "avatar_review_status" not in miniapp_user_columns:
+            statements.append(
+                "ALTER TABLE miniapp_users ADD COLUMN avatar_review_status VARCHAR(20) "
+                "DEFAULT 'approved'"
+            )
+        if "avatar_reject_reason" not in miniapp_user_columns:
+            statements.append(
+                "ALTER TABLE miniapp_users ADD COLUMN avatar_reject_reason VARCHAR(255)"
+            )
+        _execute_schema_statements(statements)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "UPDATE miniapp_users SET avatar_review_status = 'approved' "
+                    "WHERE avatar_review_status IS NULL OR avatar_review_status = ''"
+                )
+            )
+
+    if inspector.has_table("shop_settings"):
+        shop_setting_columns = {column["name"] for column in inspector.get_columns("shop_settings")}
+        statements = []
+        if "draft_payload" not in shop_setting_columns:
+            statements.append("ALTER TABLE shop_settings ADD COLUMN draft_payload JSON")
+        if "draft_updated_at" not in shop_setting_columns:
+            statements.append("ALTER TABLE shop_settings ADD COLUMN draft_updated_at DATETIME")
+        if "published_at" not in shop_setting_columns:
+            statements.append("ALTER TABLE shop_settings ADD COLUMN published_at DATETIME")
+        _execute_schema_statements(statements)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "UPDATE shop_settings SET published_at = CURRENT_TIMESTAMP "
+                    "WHERE published_at IS NULL"
+                )
+            )
+
+
+def _execute_schema_statements(statements: list[str]) -> None:
+    if not statements:
+        return
+
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_runtime_schema()
 
     with SessionLocal() as db:
         admin = (
@@ -62,6 +121,11 @@ def init_db() -> None:
 
         if db.get(ShopSetting, 1) is None:
             db.add(ShopSetting(id=1))
+        else:
+            setting = db.get(ShopSetting, 1)
+            if setting is not None and setting.published_at is None:
+                setting.published_at = setting.updated_at
+                db.add(setting)
 
         if db.get(NotificationSetting, 1) is None:
             db.add(NotificationSetting(id=1))

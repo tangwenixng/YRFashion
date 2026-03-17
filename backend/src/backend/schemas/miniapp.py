@@ -11,6 +11,9 @@ class MiniappProfileResponse(BaseModel):
     id: int
     nickname: str | None
     avatar_url: str | None
+    pending_avatar_url: str | None = None
+    avatar_review_status: str = "approved"
+    avatar_reject_reason: str | None = None
     created_at: datetime
     last_visit_at: datetime
 
@@ -36,6 +39,9 @@ class MiniappProfileUpdateRequest(BaseModel):
 
 class MiniappAvatarUploadResponse(BaseModel):
     avatar_url: str
+    pending_avatar_url: str | None = None
+    avatar_review_status: str = "pending"
+    avatar_reject_reason: str | None = None
 
 
 class MiniappProductCardResponse(BaseModel):

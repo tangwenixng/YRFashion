@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import JSON, DateTime, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -17,6 +18,11 @@ class ShopSetting(Base):
     address: Mapped[str] = mapped_column(Text(), default="")
     business_hours: Mapped[str] = mapped_column(Text(), default="")
     homepage_banner_json: Mapped[list[str]] = mapped_column(JSON, default=list)
+    draft_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=dict, nullable=True)
+    draft_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=True
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

@@ -131,11 +131,17 @@ def test_user_list_and_settings() -> None:
         )
         assert update_response.status_code == 200
         assert update_response.json()["shop_name"] == "YRFasion"
+        assert update_response.json()["has_unpublished_changes"] is True
+
+        publish_response = client.post("/api/admin/settings/publish", headers=headers)
+        assert publish_response.status_code == 200
+        assert publish_response.json()["has_unpublished_changes"] is False
 
         get_response = client.get("/api/admin/settings", headers=headers)
 
     assert get_response.status_code == 200
     assert get_response.json()["homepage_banner_urls"] == ["/uploads/banner-1.jpg"]
+    assert get_response.json()["has_unpublished_changes"] is False
 
 
 def test_message_batch_read() -> None:

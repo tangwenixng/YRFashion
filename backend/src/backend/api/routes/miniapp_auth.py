@@ -14,6 +14,7 @@ from backend.schemas.miniapp import (
     MiniappProfileResponse,
     MiniappProfileUpdateRequest,
 )
+from backend.services.content_safety import ensure_safe_text
 from backend.services.miniapp_auth import resolve_openid_from_code
 from backend.services.storage import save_miniapp_avatar
 
@@ -25,6 +26,9 @@ def serialize_miniapp_profile(user: MiniappUser) -> MiniappProfileResponse:
         id=user.id,
         nickname=user.nickname,
         avatar_url=user.avatar_url,
+        pending_avatar_url=user.pending_avatar_url,
+        avatar_review_status=user.avatar_review_status,
+        avatar_reject_reason=user.avatar_reject_reason,
         created_at=user.created_at,
         last_visit_at=user.last_visit_at,
     )
@@ -65,8 +69,20 @@ def update_profile(
     db: Session = Depends(get_db),
     current_user: MiniappUser = Depends(get_current_miniapp_user),
 ) -> MiniappProfileResponse:
-    current_user.nickname = payload.nickname
-    current_user.avatar_url = payload.avatar_url
+    current_user.nickname = ensure_safe_text(payload.nickname, field_label="昵称")
+    normalized_avatar_url = payload.avatar_url.strip()
+    if normalized_avatar_url == (current_user.pending_avatar_url or "").strip():
+        current_user.avatar_review_status = "pending"
+        current_user.avatar_reject_reason = None
+    elif normalized_avatar_url == (current_user.avatar_url or "").strip():
+        current_user.pending_avatar_url = None
+        current_user.avatar_review_status = "approved"
+        current_user.avatar_reject_reason = None
+    else:
+        current_user.pending_avatar_url = normalized_avatar_url
+        current_user.avatar_review_status = "pending"
+        current_user.avatar_reject_reason = None
+
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
@@ -80,8 +96,15 @@ def upload_avatar(
     current_user: MiniappUser = Depends(get_current_miniapp_user),
 ) -> MiniappAvatarUploadResponse:
     _, avatar_url = save_miniapp_avatar(current_user.id, file)
-    current_user.avatar_url = avatar_url
+    current_user.pending_avatar_url = avatar_url
+    current_user.avatar_review_status = "pending"
+    current_user.avatar_reject_reason = None
     db.add(current_user)
     db.commit()
     db.refresh(current_user)
-    return MiniappAvatarUploadResponse(avatar_url=current_user.avatar_url or avatar_url)
+    return MiniappAvatarUploadResponse(
+        avatar_url=avatar_url,
+        pending_avatar_url=current_user.pending_avatar_url,
+        avatar_review_status=current_user.avatar_review_status,
+        avatar_reject_reason=current_user.avatar_reject_reason,
+    )

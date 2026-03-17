@@ -14,6 +14,9 @@ class MiniappUser(Base):
     unionid: Mapped[str | None] = mapped_column(String(64), nullable=True)
     nickname: Mapped[str | None] = mapped_column(String(100), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    pending_avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    avatar_review_status: Mapped[str] = mapped_column(String(20), default="approved")
+    avatar_reject_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     first_visit_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_visit_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(

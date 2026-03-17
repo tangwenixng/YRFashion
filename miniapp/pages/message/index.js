@@ -4,7 +4,7 @@ const { normalizeMediaUrl } = require("../../utils/media")
 
 function buildProfileState(user) {
   const nickname = (user && user.nickname) || ""
-  const avatarUrl = (user && user.avatar_url) || ""
+  const avatarUrl = (user && (user.pending_avatar_url || user.avatar_url)) || ""
   const displayAvatarUrl = avatarUrl ? normalizeMediaUrl(avatarUrl) : ""
 
   return {
@@ -14,6 +14,18 @@ function buildProfileState(user) {
     savedProfileAvatarUrl: displayAvatarUrl,
     needsProfileCompletion: !nickname || !avatarUrl,
   }
+}
+
+function resolveErrorMessage(error, fallback) {
+  if (error && error.data && typeof error.data.detail === "string" && error.data.detail.trim()) {
+    return error.data.detail
+  }
+
+  if (error && typeof error.detail === "string" && error.detail.trim()) {
+    return error.detail
+  }
+
+  return fallback
 }
 
 Page({
@@ -85,7 +97,8 @@ Page({
       nickname,
       avatar_url: avatarUrl,
     })
-    const normalizedAvatarUrl = profile.avatar_url ? normalizeMediaUrl(profile.avatar_url) : avatarUrl
+    const finalAvatarUrl = profile.pending_avatar_url || profile.avatar_url || avatarUrl
+    const normalizedAvatarUrl = finalAvatarUrl ? normalizeMediaUrl(finalAvatarUrl) : ""
 
     this.setData({
       profileNickname: profile.nickname || nickname,
@@ -136,7 +149,10 @@ Page({
       }, 600)
     } catch (error) {
       this.setData({ submitting: false })
-      wx.showToast({ title: "提交失败，请稍后重试", icon: "none" })
+      wx.showToast({
+        title: resolveErrorMessage(error, "提交失败，请稍后重试"),
+        icon: "none",
+      })
     }
   },
 })

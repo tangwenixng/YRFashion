@@ -52,16 +52,20 @@ def test_miniapp_profile_update_persists_nickname_and_avatar() -> None:
     assert update_response.status_code == 200
     payload = update_response.json()
     assert payload["nickname"] == "留言顾客"
-    assert payload["avatar_url"] == "https://cdn.example.com/avatars/customer-1.jpg"
+    assert payload["avatar_url"] is None
+    assert payload["pending_avatar_url"] == "https://cdn.example.com/avatars/customer-1.jpg"
+    assert payload["avatar_review_status"] == "pending"
 
     with SessionLocal() as db:
         user = db.get(MiniappUser, payload["id"])
         assert user is not None
         assert user.nickname == "留言顾客"
-        assert user.avatar_url == "https://cdn.example.com/avatars/customer-1.jpg"
+        assert user.avatar_url is None
+        assert user.pending_avatar_url == "https://cdn.example.com/avatars/customer-1.jpg"
+        assert user.avatar_review_status == "pending"
 
 
-def test_miniapp_avatar_upload_updates_user_avatar() -> None:
+def test_miniapp_avatar_upload_marks_avatar_as_pending() -> None:
     with TestClient(app) as client:
         login_response = client.post("/api/miniapp/auth/login", json={"code": "profile-code-002"})
         token = login_response.json()["access_token"]
@@ -76,3 +80,24 @@ def test_miniapp_avatar_upload_updates_user_avatar() -> None:
     assert upload_response.status_code == 200
     payload = upload_response.json()
     assert payload["avatar_url"].startswith("/uploads/miniapp-users/")
+    assert payload["pending_avatar_url"] == payload["avatar_url"]
+    assert payload["avatar_review_status"] == "pending"
+
+
+def test_miniapp_profile_rejects_high_risk_nickname() -> None:
+    with TestClient(app) as client:
+        login_response = client.post("/api/miniapp/auth/login", json={"code": "profile-code-003"})
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        update_response = client.put(
+            "/api/miniapp/auth/profile",
+            headers=headers,
+            json={
+                "nickname": "加微信领券",
+                "avatar_url": "https://cdn.example.com/avatars/customer-3.jpg",
+            },
+        )
+
+    assert update_response.status_code == 400
+    assert update_response.json()["detail"] == "昵称包含高风险内容，请修改后再提交"

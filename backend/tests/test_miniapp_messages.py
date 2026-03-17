@@ -157,7 +157,23 @@ def test_message_submit_uses_updated_miniapp_profile() -> None:
         user = db.get(MiniappUser, miniapp_user_id)
         assert user is not None
         assert user.nickname == "头像用户"
-        assert user.avatar_url == "https://cdn.example.com/avatars/message-user.jpg"
+        assert user.avatar_url is None
+        assert user.pending_avatar_url == "https://cdn.example.com/avatars/message-user.jpg"
+
+
+def test_message_submit_rejects_high_risk_content() -> None:
+    product_id = seed_product()
+
+    with TestClient(app) as client:
+        headers, _ = get_miniapp_headers(client)
+        response = client.post(
+            f"/api/miniapp/products/{product_id}/messages",
+            headers=headers,
+            json={"content": "加微信下单更快"},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "留言内容包含高风险内容，请修改后再提交"
 
 
 def test_message_history_endpoint_supports_all_messages_and_product_filter() -> None:
