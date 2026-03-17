@@ -57,6 +57,21 @@
   font-size: 24rpx;
 }
 
+.profile-status {
+  display: block;
+  margin-top: 10rpx;
+  line-height: 1.7;
+  font-size: 24rpx;
+}
+
+.status-pending {
+  color: #9a6a1f;
+}
+
+.status-rejected {
+  color: #bf4a38;
+}
+
 .profile-badge {
   flex-shrink: 0;
   height: fit-content;

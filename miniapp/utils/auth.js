@@ -55,6 +55,32 @@ function loginWithCode(code) {
   })
 }
 
+function fetchMiniappProfile() {
+  const token = getAccessToken()
+  if (!token) {
+    return ensureMiniappLogin(true).then(() => fetchMiniappProfile())
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: `${require("./config").API_BASE_URL}/miniapp/auth/profile`,
+      method: "GET",
+      header: {
+        Authorization: `Bearer ${token}`,
+      },
+      success: (response) => {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          saveMiniappUser(response.data)
+          resolve(response.data)
+          return
+        }
+        reject(response)
+      },
+      fail: reject,
+    })
+  })
+}
+
 function ensureMiniappLogin(force = false) {
   if (!force) {
     const token = getAccessToken()
@@ -155,6 +181,7 @@ function updateMiniappProfile(payload) {
 
 module.exports = {
   ensureMiniappLogin,
+  fetchMiniappProfile,
   getAccessToken,
   getMiniappUser,
   clearSession,

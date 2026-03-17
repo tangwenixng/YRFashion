@@ -144,6 +144,66 @@ def test_user_list_and_settings() -> None:
     assert get_response.json()["has_unpublished_changes"] is False
 
 
+def test_avatar_review_workflow() -> None:
+    with TestClient(app) as client:
+        login_response = client.post("/api/miniapp/auth/login", json={"code": "avatar-review-user"})
+        token = login_response.json()["access_token"]
+        miniapp_headers = {"Authorization": f"Bearer {token}"}
+        update_response = client.put(
+            "/api/miniapp/auth/profile",
+            headers=miniapp_headers,
+            json={
+                "nickname": "审核头像用户",
+                "avatar_url": "https://cdn.example.com/avatars/review-user.jpg",
+            },
+        )
+        assert update_response.status_code == 200
+        user_id = update_response.json()["id"]
+
+        headers = get_admin_headers(client)
+        pending_list_response = client.get(
+            "/api/admin/users?avatar_review_status=pending&page=1&page_size=10",
+            headers=headers,
+        )
+        assert pending_list_response.status_code == 200
+        assert any(item["id"] == user_id for item in pending_list_response.json()["items"])
+
+        reject_response = client.post(
+            f"/api/admin/users/{user_id}/avatar/reject",
+            headers=headers,
+            json={"reason": "头像包含不清晰人物主体，请重新上传"},
+        )
+        assert reject_response.status_code == 200
+        assert reject_response.json()["avatar_review_status"] == "rejected"
+        assert (
+            reject_response.json()["avatar_reject_reason"]
+            == "头像包含不清晰人物主体，请重新上传"
+        )
+
+        second_update_response = client.put(
+            "/api/miniapp/auth/profile",
+            headers=miniapp_headers,
+            json={
+                "nickname": "审核头像用户",
+                "avatar_url": "https://cdn.example.com/avatars/review-user-approved.jpg",
+            },
+        )
+        assert second_update_response.status_code == 200
+        assert second_update_response.json()["avatar_review_status"] == "pending"
+
+        approve_response = client.post(
+            f"/api/admin/users/{user_id}/avatar/approve",
+            headers=headers,
+        )
+        assert approve_response.status_code == 200
+        assert approve_response.json()["avatar_review_status"] == "approved"
+        assert (
+            approve_response.json()["avatar_url"]
+            == "https://cdn.example.com/avatars/review-user-approved.jpg"
+        )
+        assert approve_response.json()["pending_avatar_url"] is None
+
+
 def test_message_batch_read() -> None:
     first_message_id, _, _ = seed_message()
     second_message_id, _, _ = seed_message()

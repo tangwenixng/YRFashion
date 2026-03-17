@@ -1,4 +1,4 @@
-const { getMiniappUser, updateMiniappProfile } = require("../../utils/auth")
+const { fetchMiniappProfile, getMiniappUser, updateMiniappProfile } = require("../../utils/auth")
 const { request } = require("../../utils/http")
 const { normalizeMediaUrl } = require("../../utils/media")
 
@@ -6,6 +6,8 @@ function buildProfileState(user) {
   const nickname = (user && user.nickname) || ""
   const avatarUrl = (user && (user.pending_avatar_url || user.avatar_url)) || ""
   const displayAvatarUrl = avatarUrl ? normalizeMediaUrl(avatarUrl) : ""
+  const avatarReviewStatus = (user && user.avatar_review_status) || "approved"
+  const avatarRejectReason = (user && user.avatar_reject_reason) || ""
 
   return {
     profileNickname: nickname,
@@ -13,6 +15,8 @@ function buildProfileState(user) {
     savedProfileNickname: nickname,
     savedProfileAvatarUrl: displayAvatarUrl,
     needsProfileCompletion: !nickname || !avatarUrl,
+    avatarReviewStatus,
+    avatarRejectReason,
   }
 }
 
@@ -40,6 +44,8 @@ Page({
     savedProfileNickname: "",
     savedProfileAvatarUrl: "",
     needsProfileCompletion: true,
+    avatarReviewStatus: "approved",
+    avatarRejectReason: "",
   },
 
   onLoad(query) {
@@ -54,6 +60,16 @@ Page({
         buildProfileState(getMiniappUser()),
       ),
     )
+    this.syncProfile()
+  },
+
+  async syncProfile() {
+    try {
+      const profile = await fetchMiniappProfile()
+      this.setData(buildProfileState(profile))
+    } catch (_error) {
+      // Keep local cached profile as a fallback when the network is unavailable.
+    }
   },
 
   handleInput(event) {
@@ -69,6 +85,8 @@ Page({
     this.setData({
       profileAvatarUrl: avatarUrl,
       needsProfileCompletion: !this.data.profileNickname.trim() || !avatarUrl,
+      avatarReviewStatus: "pending",
+      avatarRejectReason: "",
     })
   },
 
@@ -106,6 +124,8 @@ Page({
       savedProfileNickname: profile.nickname || nickname,
       savedProfileAvatarUrl: normalizedAvatarUrl,
       needsProfileCompletion: false,
+      avatarReviewStatus: profile.avatar_review_status || "approved",
+      avatarRejectReason: profile.avatar_reject_reason || "",
     })
     return true
   },

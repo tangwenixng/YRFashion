@@ -12,6 +12,12 @@
         <text class="profile-hint">
           留言前请补充昵称和头像，店主后台会同时看到你的 openid、昵称和头像。
         </text>
+        <text wx:if="{{avatarReviewStatus === 'pending'}}" class="profile-status status-pending">
+          当前头像审核中，审核通过后才会在店主后台正式展示。
+        </text>
+        <text wx:if="{{avatarReviewStatus === 'rejected'}}" class="profile-status status-rejected">
+          当前头像未通过审核：{{avatarRejectReason || '请重新上传清晰、合规的头像'}}
+        </text>
       </view>
       <text wx:if="{{needsProfileCompletion}}" class="profile-badge">首次留言需补充</text>
     </view>

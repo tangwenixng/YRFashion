@@ -63,6 +63,13 @@ def login(payload: MiniappLoginRequest, db: Session = Depends(get_db)) -> Miniap
     )
 
 
+@router.get("/profile", response_model=MiniappProfileResponse)
+def get_profile(
+    current_user: MiniappUser = Depends(get_current_miniapp_user),
+) -> MiniappProfileResponse:
+    return serialize_miniapp_profile(current_user)
+
+
 @router.put("/profile", response_model=MiniappProfileResponse)
 def update_profile(
     payload: MiniappProfileUpdateRequest,

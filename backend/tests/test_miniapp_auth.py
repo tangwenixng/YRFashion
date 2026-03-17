@@ -101,3 +101,39 @@ def test_miniapp_profile_rejects_high_risk_nickname() -> None:
 
     assert update_response.status_code == 400
     assert update_response.json()["detail"] == "昵称包含高风险内容，请修改后再提交"
+
+
+def test_miniapp_profile_get_returns_latest_review_status() -> None:
+    with TestClient(app) as client:
+        login_response = client.post("/api/miniapp/auth/login", json={"code": "profile-code-004"})
+        token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        update_response = client.put(
+            "/api/miniapp/auth/profile",
+            headers=headers,
+            json={
+                "nickname": "同步状态用户",
+                "avatar_url": "https://cdn.example.com/avatars/customer-4.jpg",
+            },
+        )
+        user_id = update_response.json()["id"]
+
+        admin_login_response = client.post(
+            "/api/admin/auth/login",
+            json={"username": "admin", "password": "admin123456"},
+        )
+        admin_headers = {"Authorization": f"Bearer {admin_login_response.json()['access_token']}"}
+        approve_response = client.post(
+            f"/api/admin/users/{user_id}/avatar/approve",
+            headers=admin_headers,
+        )
+        assert approve_response.status_code == 200
+
+        profile_response = client.get("/api/miniapp/auth/profile", headers=headers)
+
+    assert profile_response.status_code == 200
+    payload = profile_response.json()
+    assert payload["avatar_review_status"] == "approved"
+    assert payload["avatar_url"] == "https://cdn.example.com/avatars/customer-4.jpg"
+    assert payload["pending_avatar_url"] is None
