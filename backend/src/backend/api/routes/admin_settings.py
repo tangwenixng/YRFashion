@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from backend.api.deps import get_current_admin
 from backend.db.session import get_db
 from backend.models import AdminUser, ShopSetting
-from backend.services.content_safety import ensure_compliant_storefront_text
 from backend.schemas.setting import ShopSettingResponse, ShopSettingUpdateRequest
+from backend.services.content_safety import ensure_compliant_storefront_text
 
 router = APIRouter(prefix="/admin/settings")
 
@@ -70,7 +70,9 @@ def normalize_settings_payload(payload: ShopSettingUpdateRequest) -> dict[str, s
         "business_hours": ensure_compliant_storefront_text(
             payload.business_hours, field_label="营业时间"
         ),
-        "homepage_banner_urls": [item.strip() for item in payload.homepage_banner_urls if item.strip()],
+        "homepage_banner_urls": [
+            item.strip() for item in payload.homepage_banner_urls if item.strip()
+        ],
     }
 
 
