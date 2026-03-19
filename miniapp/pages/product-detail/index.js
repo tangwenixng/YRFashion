@@ -65,6 +65,21 @@ function formatDateTime(value) {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
+function formatTime(value) {
+  if (!value) {
+    return ""
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return ""
+  }
+
+  const hour = `${date.getHours()}`.padStart(2, "0")
+  const minute = `${date.getMinutes()}`.padStart(2, "0")
+  return `${hour}:${minute}`
+}
+
 function normalizeMessage(message) {
   const statusMeta = STATUS_META_MAP[message.status] || {
     label: "已提交",
@@ -75,7 +90,9 @@ function normalizeMessage(message) {
     status_label: statusMeta.label,
     status_tone: statusMeta.tone,
     created_at_text: formatDateTime(message.created_at),
+    created_at_short_text: formatTime(message.created_at),
     reply_at_text: formatDateTime(message.reply_at),
+    reply_at_short_text: formatTime(message.reply_at),
     has_reply: Boolean(message.reply_content),
   })
 }
@@ -216,7 +233,7 @@ Page({
         messages: nextMessages,
         messagesLoading: false,
         messagesError: "",
-        messagesLastUpdatedText: formatDateTime(new Date()),
+        messagesLastUpdatedText: formatTime(new Date()),
         hasUnreadReplies: hasNewReply || nextMessages.some((item) => item.status === "replied"),
       })
 
