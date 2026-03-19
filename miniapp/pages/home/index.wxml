@@ -41,16 +41,20 @@
       </view>
       <block wx:if="{{home.featured_products.length}}">
         <view class="product-list">
-          <block wx:for="{{home.featured_products}}" wx:key="id">
-            <view class="product-card" bindtap="goToProductDetail" data-product-id="{{item.id}}">
-              <image wx:if="{{item.cover_image_url}}" class="product-image" src="{{item.cover_image_url}}" mode="aspectFill"></image>
-              <view wx:else class="product-image product-placeholder">暂无封面</view>
-              <view class="product-body">
-                <text class="product-name">{{item.name}}</text>
-                <view class="tag-row">
-                  <text wx:for="{{item.tags}}" wx:key="*this" class="tag">{{item}}</text>
+          <block wx:for="{{featuredColumns}}" wx:key="index" wx:for-item="column">
+            <view class="product-column">
+              <block wx:for="{{column}}" wx:key="id" wx:for-item="product">
+                <view class="product-card" bindtap="goToProductDetail" data-product-id="{{product.id}}">
+                  <image wx:if="{{product.cover_image_url}}" class="product-image" src="{{product.cover_image_url}}" mode="widthFix"></image>
+                  <view wx:else class="product-image product-placeholder">暂无封面</view>
+                  <view class="product-body">
+                    <text class="product-name">{{product.name}}</text>
+                    <view class="tag-row">
+                      <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
+                    </view>
+                  </view>
                 </view>
-              </view>
+              </block>
             </view>
           </block>
         </view>
