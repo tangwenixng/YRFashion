@@ -56,26 +56,16 @@ Page({
     }
   },
 
-  handleCall() {
-    const phone = this.data.contact && this.data.contact.contact_phone
-    if (!phone) {
-      wx.showToast({ title: "暂未设置联系电话", icon: "none" })
-      return
-    }
-    wx.makePhoneCall({ phoneNumber: phone })
-  },
-
-  handleCopyWechat() {
-    const wechatId = this.data.contact && this.data.contact.wechat_id
-    if (!wechatId) {
-      wx.showToast({ title: "暂未设置微信号", icon: "none" })
-      return
-    }
-    wx.setClipboardData({ data: wechatId })
+  goToProducts() {
+    wx.navigateTo({ url: "/pages/products/index" })
   },
 
   goHome() {
     wx.reLaunch({ url: "/pages/home/index" })
+  },
+
+  goToMessageHistory() {
+    wx.navigateTo({ url: "/pages/message-history/index" })
   },
 
   goBack() {

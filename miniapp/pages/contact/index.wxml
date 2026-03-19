@@ -42,23 +42,15 @@
       <text class="field-value">{{contact.contact_intro || '欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。'}}</text>
     </view>
 
-    <view class="card contact-card">
-      <view class="contact-row">
-        <view class="contact-copy">
-          <text class="field-label">联系电话</text>
-          <text class="field-value">{{contact.contact_phone || '暂未设置'}}</text>
-        </view>
-        <button class="mini-action" bindtap="handleCall">拨打</button>
+    <view class="card feedback-card">
+      <view class="feedback-head">
+        <text class="field-label">反馈方式</text>
+        <text class="feedback-pill">站内交流</text>
       </view>
-    </view>
-
-    <view class="card contact-card">
-      <view class="contact-row">
-        <view class="contact-copy">
-          <text class="field-label">微信号</text>
-          <text class="field-value">{{contact.wechat_id || '暂未设置'}}</text>
-        </view>
-        <button class="mini-action mini-action-secondary" bindtap="handleCopyWechat">复制</button>
+      <text class="field-value">建议在感兴趣的穿搭详情中留言反馈，我会在留言记录里继续回复你。</text>
+      <view class="feedback-actions">
+        <button class="mini-action" bindtap="goToProducts">去看穿搭</button>
+        <text class="feedback-link" bindtap="goToMessageHistory">我的留言记录</text>
       </view>
     </view>
 

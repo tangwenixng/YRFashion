@@ -35,8 +35,6 @@ def get_contact(db: Session = Depends(get_db)) -> MiniappContactResponse:
     return MiniappContactResponse(
         shop_name=setting.shop_name,
         contact_intro=setting.contact_intro,
-        contact_phone=setting.contact_phone,
-        wechat_id=setting.wechat_id,
         address=setting.address,
         business_hours=setting.business_hours,
     )

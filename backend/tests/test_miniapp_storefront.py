@@ -91,10 +91,10 @@ def test_contact_returns_shop_contact_data() -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["contact_phone"] == "18800001111"
     assert payload["contact_intro"] == "欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。"
-    assert payload["wechat_id"] == "yrfasion-shop"
     assert payload["address"] == "上海市静安区南京西路"
+    assert "contact_phone" not in payload
+    assert "wechat_id" not in payload
 
 
 def test_storefront_only_reads_published_settings() -> None:

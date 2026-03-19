@@ -69,21 +69,24 @@
   font-size: 29rpx;
 }
 
-.contact-card {
+.feedback-card {
   padding-top: 26rpx;
-  padding-bottom: 26rpx;
+  padding-bottom: 24rpx;
 }
 
-.contact-row {
+.feedback-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
 }
 
-.contact-copy {
-  flex: 1;
-  min-width: 0;
+.feedback-pill {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #f2e4d7;
+  color: #7a5947;
+  font-size: 22rpx;
 }
 
 .action-button {
@@ -99,7 +102,7 @@
 
 .mini-action {
   margin: 0;
-  min-width: 132rpx;
+  min-width: 176rpx;
   height: 64rpx;
   line-height: 64rpx;
   padding: 0 24rpx;
@@ -116,9 +119,17 @@
   border: 0;
 }
 
-.mini-action-secondary {
-  background: #efe0cf;
-  color: #5d4333;
+.feedback-actions {
+  margin-top: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.feedback-link {
+  color: #8f7362;
+  font-size: 24rpx;
 }
 
 .info-grid {
@@ -158,7 +169,8 @@
     grid-template-columns: 1fr;
   }
 
-  .contact-row {
+  .feedback-head,
+  .feedback-actions {
     align-items: flex-start;
     flex-direction: column;
   }
