@@ -1,10 +1,10 @@
-const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
-const { formatDateTime, getMessageStatusLabel } = require("../../utils/admin-format")
+const { ensureConsoleLogin, redirectToConsoleLogin } = require("../utils/console-auth")
+const { formatDateTime, getMessageStatusLabel } = require("../utils/console-format")
 const {
-  fetchAdminMessages,
-  markAdminMessageRead,
-  markAdminMessageUnread,
-} = require("../../utils/admin-api/messages")
+  fetchConsoleMessages,
+  markConsoleMessageRead,
+  markConsoleMessageUnread,
+} = require("../utils/console-api/messages")
 
 function decorateMessage(message) {
   const userDisplay = message.miniapp_user_nickname || message.miniapp_user_openid
@@ -32,9 +32,9 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => this.loadMessages())
-      .catch(() => redirectToAdminLogin())
+      .catch(() => redirectToConsoleLogin())
   },
 
   async loadMessages() {
@@ -45,7 +45,7 @@ Page({
 
     try {
       const status = this.data.statusFilter === "all" ? "" : this.data.statusFilter
-      const items = await fetchAdminMessages(status)
+      const items = await fetchConsoleMessages(status)
       this.setData({
         items: items.map(decorateMessage),
         loading: false,
@@ -69,14 +69,14 @@ Page({
   openDetail(event) {
     const messageId = event.currentTarget.dataset.messageId
     wx.navigateTo({
-      url: `/pages-admin/message-detail/index?id=${messageId}`,
+      url: `/pages-console/message-detail/index?id=${messageId}`,
     })
   },
 
   async markRead(event) {
     const messageId = Number(event.currentTarget.dataset.messageId)
     try {
-      await markAdminMessageRead(messageId)
+      await markConsoleMessageRead(messageId)
       wx.showToast({ title: "已标记为已读", icon: "success" })
       this.loadMessages()
     } catch (_error) {
@@ -87,7 +87,7 @@ Page({
   async markUnread(event) {
     const messageId = Number(event.currentTarget.dataset.messageId)
     try {
-      await markAdminMessageUnread(messageId)
+      await markConsoleMessageUnread(messageId)
       wx.showToast({ title: "已标记为未读", icon: "success" })
       this.loadMessages()
     } catch (_error) {

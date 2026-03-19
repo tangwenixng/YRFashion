@@ -1,5 +1,5 @@
-const { API_BASE_URL } = require("./config")
-const { clearAdminSession, getAdminAccessToken, redirectToAdminLogin } = require("./admin-auth")
+const { API_BASE_URL } = require("../../utils/config")
+const { clearConsoleSession, getConsoleAccessToken, redirectToConsoleLogin } = require("./console-auth")
 
 function request(options) {
   const {
@@ -15,12 +15,12 @@ function request(options) {
       method,
       data,
       header: Object.assign({}, header, {
-        Authorization: `Bearer ${getAdminAccessToken()}`,
+        Authorization: `Bearer ${getConsoleAccessToken()}`,
       }),
       success: (response) => {
         if (response.statusCode === 401) {
-          clearAdminSession()
-          redirectToAdminLogin()
+          clearConsoleSession()
+          redirectToConsoleLogin()
           reject(response)
           return
         }
@@ -52,7 +52,7 @@ function uploadFile(options) {
       name,
       formData,
       header: {
-        Authorization: `Bearer ${getAdminAccessToken()}`,
+        Authorization: `Bearer ${getConsoleAccessToken()}`,
       },
       success: (response) => {
         let payload = {}
@@ -64,8 +64,8 @@ function uploadFile(options) {
         }
 
         if (response.statusCode === 401) {
-          clearAdminSession()
-          redirectToAdminLogin()
+          clearConsoleSession()
+          redirectToConsoleLogin()
           reject(payload)
           return
         }

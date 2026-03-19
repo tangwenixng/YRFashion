@@ -1,5 +1,5 @@
-const { request, uploadFile } = require("../admin-http")
-const { normalizeMediaUrl } = require("../media")
+const { request, uploadFile } = require("../console-http")
+const { normalizeMediaUrl } = require("../../../utils/media")
 
 function normalizeProduct(product) {
   if (!product) {
@@ -20,19 +20,19 @@ function normalizeProduct(product) {
   })
 }
 
-function fetchAdminProducts() {
+function fetchConsoleProducts() {
   return request({
     url: "/admin/products",
   }).then((response) => (response.items || []).map(normalizeProduct))
 }
 
-function fetchAdminProduct(productId) {
+function fetchConsoleProduct(productId) {
   return request({
     url: `/admin/products/${productId}`,
   }).then(normalizeProduct)
 }
 
-function createAdminProduct(payload) {
+function createConsoleProduct(payload) {
   return request({
     url: "/admin/products",
     method: "POST",
@@ -40,7 +40,7 @@ function createAdminProduct(payload) {
   }).then(normalizeProduct)
 }
 
-function updateAdminProduct(productId, payload) {
+function updateConsoleProduct(productId, payload) {
   return request({
     url: `/admin/products/${productId}`,
     method: "PUT",
@@ -48,7 +48,7 @@ function updateAdminProduct(productId, payload) {
   }).then(normalizeProduct)
 }
 
-function updateAdminProductSort(productId, sortOrder) {
+function updateConsoleProductSort(productId, sortOrder) {
   return request({
     url: `/admin/products/${productId}/sort`,
     method: "PUT",
@@ -58,7 +58,7 @@ function updateAdminProductSort(productId, sortOrder) {
   }).then(normalizeProduct)
 }
 
-function uploadAdminProductImage(productId, filePath, sortOrder, isCover) {
+function uploadConsoleProductImage(productId, filePath, sortOrder, isCover) {
   return uploadFile({
     url: `/admin/products/${productId}/images`,
     filePath,
@@ -73,7 +73,7 @@ function uploadAdminProductImage(productId, filePath, sortOrder, isCover) {
   )
 }
 
-function updateAdminProductImagesSort(productId, items) {
+function updateConsoleProductImagesSort(productId, items) {
   return request({
     url: `/admin/products/${productId}/images/sort`,
     method: "PUT",
@@ -83,14 +83,14 @@ function updateAdminProductImagesSort(productId, items) {
   }).then(normalizeProduct)
 }
 
-function setAdminProductCover(productId, imageId) {
+function setConsoleProductCover(productId, imageId) {
   return request({
     url: `/admin/products/${productId}/images/${imageId}/cover`,
     method: "POST",
   }).then(normalizeProduct)
 }
 
-function deleteAdminProductImage(productId, imageId) {
+function deleteConsoleProductImage(productId, imageId) {
   return request({
     url: `/admin/products/${productId}/images/${imageId}`,
     method: "DELETE",
@@ -98,14 +98,14 @@ function deleteAdminProductImage(productId, imageId) {
 }
 
 module.exports = {
-  createAdminProduct,
-  deleteAdminProductImage,
-  fetchAdminProduct,
-  fetchAdminProducts,
-  normalizeAdminProduct: normalizeProduct,
-  setAdminProductCover,
-  updateAdminProduct,
-  updateAdminProductImagesSort,
-  updateAdminProductSort,
-  uploadAdminProductImage,
+  createConsoleProduct,
+  deleteConsoleProductImage,
+  fetchConsoleProduct,
+  fetchConsoleProducts,
+  normalizeConsoleProduct: normalizeProduct,
+  setConsoleProductCover,
+  updateConsoleProduct,
+  updateConsoleProductImagesSort,
+  updateConsoleProductSort,
+  uploadConsoleProductImage,
 }

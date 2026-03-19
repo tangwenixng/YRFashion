@@ -1,5 +1,5 @@
-const { request } = require("../admin-http")
-const { normalizeMediaUrl } = require("../media")
+const { request } = require("../console-http")
+const { normalizeMediaUrl } = require("../../../utils/media")
 
 function normalizeMessage(message) {
   if (!message) {
@@ -11,28 +11,28 @@ function normalizeMessage(message) {
   })
 }
 
-function fetchAdminMessages(status) {
+function fetchConsoleMessages(status) {
   const query = status ? `?status=${encodeURIComponent(status)}` : ""
   return request({
     url: `/admin/messages${query}`,
   }).then((response) => (response.items || []).map(normalizeMessage))
 }
 
-function markAdminMessageRead(messageId) {
+function markConsoleMessageRead(messageId) {
   return request({
     url: `/admin/messages/${messageId}/read`,
     method: "POST",
   }).then(normalizeMessage)
 }
 
-function markAdminMessageUnread(messageId) {
+function markConsoleMessageUnread(messageId) {
   return request({
     url: `/admin/messages/${messageId}/unread`,
     method: "POST",
   }).then(normalizeMessage)
 }
 
-function replyAdminMessage(messageId, replyContent) {
+function replyConsoleMessage(messageId, replyContent) {
   return request({
     url: `/admin/messages/${messageId}/reply`,
     method: "POST",
@@ -43,8 +43,8 @@ function replyAdminMessage(messageId, replyContent) {
 }
 
 module.exports = {
-  fetchAdminMessages,
-  markAdminMessageRead,
-  markAdminMessageUnread,
-  replyAdminMessage,
+  fetchConsoleMessages,
+  markConsoleMessageRead,
+  markConsoleMessageUnread,
+  replyConsoleMessage,
 }

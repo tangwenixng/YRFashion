@@ -1,11 +1,11 @@
-const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
+const { ensureConsoleLogin, redirectToConsoleLogin } = require("../utils/console-auth")
 const {
-  deleteAdminProductImage,
-  fetchAdminProduct,
-  setAdminProductCover,
-  updateAdminProductImagesSort,
-  uploadAdminProductImage,
-} = require("../../utils/admin-api/products")
+  deleteConsoleProductImage,
+  fetchConsoleProduct,
+  setConsoleProductCover,
+  updateConsoleProductImagesSort,
+  uploadConsoleProductImage,
+} = require("../utils/console-api/products")
 
 Page({
   data: {
@@ -23,9 +23,9 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => this.loadProduct())
-      .catch(() => redirectToAdminLogin())
+      .catch(() => redirectToConsoleLogin())
   },
 
   async loadProduct() {
@@ -43,7 +43,7 @@ Page({
     })
 
     try {
-      const product = await fetchAdminProduct(this.data.productId)
+      const product = await fetchConsoleProduct(this.data.productId)
       this.setData({
         product,
         loading: false,
@@ -79,7 +79,7 @@ Page({
         try {
           const startSort = this.data.product.images.length
           for (let index = 0; index < tempFilePaths.length; index += 1) {
-            await uploadAdminProductImage(
+            await uploadConsoleProductImage(
               this.data.productId,
               tempFilePaths[index],
               startSort + index,
@@ -123,7 +123,7 @@ Page({
 
     this.setData({ savingSort: true })
     try {
-      const product = await updateAdminProductImagesSort(
+      const product = await updateConsoleProductImagesSort(
         this.data.productId,
         this.data.product.images.map((image) => ({
           id: image.id,
@@ -144,7 +144,7 @@ Page({
   async setCover(event) {
     const imageId = Number(event.currentTarget.dataset.imageId)
     try {
-      const product = await setAdminProductCover(this.data.productId, imageId)
+      const product = await setConsoleProductCover(this.data.productId, imageId)
       this.setData({ product })
       wx.showToast({ title: "封面已更新", icon: "success" })
     } catch (_error) {
@@ -155,7 +155,7 @@ Page({
   async removeImage(event) {
     const imageId = Number(event.currentTarget.dataset.imageId)
     try {
-      const product = await deleteAdminProductImage(this.data.productId, imageId)
+      const product = await deleteConsoleProductImage(this.data.productId, imageId)
       this.setData({ product })
       wx.showToast({ title: "删除成功", icon: "success" })
     } catch (_error) {

@@ -1,10 +1,10 @@
-const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
-const { fetchAdminCategories } = require("../../utils/admin-api/categories")
+const { ensureConsoleLogin, redirectToConsoleLogin } = require("../utils/console-auth")
+const { fetchConsoleCategories } = require("../utils/console-api/categories")
 const {
-  createAdminProduct,
-  fetchAdminProduct,
-  updateAdminProduct,
-} = require("../../utils/admin-api/products")
+  createConsoleProduct,
+  fetchConsoleProduct,
+  updateConsoleProduct,
+} = require("../utils/console-api/products")
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "草稿" },
@@ -25,7 +25,7 @@ function goBackToProducts() {
   wx.navigateBack({
     fail: () => {
       wx.reLaunch({
-        url: "/pages-admin/products/index",
+        url: "/pages-console/products/index",
       })
     },
   })
@@ -55,9 +55,9 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => this.loadPage())
-      .catch(() => redirectToAdminLogin())
+      .catch(() => redirectToConsoleLogin())
   },
 
   async loadPage() {
@@ -65,8 +65,8 @@ Page({
 
     try {
       const [categories, product] = await Promise.all([
-        fetchAdminCategories(),
-        this.data.productId ? fetchAdminProduct(this.data.productId) : Promise.resolve(null),
+        fetchConsoleCategories(),
+        this.data.productId ? fetchConsoleProduct(this.data.productId) : Promise.resolve(null),
       ])
 
       const categoryOptions = buildCategoryOptions(categories)
@@ -143,13 +143,13 @@ Page({
 
     try {
       if (this.data.productId) {
-        await updateAdminProduct(this.data.productId, payload)
+        await updateConsoleProduct(this.data.productId, payload)
         wx.showToast({ title: "保存成功", icon: "success" })
         setTimeout(() => {
           goBackToProducts()
         }, 300)
       } else {
-        const product = await createAdminProduct(payload)
+        const product = await createConsoleProduct(payload)
         this.setData({ saving: false })
         wx.showModal({
           title: "展示已创建",
@@ -159,7 +159,7 @@ Page({
           success: (result) => {
             if (result.confirm) {
               wx.redirectTo({
-                url: `/pages-admin/product-images/index?id=${product.id}`,
+                url: `/pages-console/product-images/index?id=${product.id}`,
               })
               return
             }

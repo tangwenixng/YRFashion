@@ -1,11 +1,11 @@
-const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
-const { formatDateTime, getMessageStatusLabel } = require("../../utils/admin-format")
+const { ensureConsoleLogin, redirectToConsoleLogin } = require("../utils/console-auth")
+const { formatDateTime, getMessageStatusLabel } = require("../utils/console-format")
 const {
-  fetchAdminMessages,
-  markAdminMessageRead,
-  markAdminMessageUnread,
-  replyAdminMessage,
-} = require("../../utils/admin-api/messages")
+  fetchConsoleMessages,
+  markConsoleMessageRead,
+  markConsoleMessageUnread,
+  replyConsoleMessage,
+} = require("../utils/console-api/messages")
 
 function decorateMessage(message) {
   const userDisplay = message.miniapp_user_nickname || message.miniapp_user_openid
@@ -37,9 +37,9 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => this.loadDetail())
-      .catch(() => redirectToAdminLogin())
+      .catch(() => redirectToConsoleLogin())
   },
 
   async loadDetail() {
@@ -57,7 +57,7 @@ Page({
     })
 
     try {
-      const items = await fetchAdminMessages()
+      const items = await fetchConsoleMessages()
       const current = items.find((item) => item.id === this.data.messageId)
       if (!current) {
         this.setData({
@@ -93,7 +93,7 @@ Page({
       return
     }
     try {
-      const message = await markAdminMessageRead(this.data.message.id)
+      const message = await markConsoleMessageRead(this.data.message.id)
       this.setData({
         message: decorateMessage(message),
       })
@@ -108,7 +108,7 @@ Page({
       return
     }
     try {
-      const message = await markAdminMessageUnread(this.data.message.id)
+      const message = await markConsoleMessageUnread(this.data.message.id)
       this.setData({
         message: decorateMessage(message),
       })
@@ -130,7 +130,7 @@ Page({
 
     this.setData({ saving: true })
     try {
-      const message = await replyAdminMessage(this.data.message.id, replyContent)
+      const message = await replyConsoleMessage(this.data.message.id, replyContent)
       this.setData({
         saving: false,
         message: decorateMessage(message),

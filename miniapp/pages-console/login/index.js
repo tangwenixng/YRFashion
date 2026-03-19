@@ -1,18 +1,18 @@
-const { ensureAdminLogin, loginAdmin } = require("../../utils/admin-auth")
+const { ensureConsoleLogin, loginConsole } = require("../utils/console-auth")
 
 Page({
   data: {
-    username: "admin",
+    username: "",
     password: "",
     submitting: false,
     error: "",
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => {
         wx.reLaunch({
-          url: "/pages-admin/home/index",
+          url: "/pages-console/home/index",
         })
       })
       .catch(() => {})
@@ -48,11 +48,11 @@ Page({
     })
 
     try {
-      await loginAdmin(username, password)
+      await loginConsole(username, password)
       wx.showToast({ title: "登录成功", icon: "success" })
       setTimeout(() => {
         wx.reLaunch({
-          url: "/pages-admin/home/index",
+          url: "/pages-console/home/index",
         })
       }, 300)
     } catch (error) {

@@ -1,11 +1,11 @@
-const { request } = require("../admin-http")
+const { request } = require("../console-http")
 
-function fetchAdminCategories() {
+function fetchConsoleCategories() {
   return request({
     url: "/admin/categories",
   }).then((response) => response.items || [])
 }
 
 module.exports = {
-  fetchAdminCategories,
+  fetchConsoleCategories,
 }

@@ -54,7 +54,7 @@
       <button class="action-button secondary" bindtap="goToMessageHistory">查看咨询记录</button>
     </view>
 
-    <view class="page-footer" bindlongpress="goToAdminLogin">
+    <view class="page-footer" bindlongpress="goToConsoleLogin">
       <text class="footer-text">YRFashion</text>
     </view>
   </block>

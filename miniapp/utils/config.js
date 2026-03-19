@@ -3,8 +3,8 @@ const defaultConfig = {
   API_PREFIX: "/api",
   TOKEN_STORAGE_KEY: "yrfasion-miniapp-token",
   USER_STORAGE_KEY: "yrfasion-miniapp-user",
-  ADMIN_TOKEN_STORAGE_KEY: "yrfasion-admin-token",
-  ADMIN_PROFILE_STORAGE_KEY: "yrfasion-admin-profile",
+  CONSOLE_TOKEN_STORAGE_KEY: "yrfasion-console-token",
+  CONSOLE_PROFILE_STORAGE_KEY: "yrfasion-console-profile",
 }
 
 let privateConfig = {}

@@ -1,6 +1,6 @@
-const { clearAdminSession, ensureAdminLogin, getAdminProfile, redirectToAdminLogin } = require("../../utils/admin-auth")
-const { fetchAdminMessages } = require("../../utils/admin-api/messages")
-const { fetchAdminProducts } = require("../../utils/admin-api/products")
+const { clearConsoleSession, ensureConsoleLogin, getConsoleProfile, redirectToConsoleLogin } = require("../utils/console-auth")
+const { fetchConsoleMessages } = require("../utils/console-api/messages")
+const { fetchConsoleProducts } = require("../utils/console-api/products")
 
 Page({
   data: {
@@ -12,25 +12,25 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => {
         this.loadHome()
       })
       .catch(() => {
-        redirectToAdminLogin()
+        redirectToConsoleLogin()
       })
   },
 
   async loadHome() {
     this.setData({
       loading: true,
-      profile: getAdminProfile(),
+      profile: getConsoleProfile(),
     })
 
     try {
       const [products, messages] = await Promise.all([
-        fetchAdminProducts(),
-        fetchAdminMessages(),
+        fetchConsoleProducts(),
+        fetchConsoleMessages(),
       ])
 
       const unreadMessageCount = messages.filter((item) => item.status === "unread").length
@@ -38,7 +38,7 @@ Page({
 
       this.setData({
         loading: false,
-        profile: getAdminProfile(),
+        profile: getConsoleProfile(),
         productCount: products.length,
         unreadMessageCount,
         repliedMessageCount,
@@ -51,20 +51,20 @@ Page({
 
   goToProducts() {
     wx.navigateTo({
-      url: "/pages-admin/products/index",
+      url: "/pages-console/products/index",
     })
   },
 
   goToMessages() {
     wx.navigateTo({
-      url: "/pages-admin/messages/index",
+      url: "/pages-console/messages/index",
     })
   },
 
   logout() {
-    clearAdminSession()
+    clearConsoleSession()
     wx.reLaunch({
-      url: "/pages-admin/login/index",
+      url: "/pages-console/login/index",
     })
   },
 })

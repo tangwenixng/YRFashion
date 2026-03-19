@@ -16,7 +16,7 @@
   },
   "subpackages": [
     {
-      "root": "pages-admin",
+      "root": "pages-console",
       "pages": [
         "login/index",
         "home/index",

@@ -1,10 +1,10 @@
-const { ensureAdminLogin, redirectToAdminLogin } = require("../../utils/admin-auth")
-const { getProductStatusLabel } = require("../../utils/admin-format")
+const { ensureConsoleLogin, redirectToConsoleLogin } = require("../utils/console-auth")
+const { getProductStatusLabel } = require("../utils/console-format")
 const {
-  fetchAdminProducts,
-  updateAdminProduct,
-  updateAdminProductSort,
-} = require("../../utils/admin-api/products")
+  fetchConsoleProducts,
+  updateConsoleProduct,
+  updateConsoleProductSort,
+} = require("../utils/console-api/products")
 
 function decorateProduct(product) {
   return Object.assign({}, product, {
@@ -43,9 +43,9 @@ Page({
   },
 
   onShow() {
-    ensureAdminLogin()
+    ensureConsoleLogin()
       .then(() => this.loadProducts())
-      .catch(() => redirectToAdminLogin())
+      .catch(() => redirectToConsoleLogin())
   },
 
   onPullDownRefresh() {
@@ -59,7 +59,7 @@ Page({
     })
 
     try {
-      const items = (await fetchAdminProducts()).map(decorateProduct)
+      const items = (await fetchConsoleProducts()).map(decorateProduct)
       this.setData({
         allItems: items,
         items: applyFilters(items, this.data.keyword, this.data.statusFilter),
@@ -94,21 +94,21 @@ Page({
 
   openCreate() {
     wx.navigateTo({
-      url: "/pages-admin/product-form/index",
+      url: "/pages-console/product-form/index",
     })
   },
 
   openEdit(event) {
     const productId = event.currentTarget.dataset.productId
     wx.navigateTo({
-      url: `/pages-admin/product-form/index?id=${productId}`,
+      url: `/pages-console/product-form/index?id=${productId}`,
     })
   },
 
   openImages(event) {
     const productId = event.currentTarget.dataset.productId
     wx.navigateTo({
-      url: `/pages-admin/product-images/index?id=${productId}`,
+      url: `/pages-console/product-images/index?id=${productId}`,
     })
   },
 
@@ -133,7 +133,7 @@ Page({
     }
 
     try {
-      await updateAdminProductSort(productId, Number(product.sort_order) || 0)
+      await updateConsoleProductSort(productId, Number(product.sort_order) || 0)
       wx.showToast({ title: "排序已更新", icon: "success" })
       this.loadProducts()
     } catch (_error) {
@@ -151,7 +151,7 @@ Page({
     const nextStatus = product.status === "published" ? "draft" : "published"
 
     try {
-      await updateAdminProduct(productId, {
+      await updateConsoleProduct(productId, {
         name: product.name,
         category_id: product.category_id,
         description: product.description,

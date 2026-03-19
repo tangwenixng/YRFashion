@@ -1,7 +1,7 @@
 <view class="page">
   <view class="hero">
-    <text class="eyebrow">门店管理端</text>
-    <text class="title">移动管理台</text>
+    <text class="eyebrow">门店工作台</text>
+    <text class="title">移动工作台</text>
     <text class="subtitle">可在手机上管理穿搭展示与咨询消息。</text>
   </view>
 
@@ -10,7 +10,7 @@
       <text class="label">账号</text>
       <input
         class="input"
-        placeholder="请输入管理账号"
+        placeholder="请输入工作台账号"
         value="{{username}}"
         bindinput="handleUsernameInput"
       />
@@ -21,7 +21,7 @@
       <input
         class="input"
         password="true"
-        placeholder="请输入管理密码"
+        placeholder="请输入工作台密码"
         value="{{password}}"
         bindinput="handlePasswordInput"
       />
@@ -32,8 +32,8 @@
     <button class="primary-button" loading="{{submitting}}" bindtap="submit">登录</button>
 
     <view class="tips">
-      <text>这里使用现有后台管理账号登录。</text>
-      <text>管理端登录态与用户端登录态彼此独立。</text>
+      <text>这里使用现有工作台账号登录。</text>
+      <text>工作台登录态与用户端登录态彼此独立。</text>
     </view>
   </view>
 </view>

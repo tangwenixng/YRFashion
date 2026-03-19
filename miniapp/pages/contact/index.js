@@ -46,14 +46,14 @@ Page({
     })
   },
 
-  goToAdminLogin() {
+  goToConsoleLogin() {
     wx.showToast({
-      title: "正在进入管理端",
+      title: "正在进入工作台",
       icon: "none",
       duration: 1200,
     })
     wx.navigateTo({
-      url: "/pages-admin/login/index",
+      url: "/pages-console/login/index",
     })
   },
 })
