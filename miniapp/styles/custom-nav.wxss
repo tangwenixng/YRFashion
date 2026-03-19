@@ -44,24 +44,24 @@
 
 .nav-home-icon {
   position: relative;
-  width: 28rpx;
+  width: 30rpx;
   height: 28rpx;
 }
 
 .nav-home-roof {
   position: absolute;
   top: 0;
-  left: 4rpx;
+  left: 50%;
   width: 20rpx;
   height: 20rpx;
   border-top: 4rpx solid #5d4333;
   border-left: 4rpx solid #5d4333;
-  transform: rotate(45deg);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 .nav-home-body {
   position: absolute;
-  left: 4rpx;
+  left: 50%;
   bottom: 2rpx;
   width: 20rpx;
   height: 14rpx;
@@ -69,16 +69,18 @@
   border-top: 0;
   border-radius: 3rpx;
   background: transparent;
+  transform: translateX(-50%);
 }
 
 .nav-home-door {
   position: absolute;
-  left: 12rpx;
+  left: 50%;
   bottom: 2rpx;
   width: 6rpx;
   height: 10rpx;
   border-radius: 2rpx 2rpx 0 0;
   background: #5d4333;
+  transform: translateX(-50%);
 }
 
 .nav-title {
