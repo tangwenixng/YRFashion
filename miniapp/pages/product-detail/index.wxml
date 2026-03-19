@@ -56,10 +56,19 @@
       <text class="description">{{product.description || '这里会持续更新这套穿搭的更多介绍。'}}</text>
     </view>
 
-    <view class="action-bar">
-      <button class="primary-button" bindtap="handleConsult">留言交流</button>
-      <button class="secondary-button" bindtap="goToMessageHistory">查看留言记录</button>
-      <button class="secondary-button" bindtap="goToContact">联系我</button>
+    <view class="message-entry">
+      <view class="message-entry-input" bindtap="handleConsult">
+        <text class="message-entry-placeholder">说说你的想法，欢迎留言交流</text>
+      </view>
+      <view class="message-entry-button" bindtap="handleConsult">
+        <text>留言</text>
+      </view>
+    </view>
+
+    <view class="message-entry-links">
+      <text class="message-entry-link" bindtap="goToMessageHistory">查看留言记录</text>
+      <text class="message-entry-divider">·</text>
+      <text class="message-entry-link message-entry-link-muted" bindtap="goToContact">联系我</text>
     </view>
 
     <view class="panel history-panel">
