@@ -6,7 +6,7 @@
 
   <block wx:elif="{{error}}">
     <view class="card error-card">
-      <text class="shop-name">联系方式</text>
+      <text class="shop-name">联系我</text>
       <text class="field-value">{{error}}</text>
       <button class="action-button secondary" bindtap="loadContact">重新加载</button>
     </view>
@@ -14,44 +14,43 @@
 
   <block wx:elif="{{contact}}">
     <view class="card intro-card">
-      <text class="label">联系我</text>
+      <view class="intro-head">
+        <text class="label label-light">CONTACT</text>
+        <text class="intro-badge">轻松交流</text>
+      </view>
       <text class="shop-name">{{contact.shop_name || '伊人Fashion 穿搭馆'}}</text>
-      <text class="field-value">可通过电话或微信联系我，也可以先查看自己的留言记录。</text>
+      <text class="field-value">欢迎通过电话或微信联系我。看到消息后，我会尽快回复你。</text>
     </view>
 
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">联系电话</text>
-        <text class="field-value">{{contact.contact_phone || '暂未设置'}}</text>
+    <view class="card contact-card">
+      <view class="contact-row">
+        <view class="contact-copy">
+          <text class="field-label">联系电话</text>
+          <text class="field-value">{{contact.contact_phone || '暂未设置'}}</text>
+        </view>
+        <button class="mini-action" bindtap="handleCall">拨打</button>
       </view>
-      <button class="action-button" bindtap="handleCall">拨打电话</button>
     </view>
 
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">微信号</text>
-        <text class="field-value">{{contact.wechat_id || '暂未设置'}}</text>
+    <view class="card contact-card">
+      <view class="contact-row">
+        <view class="contact-copy">
+          <text class="field-label">微信号</text>
+          <text class="field-value">{{contact.wechat_id || '暂未设置'}}</text>
+        </view>
+        <button class="mini-action mini-action-secondary" bindtap="handleCopyWechat">复制</button>
       </view>
-      <button class="action-button secondary" bindtap="handleCopyWechat">复制微信号</button>
     </view>
 
     <view class="card info-grid">
-      <view>
+      <view class="info-tile">
         <text class="field-label">所在地区</text>
         <text class="field-value">{{contact.address || '暂未设置'}}</text>
       </view>
-      <view>
+      <view class="info-tile">
         <text class="field-label">回复时段</text>
         <text class="field-value">{{contact.business_hours || '暂未设置'}}</text>
       </view>
-    </view>
-
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">留言记录</text>
-        <text class="field-value">如果你已经提交过留言，可以在这里继续查看我的回复。</text>
-      </view>
-      <button class="action-button secondary" bindtap="goToMessageHistory">查看留言记录</button>
     </view>
 
     <view class="page-footer" bindtap="handleConsoleEntryTap">

@@ -49,12 +49,6 @@ Page({
     wx.setClipboardData({ data: wechatId })
   },
 
-  goToMessageHistory() {
-    wx.navigateTo({
-      url: "/pages/message-history/index",
-    })
-  },
-
   handleConsoleEntryTap() {
     if (this.consoleEntryTapTimer) {
       clearTimeout(this.consoleEntryTapTimer)
