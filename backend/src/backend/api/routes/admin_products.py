@@ -9,6 +9,7 @@ from backend.core.config import settings
 from backend.db.session import get_db
 from backend.models import AdminUser, Category, Product, ProductImage
 from backend.schemas.product import (
+    ProductBatchSortRequest,
     ProductBatchStatusRequest,
     ProductCreateRequest,
     ProductImageResponse,
@@ -172,6 +173,45 @@ def batch_update_product_status(
     products = db.query(Product).filter(Product.id.in_(product_ids)).all()
     for product in products:
         product.status = payload.status
+        db.add(product)
+
+    db.commit()
+    refreshed_products = (
+        db.query(Product)
+        .options(selectinload(Product.images), selectinload(Product.category))
+        .filter(Product.id.in_(product_ids))
+        .order_by(Product.sort_order.asc(), Product.id.desc())
+        .all()
+    )
+    return ProductListResponse(
+        items=[serialize_product(product) for product in refreshed_products],
+        page=1,
+        page_size=len(refreshed_products),
+        total=len(refreshed_products),
+    )
+
+
+@router.put("/batch-sort", response_model=ProductListResponse)
+def batch_update_product_sort(
+    payload: ProductBatchSortRequest,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> ProductListResponse:
+    product_ids = [item.id for item in payload.items if item.id > 0]
+    if not product_ids:
+        return ProductListResponse(items=[], page=1, page_size=0, total=0)
+
+    products = db.query(Product).filter(Product.id.in_(product_ids)).all()
+    product_map = {product.id: product for product in products}
+
+    for item in payload.items:
+        product = product_map.get(item.id)
+        if product is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Product sort payload contains invalid product id",
+            )
+        product.sort_order = item.sort_order
         db.add(product)
 
     db.commit()

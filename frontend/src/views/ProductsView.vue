@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Delete, EditPen, Picture, Plus, RefreshRight, Sort, Star } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { reactive, ref } from 'vue'
+import { nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
+  batchUpdateProductSort,
   batchUpdateProductStatus,
   createProduct,
   deleteProduct,
@@ -13,9 +14,9 @@ import {
   updateProduct,
   updateProductImageCover,
   updateProductImagesSort,
-  updateProductSort,
-  uploadProductImage,
+  type ProductImage,
   type ProductItem,
+  uploadProductImage,
 } from '../api/modules/products'
 
 type ProductFormState = {
@@ -27,17 +28,37 @@ type ProductFormState = {
   sort_order: number
 }
 
+type EditorImageItem = {
+  key: string
+  id: number | null
+  image_url: string
+  original_name: string
+  sort_order: number
+  is_cover: boolean
+  source: 'existing' | 'new'
+  file: File | null
+  object_url: string | null
+}
+
+const PAGE_SORT_STEP = 10
+const PAGE_SORT_GROUP = 1000
+
 const loading = ref(false)
+const saving = ref(false)
+const actionLoadingProductId = ref<number | null>(null)
 const products = ref<ProductItem[]>([])
 const categories = ref<CategoryItem[]>([])
+const productsTableRef = ref<{ $el: HTMLElement } | null>(null)
+const editorUploadRef = ref<{ clearFiles: () => void } | null>(null)
 const editorVisible = ref(false)
-const uploadVisible = ref(false)
 const editingProductId = ref<number | null>(null)
-const uploadingProduct = ref<ProductItem | null>(null)
-const uploadSortOrder = ref(0)
-const uploadAsCover = ref(true)
-const selectedFile = ref<File | null>(null)
+const editorImages = ref<EditorImageItem[]>([])
+const removedImageIds = ref<number[]>([])
+const imageUploadKey = ref(0)
 const selectedProductIds = ref<number[]>([])
+const dragProductId = ref<number | null>(null)
+const dragImageKey = ref('')
+const dragOverImageKey = ref('')
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -81,6 +102,40 @@ const form = reactive<ProductFormState>({
   sort_order: 0,
 })
 
+const buildPageSortOrder = (index: number) => (page.value - 1) * PAGE_SORT_GROUP + index * PAGE_SORT_STEP
+
+const normalizeEditorImages = (nextImages: EditorImageItem[], preferredCoverKey = '') => {
+  const fallbackCoverKey =
+    nextImages.find((item) => item.key === preferredCoverKey)?.key ||
+    nextImages.find((item) => item.is_cover)?.key ||
+    nextImages[0]?.key ||
+    ''
+
+  editorImages.value = nextImages.map((item, index) => ({
+    ...item,
+    sort_order: index,
+    is_cover: item.key === fallbackCoverKey,
+  }))
+}
+
+const revokeEditorObjectUrls = () => {
+  editorImages.value.forEach((image) => {
+    if (image.object_url) {
+      URL.revokeObjectURL(image.object_url)
+    }
+  })
+}
+
+const resetEditorImages = () => {
+  revokeEditorObjectUrls()
+  editorImages.value = []
+  removedImageIds.value = []
+  dragImageKey.value = ''
+  dragOverImageKey.value = ''
+  imageUploadKey.value += 1
+  editorUploadRef.value?.clearFiles?.()
+}
+
 const resetForm = () => {
   editingProductId.value = null
   form.name = ''
@@ -89,7 +144,24 @@ const resetForm = () => {
   form.tagsText = ''
   form.status = 'draft'
   form.sort_order = 0
+  resetEditorImages()
 }
+
+const toEditorImage = (image: ProductImage): EditorImageItem => ({
+  key: `existing-${image.id}`,
+  id: image.id,
+  image_url: image.image_url,
+  original_name: image.original_name,
+  sort_order: image.sort_order,
+  is_cover: image.is_cover,
+  source: 'existing',
+  file: null,
+  object_url: null,
+})
+
+const formatStatusLabel = (status: ProductItem['status']) => statusLabelMap[status] ?? status
+
+const formatTagLabel = (tag: string) => tagLabelMap[tag] ?? tag
 
 const loadProducts = async () => {
   loading.value = true
@@ -103,9 +175,8 @@ const loadProducts = async () => {
     })
     products.value = result.items
     total.value = result.total
-    if (uploadingProduct.value) {
-      uploadingProduct.value = products.value.find((item) => item.id === uploadingProduct.value?.id) ?? null
-    }
+    await nextTick()
+    bindProductRowDrag()
   } finally {
     loading.value = false
   }
@@ -149,6 +220,7 @@ const openCreate = () => {
 }
 
 const openEdit = (product: ProductItem) => {
+  resetForm()
   editingProductId.value = product.id
   form.name = product.name
   form.category_id = product.category_id
@@ -156,44 +228,177 @@ const openEdit = (product: ProductItem) => {
   form.tagsText = product.tags.join(', ')
   form.status = product.status
   form.sort_order = product.sort_order
+  normalizeEditorImages(product.images.map(toEditorImage))
   editorVisible.value = true
 }
 
-const saveProduct = async () => {
-  const payload = {
-    name: form.name.trim(),
-    category_id: form.category_id,
-    description: form.description.trim(),
-    tags: form.tagsText
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean),
-    status: form.status,
-    sort_order: form.sort_order,
+const buildPayload = () => ({
+  name: form.name.trim(),
+  category_id: form.category_id,
+  description: form.description.trim(),
+  tags: form.tagsText
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean),
+  status: form.status,
+  sort_order: form.sort_order,
+})
+
+const handleEditorFileChange = (uploadFile: { raw?: File }) => {
+  const rawFile = uploadFile.raw
+  if (!rawFile) {
+    return
   }
 
+  const objectUrl = URL.createObjectURL(rawFile)
+  const nextImages = editorImages.value.concat({
+    key: `new-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+    id: null,
+    image_url: objectUrl,
+    original_name: rawFile.name,
+    sort_order: editorImages.value.length,
+    is_cover: editorImages.value.length === 0,
+    source: 'new',
+    file: rawFile,
+    object_url: objectUrl,
+  })
+  normalizeEditorImages(nextImages)
+}
+
+const setEditorCover = (imageKey: string) => {
+  normalizeEditorImages(editorImages.value, imageKey)
+}
+
+const removeEditorImage = (imageKey: string) => {
+  const target = editorImages.value.find((item) => item.key === imageKey)
+  if (!target) {
+    return
+  }
+
+  if (target.source === 'existing' && target.id) {
+    removedImageIds.value.push(target.id)
+  }
+  if (target.object_url) {
+    URL.revokeObjectURL(target.object_url)
+  }
+
+  const nextImages = editorImages.value.filter((item) => item.key !== imageKey)
+  normalizeEditorImages(nextImages)
+}
+
+const handleImageDragStart = (imageKey: string) => {
+  dragImageKey.value = imageKey
+}
+
+const handleImageDragEnter = (imageKey: string) => {
+  if (dragImageKey.value && dragImageKey.value !== imageKey) {
+    dragOverImageKey.value = imageKey
+  }
+}
+
+const handleImageDragEnd = () => {
+  dragImageKey.value = ''
+  dragOverImageKey.value = ''
+}
+
+const handleImageDrop = (targetKey: string) => {
+  const sourceKey = dragImageKey.value
+  dragImageKey.value = ''
+  dragOverImageKey.value = ''
+
+  if (!sourceKey || sourceKey === targetKey) {
+    return
+  }
+
+  const nextImages = [...editorImages.value]
+  const sourceIndex = nextImages.findIndex((item) => item.key === sourceKey)
+  const targetIndex = nextImages.findIndex((item) => item.key === targetKey)
+  if (sourceIndex === -1 || targetIndex === -1) {
+    return
+  }
+
+  const [movedImage] = nextImages.splice(sourceIndex, 1)
+  nextImages.splice(targetIndex, 0, movedImage)
+  normalizeEditorImages(nextImages, movedImage.is_cover ? movedImage.key : '')
+}
+
+const saveProduct = async () => {
+  if (saving.value) {
+    return
+  }
+
+  const payload = buildPayload()
   if (!payload.name) {
     ElMessage.warning('商品名称不能为空')
     return
   }
 
-  if (editingProductId.value) {
-    await updateProduct(editingProductId.value, payload)
-    ElMessage.success('商品已更新')
-  } else {
-    await createProduct(payload)
-    ElMessage.success('商品已创建')
-  }
+  saving.value = true
+  try {
+    const savedProduct = editingProductId.value
+      ? await updateProduct(editingProductId.value, payload)
+      : await createProduct(payload)
+    const productId = savedProduct.id
 
-  editorVisible.value = false
-  resetForm()
-  await loadProducts()
+    for (const imageId of removedImageIds.value) {
+      await deleteProductImage(productId, imageId)
+    }
+
+    const uploadedImageMap = new Map<string, ProductImage>()
+    for (const image of editorImages.value) {
+      if (image.source !== 'new' || !image.file) {
+        continue
+      }
+
+      const uploadedImage = await uploadProductImage(productId, image.file, image.sort_order, false)
+      uploadedImageMap.set(image.key, uploadedImage)
+    }
+
+    const finalSortItems = editorImages.value
+      .map((image, index) => {
+        const imageId = image.source === 'existing' ? image.id : uploadedImageMap.get(image.key)?.id
+        if (!imageId) {
+          return null
+        }
+        return {
+          id: imageId,
+          sort_order: index,
+        }
+      })
+      .filter((item): item is { id: number; sort_order: number } => item !== null)
+
+    if (finalSortItems.length) {
+      await updateProductImagesSort(productId, { items: finalSortItems })
+      const coverImage = editorImages.value.find((image) => image.is_cover)
+      const coverImageId = coverImage
+        ? (coverImage.source === 'existing' ? coverImage.id : uploadedImageMap.get(coverImage.key)?.id) || null
+        : null
+      if (coverImageId) {
+        await updateProductImageCover(productId, coverImageId)
+      }
+    }
+
+    ElMessage.success(editingProductId.value ? '商品已更新' : '商品已创建')
+    editorVisible.value = false
+    await loadProducts()
+  } finally {
+    saving.value = false
+  }
 }
 
-const saveSort = async (product: ProductItem) => {
-  await updateProductSort(product.id, product.sort_order)
-  ElMessage.success('排序已更新')
-  await loadProducts()
+const toggleProductPublish = async (product: ProductItem) => {
+  const nextStatus = product.status === 'published' ? 'draft' : 'published'
+  actionLoadingProductId.value = product.id
+  try {
+    await batchUpdateProductStatus({
+      ids: [product.id],
+      status: nextStatus,
+    })
+    ElMessage.success(nextStatus === 'published' ? '商品已发布' : '商品已撤回')
+    await loadProducts()
+  } finally {
+    actionLoadingProductId.value = null
+  }
 }
 
 const batchSetStatus = async (status: 'published' | 'archived') => {
@@ -210,22 +415,6 @@ const batchSetStatus = async (status: 'published' | 'archived') => {
   await loadProducts()
 }
 
-const openUpload = (product: ProductItem) => {
-  uploadingProduct.value = product
-  uploadVisible.value = true
-  selectedFile.value = null
-  uploadSortOrder.value = product.images.length
-  uploadAsCover.value = product.images.length === 0
-}
-
-const handleFileChange = (uploadFile: { raw?: File }) => {
-  selectedFile.value = uploadFile.raw ?? null
-}
-
-const formatStatusLabel = (status: ProductItem['status']) => statusLabelMap[status] ?? status
-
-const formatTagLabel = (tag: string) => tagLabelMap[tag] ?? tag
-
 const confirmDeleteProduct = async (product: ProductItem) => {
   try {
     await ElMessageBox.confirm(`删除后将同时移除商品图片与关联留言：${product.name}`, '删除商品', {
@@ -240,67 +429,107 @@ const confirmDeleteProduct = async (product: ProductItem) => {
   await deleteProduct(product.id)
   ElMessage.success('商品已删除')
 
-  if (uploadingProduct.value?.id === product.id) {
-    uploadVisible.value = false
-    uploadingProduct.value = null
-  }
-
   if (products.value.length === 1 && page.value > 1) {
     page.value -= 1
   }
   await loadProducts()
 }
 
-const submitUpload = async () => {
-  if (!uploadingProduct.value || !selectedFile.value) {
-    ElMessage.warning('请先选择图片文件')
+const persistDraggedSort = async (sourceId: number, targetId: number) => {
+  if (sourceId === targetId || loading.value) {
     return
   }
 
-  await uploadProductImage(
-    uploadingProduct.value.id,
-    selectedFile.value,
-    uploadSortOrder.value,
-    uploadAsCover.value,
-  )
-  ElMessage.success('图片上传成功')
-  await loadProducts()
-}
-
-const saveImageSorts = async () => {
-  if (!uploadingProduct.value) {
+  const nextProducts = [...products.value]
+  const sourceIndex = nextProducts.findIndex((item) => item.id === sourceId)
+  const targetIndex = nextProducts.findIndex((item) => item.id === targetId)
+  if (sourceIndex === -1 || targetIndex === -1) {
     return
   }
 
-  await updateProductImagesSort(uploadingProduct.value.id, {
-    items: uploadingProduct.value.images.map((image) => ({
-      id: image.id,
-      sort_order: image.sort_order,
+  const [movedProduct] = nextProducts.splice(sourceIndex, 1)
+  nextProducts.splice(targetIndex, 0, movedProduct)
+
+  const sortPayload = {
+    items: nextProducts.map((item, index) => ({
+      id: item.id,
+      sort_order: buildPageSortOrder(index),
     })),
+  }
+
+  products.value = nextProducts.map((item, index) => ({
+    ...item,
+    sort_order: sortPayload.items[index].sort_order,
+  }))
+
+  await batchUpdateProductSort(sortPayload)
+  ElMessage.success('商品排序已更新')
+  await loadProducts()
+}
+
+const bindProductRowDrag = () => {
+  const tableElement = productsTableRef.value?.$el
+  if (!tableElement) {
+    return
+  }
+
+  const rows = Array.from(tableElement.querySelectorAll('.el-table__body-wrapper tbody tr'))
+  rows.forEach((row, index) => {
+    const product = products.value[index]
+    if (!product) {
+      return
+    }
+
+    row.setAttribute('draggable', 'true')
+    row.ondragstart = (event) => {
+      const target = event.target as HTMLElement | null
+      if (!target?.closest('.drag-handle')) {
+        event.preventDefault()
+        return
+      }
+
+      dragProductId.value = product.id
+      event.dataTransfer?.setData('text/plain', String(product.id))
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move'
+      }
+      row.classList.add('is-row-dragging')
+    }
+    row.ondragover = (event) => {
+      if (!dragProductId.value || dragProductId.value === product.id) {
+        return
+      }
+      event.preventDefault()
+      row.classList.add('is-row-drag-over')
+    }
+    row.ondragleave = () => {
+      row.classList.remove('is-row-drag-over')
+    }
+    row.ondragend = () => {
+      dragProductId.value = null
+      rows.forEach((item) => item.classList.remove('is-row-dragging', 'is-row-drag-over'))
+    }
+    row.ondrop = async (event) => {
+      event.preventDefault()
+      rows.forEach((item) => item.classList.remove('is-row-drag-over'))
+      const sourceId = Number(event.dataTransfer?.getData('text/plain') || dragProductId.value || 0)
+      dragProductId.value = null
+      row.classList.remove('is-row-dragging')
+      if (!sourceId || sourceId === product.id) {
+        return
+      }
+      await persistDraggedSort(sourceId, product.id)
+    }
   })
-  ElMessage.success('图片排序已更新')
-  await loadProducts()
 }
 
-const setCoverImage = async (imageId: number) => {
-  if (!uploadingProduct.value) {
-    return
-  }
-
-  await updateProductImageCover(uploadingProduct.value.id, imageId)
-  ElMessage.success('封面图已更新')
-  await loadProducts()
+const handleEditorClosed = () => {
+  resetForm()
 }
 
-const removeImage = async (imageId: number) => {
-  if (!uploadingProduct.value) {
-    return
-  }
-
-  await deleteProductImage(uploadingProduct.value.id, imageId)
-  ElMessage.success('图片已删除')
-  await loadProducts()
-}
+onBeforeUnmount(() => {
+  revokeEditorObjectUrls()
+})
 
 void loadProducts()
 void loadCategories()
@@ -311,7 +540,7 @@ void loadCategories()
     <div class="page-header">
       <div>
         <h1 class="page-title">商品管理</h1>
-        <p class="page-subtitle">在这里维护商品文案、展示状态、排序和本地图片资源。</p>
+        <p class="page-subtitle">商品文案、图片、发布状态和展示顺序都在这里一次性完成。</p>
       </div>
 
       <div class="header-actions">
@@ -356,10 +585,28 @@ void loadCategories()
     </section>
 
     <section class="content-card table-card">
-      <el-table :data="products" v-loading="loading" table-layout="auto" @selection-change="handleSelectionChange">
+      <div class="table-tip">拖住排序手柄可直接调整当前页商品顺序。</div>
+      <el-table
+        ref="productsTableRef"
+        :data="products"
+        v-loading="loading"
+        table-layout="auto"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="48" />
-        <el-table-column prop="name" label="商品名称" min-width="140" />
-        <el-table-column label="分类" min-width="88">
+        <el-table-column label="排序" width="74">
+          <template #default="{ row }">
+            <div class="drag-cell">
+              <span class="drag-handle" :data-product-id="row.id" title="拖动排序">
+                <el-icon><Sort /></el-icon>
+              </span>
+              <span class="drag-order">{{ row.sort_order }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="商品名称" min-width="160" />
+        <el-table-column label="分类" min-width="96">
           <template #default="{ row }">
             <span>{{ row.category_name || '未分类' }}</span>
           </template>
@@ -371,7 +618,7 @@ void loadCategories()
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="标签" min-width="112">
+        <el-table-column label="标签" min-width="132">
           <template #default="{ row }">
             <div class="tag-list">
               <el-tag v-for="tag in row.tags" :key="tag" effect="plain">
@@ -381,7 +628,7 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="图片" min-width="190">
+        <el-table-column label="图片" min-width="210">
           <template #default="{ row }">
             <div class="image-summary">
               <el-image
@@ -396,31 +643,31 @@ void loadCategories()
                   <div class="cover-fallback">IMG</div>
                 </template>
               </el-image>
-              <strong>{{ row.images.length }}</strong>
+              <div class="image-summary-meta">
+                <strong>{{ row.images.length }} 张</strong>
+                <span>{{ row.images[0]?.original_name || '暂无图片' }}</span>
+              </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="排序" min-width="196">
-          <template #default="{ row }">
-            <div class="sort-box">
-              <el-input-number v-model="row.sort_order" :min="0" :max="9999" controls-position="right" />
-              <el-button plain circle class="sort-save-button" @click="saveSort(row)">
-                <el-icon><Sort /></el-icon>
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" min-width="210" fixed="right">
+        <el-table-column label="操作" min-width="280" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
-              <el-button text class="action-link" title="编辑" @click="openEdit(row)">
+              <el-button text class="action-link" @click="openEdit(row)">
                 <el-icon><EditPen /></el-icon>
+                编辑
               </el-button>
-              <el-button text class="action-link" title="上传图片" @click="openUpload(row)">
-                <el-icon><Picture /></el-icon>
+              <el-button
+                text
+                class="action-link"
+                :loading="actionLoadingProductId === row.id"
+                @click="toggleProductPublish(row)"
+              >
+                {{ row.status === 'published' ? '撤回' : '发布' }}
               </el-button>
-              <el-button text class="action-link danger-link" title="删除商品" @click="confirmDeleteProduct(row)">
+              <el-button text class="action-link danger-link" @click="confirmDeleteProduct(row)">
                 <el-icon><Delete /></el-icon>
+                删除
               </el-button>
             </div>
           </template>
@@ -445,8 +692,9 @@ void loadCategories()
     <el-dialog
       v-model="editorVisible"
       :title="editingProductId ? '编辑商品' : '新增商品'"
-      width="680px"
+      width="920px"
       destroy-on-close
+      @closed="handleEditorClosed"
     >
       <div class="editor-grid">
         <el-form label-position="top">
@@ -483,107 +731,107 @@ void loadCategories()
                 <el-option label="已归档" value="archived" />
               </el-select>
             </el-form-item>
+
+            <el-form-item label="排序值">
+              <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
+            </el-form-item>
           </div>
 
-          <el-form-item label="排序值">
-            <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-          </el-form-item>
+          <div class="editor-media-panel">
+            <div class="editor-media-header">
+              <div>
+                <h3>展示图片</h3>
+                <p>可一次选择多张图片，保存商品时会随文字一起提交。</p>
+              </div>
+              <span class="muted">支持 JPG / PNG / WEBP，单张不超过 5MB</span>
+            </div>
+
+            <el-upload
+              ref="editorUploadRef"
+              :key="imageUploadKey"
+              drag
+              multiple
+              :auto-upload="false"
+              :show-file-list="false"
+              accept=".jpg,.jpeg,.png,.webp"
+              :on-change="handleEditorFileChange"
+            >
+              <el-icon class="upload-icon"><Picture /></el-icon>
+              <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
+            </el-upload>
+
+            <div v-if="editorImages.length" class="image-manager">
+              <div class="image-manager-header">
+                <h3>图片顺序与封面</h3>
+                <span class="muted">拖动图片卡片调整顺序，封面会用于首页和列表预览。</span>
+              </div>
+
+              <div class="image-grid">
+                <article
+                  v-for="image in editorImages"
+                  :key="image.key"
+                  class="image-card"
+                  :class="{
+                    cover: image.is_cover,
+                    dragging: dragImageKey === image.key,
+                    'drag-over': dragOverImageKey === image.key,
+                  }"
+                  draggable="true"
+                  @dragstart="handleImageDragStart(image.key)"
+                  @dragenter.prevent="handleImageDragEnter(image.key)"
+                  @dragover.prevent
+                  @dragend="handleImageDragEnd"
+                  @drop.prevent="handleImageDrop(image.key)"
+                >
+                  <div class="image-card-handle">
+                    <el-icon><Sort /></el-icon>
+                    <span>{{ image.source === 'new' ? '待上传' : '已上传' }}</span>
+                  </div>
+
+                  <el-image
+                    :src="image.image_url"
+                    fit="cover"
+                    class="managed-image"
+                    :preview-src-list="editorImages.map((item) => item.image_url)"
+                    preview-teleported
+                  >
+                    <template #error>
+                      <div class="cover-fallback">IMG</div>
+                    </template>
+                  </el-image>
+
+                  <div class="image-card-body">
+                    <div class="image-card-meta">
+                      <strong>{{ image.is_cover ? '当前封面' : `第 ${image.sort_order + 1} 张` }}</strong>
+                      <span>{{ image.original_name }}</span>
+                    </div>
+
+                    <div class="image-card-tags">
+                      <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
+                      <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
+                    </div>
+
+                    <div class="image-card-actions">
+                      <el-button plain @click="setEditorCover(image.key)">
+                        <el-icon><Star /></el-icon>
+                        设为封面
+                      </el-button>
+                      <el-button plain type="danger" @click="removeEditorImage(image.key)">
+                        <el-icon><Delete /></el-icon>
+                        删除
+                      </el-button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
         </el-form>
       </div>
 
       <template #footer>
         <el-button @click="editorVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveProduct">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="uploadVisible" title="上传商品图片" width="560px" destroy-on-close>
-      <el-form label-position="top">
-        <el-form-item label="目标商品">
-          <el-input :model-value="uploadingProduct?.name ?? ''" disabled />
-        </el-form-item>
-
-        <div class="inline-grid">
-          <el-form-item label="图片排序">
-            <el-input-number v-model="uploadSortOrder" :min="0" :max="9999" />
-          </el-form-item>
-          <el-form-item label="封面图">
-            <el-switch v-model="uploadAsCover" />
-          </el-form-item>
-        </div>
-
-        <el-upload
-          drag
-          :auto-upload="false"
-          :show-file-list="true"
-          :limit="1"
-          accept=".jpg,.jpeg,.png,.webp"
-          :on-change="handleFileChange"
-        >
-          <el-icon class="upload-icon"><Picture /></el-icon>
-          <div class="el-upload__text">拖拽图片到这里，或点击选择文件</div>
-          <template #tip>
-            <div class="el-upload__tip">支持 JPG / PNG / WEBP，文件大小不超过 5MB</div>
-          </template>
-        </el-upload>
-
-        <div v-if="uploadingProduct?.images.length" class="image-manager">
-          <div class="image-manager-header">
-            <h3>已上传图片</h3>
-            <el-button plain @click="saveImageSorts">
-              <el-icon><Sort /></el-icon>
-              保存图片排序
-            </el-button>
-          </div>
-
-          <div class="image-grid">
-            <article
-              v-for="image in uploadingProduct.images"
-              :key="image.id"
-              class="image-card"
-              :class="{ cover: image.is_cover }"
-            >
-              <el-image
-                :src="image.image_url"
-                fit="cover"
-                class="managed-image"
-                :preview-src-list="uploadingProduct.images.map((item) => item.image_url)"
-                preview-teleported
-              >
-                <template #error>
-                  <div class="cover-fallback">IMG</div>
-                </template>
-              </el-image>
-
-              <div class="image-card-body">
-                <div class="image-card-meta">
-                  <strong>{{ image.is_cover ? '当前封面' : '普通图片' }}</strong>
-                  <span>{{ image.original_name }}</span>
-                </div>
-
-                <el-form-item label="排序值" class="image-sort-field">
-                  <el-input-number v-model="image.sort_order" :min="0" :max="9999" />
-                </el-form-item>
-
-                <div class="image-card-actions">
-                  <el-button plain @click="setCoverImage(image.id)">
-                    <el-icon><Star /></el-icon>
-                    设为封面
-                  </el-button>
-                  <el-button plain type="danger" @click="removeImage(image.id)">
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="uploadVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitUpload">开始上传</el-button>
+        <el-button type="primary" :loading="saving" @click="saveProduct">保存商品</el-button>
       </template>
     </el-dialog>
   </section>
@@ -607,7 +855,9 @@ void loadCategories()
 .tag-list,
 .image-summary,
 .filter-actions,
-.pagination-bar {
+.pagination-bar,
+.row-actions,
+.image-card-tags {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -622,23 +872,15 @@ void loadCategories()
   margin: 0;
 }
 
-.image-summary {
-  justify-content: flex-start;
-  gap: 14px;
-}
-
-.image-summary :deep(.el-image) {
-  flex-shrink: 0;
-}
-
-.image-summary strong {
-  font-size: 15px;
-  color: #4a372b;
-}
-
 .table-card,
 .filter-card {
   padding: 14px;
+}
+
+.table-tip {
+  margin-bottom: 12px;
+  color: #907e6a;
+  font-size: 13px;
 }
 
 .filter-grid {
@@ -667,6 +909,44 @@ void loadCategories()
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.editor-media-panel {
+  margin-top: 10px;
+  padding: 18px;
+  border: 1px solid rgba(122, 92, 65, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 252, 247, 0.82);
+}
+
+.editor-media-header,
+.image-manager-header,
+.image-card-actions,
+.drag-cell,
+.image-summary-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editor-media-header {
+  margin-bottom: 14px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.editor-media-header h3,
+.image-manager-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #3d2b1f;
+}
+
+.editor-media-header p {
+  margin: 6px 0 0;
+  color: #8a755d;
+  font-size: 13px;
+}
+
 .upload-icon {
   font-size: 28px;
   color: #7d5535;
@@ -678,19 +958,8 @@ void loadCategories()
   border-top: 1px solid rgba(122, 92, 65, 0.12);
 }
 
-.image-manager-header,
-.image-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.image-manager-header {
   flex-wrap: wrap;
-}
-
-.image-manager-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #3d2b1f;
 }
 
 .image-grid {
@@ -701,10 +970,12 @@ void loadCategories()
 }
 
 .image-card {
+  position: relative;
   border: 1px solid rgba(122, 92, 65, 0.12);
   border-radius: 18px;
   overflow: hidden;
-  background: rgba(255, 252, 247, 0.9);
+  background: rgba(255, 252, 247, 0.96);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .image-card.cover {
@@ -712,9 +983,35 @@ void loadCategories()
   box-shadow: 0 12px 24px rgba(117, 86, 53, 0.08);
 }
 
+.image-card.dragging {
+  opacity: 0.72;
+  transform: scale(0.98);
+}
+
+.image-card.drag-over {
+  border-color: rgba(92, 61, 37, 0.34);
+  box-shadow: 0 14px 28px rgba(90, 60, 47, 0.12);
+}
+
+.image-card-handle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(50, 33, 22, 0.68);
+  color: #fffaf6;
+  font-size: 12px;
+  cursor: grab;
+}
+
 .managed-image {
   width: 100%;
-  height: 180px;
+  height: 220px;
   display: block;
 }
 
@@ -723,28 +1020,38 @@ void loadCategories()
 }
 
 .image-card-meta strong,
-.image-card-meta span {
+.image-card-meta span,
+.image-summary-meta strong,
+.image-summary-meta span {
   display: block;
 }
 
-.image-card-meta strong {
+.image-card-meta strong,
+.image-summary-meta strong {
   color: #3a291d;
 }
 
-.image-card-meta span {
+.image-card-meta span,
+.image-summary-meta span {
   margin-top: 6px;
   color: #8a755d;
   font-size: 13px;
   word-break: break-all;
 }
 
-.image-sort-field {
-  margin: 14px 0;
+.image-card-tags {
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.image-card-actions {
+  margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 .cover-thumb {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(122, 92, 65, 0.12);
@@ -762,28 +1069,46 @@ void loadCategories()
   text-transform: uppercase;
 }
 
-.sort-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.image-summary {
+  justify-content: flex-start;
+  gap: 14px;
 }
 
-.sort-box :deep(.el-input-number) {
-  width: 112px;
-}
-
-.sort-box :deep(.el-input-number .el-input__wrapper) {
-  padding-left: 8px;
-  padding-right: 30px;
-}
-
-.sort-save-button {
+.image-summary :deep(.el-image) {
   flex-shrink: 0;
 }
 
-.row-actions {
-  display: flex;
+.image-summary-meta {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+
+.drag-cell {
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.drag-handle {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(122, 92, 65, 0.1);
+  color: #6f5240;
+  cursor: grab;
+}
+
+.drag-order {
+  font-size: 12px;
+  color: #907e6a;
+}
+
+.row-actions {
   gap: 14px;
   flex-wrap: nowrap;
 }
@@ -792,17 +1117,15 @@ void loadCategories()
   margin: 0;
   min-width: 0;
   padding: 6px;
-  width: 32px;
-  height: 32px;
-  justify-content: center;
-  font-weight: 500;
   border-radius: 8px;
+  font-weight: 500;
 }
 
 .action-link :deep(span) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
 }
 
 .action-link :deep(.el-icon) {
@@ -813,9 +1136,21 @@ void loadCategories()
   color: var(--el-color-danger);
 }
 
+:deep(.el-table__body-wrapper tbody tr.is-row-dragging td) {
+  background: rgba(247, 239, 231, 0.92);
+}
+
+:deep(.el-table__body-wrapper tbody tr.is-row-drag-over td) {
+  background: rgba(242, 230, 217, 0.72);
+}
+
 @media (max-width: 1100px) {
   .filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .image-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -826,10 +1161,6 @@ void loadCategories()
 
   .inline-grid,
   .filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .image-grid {
     grid-template-columns: 1fr;
   }
 
