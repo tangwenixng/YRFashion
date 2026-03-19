@@ -4,6 +4,7 @@
   left: 0;
   right: 0;
   z-index: 40;
+  box-sizing: border-box;
   padding: 0 24rpx;
   background: rgba(250, 244, 238, 0.96);
 }
@@ -99,4 +100,10 @@
 
 .nav-right-space {
   flex-shrink: 0;
+}
+
+.nav-placeholder {
+  width: 100%;
+  flex-shrink: 0;
+  margin-bottom: 18rpx;
 }
