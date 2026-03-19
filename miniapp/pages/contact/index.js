@@ -1,5 +1,8 @@
 const { request } = require("../../utils/http")
 
+const CONSOLE_ENTRY_TAP_THRESHOLD = 10
+const CONSOLE_ENTRY_TAP_INTERVAL = 1500
+
 Page({
   data: {
     contact: null,
@@ -8,7 +11,13 @@ Page({
   },
 
   onLoad() {
+    this.consoleEntryTapCount = 0
+    this.consoleEntryTapTimer = null
     this.loadContact()
+  },
+
+  onUnload() {
+    this.resetConsoleEntryTapState()
   },
 
   async loadContact() {
@@ -44,6 +53,32 @@ Page({
     wx.navigateTo({
       url: "/pages/message-history/index",
     })
+  },
+
+  handleConsoleEntryTap() {
+    if (this.consoleEntryTapTimer) {
+      clearTimeout(this.consoleEntryTapTimer)
+    }
+
+    this.consoleEntryTapCount = (this.consoleEntryTapCount || 0) + 1
+
+    if (this.consoleEntryTapCount >= CONSOLE_ENTRY_TAP_THRESHOLD) {
+      this.resetConsoleEntryTapState()
+      this.goToConsoleLogin()
+      return
+    }
+
+    this.consoleEntryTapTimer = setTimeout(() => {
+      this.resetConsoleEntryTapState()
+    }, CONSOLE_ENTRY_TAP_INTERVAL)
+  },
+
+  resetConsoleEntryTapState() {
+    this.consoleEntryTapCount = 0
+    if (this.consoleEntryTapTimer) {
+      clearTimeout(this.consoleEntryTapTimer)
+      this.consoleEntryTapTimer = null
+    }
   },
 
   goToConsoleLogin() {
