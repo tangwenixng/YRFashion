@@ -48,13 +48,12 @@
             <text class="avatar-placeholder-main">头像</text>
           </view>
         </button>
-        <text class="avatar-tip">点击更换</text>
       </view>
 
       <view class="nickname-block {{nicknameFocused ? 'nickname-block-active' : ''}}">
         <input
           class="nickname-input"
-          type="text"
+          type="nickname"
           maxlength="100"
           placeholder="请输入昵称"
           value="{{profileNickname}}"
@@ -62,9 +61,6 @@
           bindfocus="handleNicknameFocus"
           bindblur="handleNicknameBlur"
         />
-        <view class="nickname-hint-row">
-          <text class="nickname-hint">留言记录中会显示这个昵称</text>
-        </view>
       </view>
     </view>
   </view>
