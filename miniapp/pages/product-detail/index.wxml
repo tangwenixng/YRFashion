@@ -16,7 +16,13 @@
     <swiper class="hero" indicator-dots="{{product.images.length > 1}}" autoplay="{{product.images.length > 1}}" circular="true">
       <block wx:for="{{product.images}}" wx:key="id">
         <swiper-item>
-          <image class="hero-image" src="{{item.image_url}}" mode="aspectFill"></image>
+          <image
+            class="hero-image"
+            src="{{item.image_url}}"
+            mode="aspectFill"
+            data-image-url="{{item.image_url}}"
+            bindtap="previewImage"
+          ></image>
         </swiper-item>
       </block>
       <swiper-item wx:if="{{!product.images.length}}">

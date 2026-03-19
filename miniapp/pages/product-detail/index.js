@@ -226,6 +226,23 @@ Page({
     })
   },
 
+  previewImage(event) {
+    const product = this.data.product
+    const current = event.currentTarget.dataset.imageUrl
+    const urls = product && Array.isArray(product.images)
+      ? product.images.map((item) => item.image_url).filter(Boolean)
+      : []
+
+    if (!current || !urls.length) {
+      return
+    }
+
+    wx.previewImage({
+      current,
+      urls,
+    })
+  },
+
   goToRelatedDetail(event) {
     const productId = Number(event.currentTarget.dataset.productId || 0)
     if (!productId) {
