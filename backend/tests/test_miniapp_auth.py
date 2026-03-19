@@ -17,6 +17,7 @@ def test_miniapp_login_creates_user_and_returns_token() -> None:
     assert payload["access_token"]
     assert payload["token_type"] == "bearer"
     assert payload["user"]["id"] > 0
+    assert payload["user"]["nickname"] is None
 
 
 def test_miniapp_login_reuses_existing_user() -> None:
@@ -32,6 +33,20 @@ def test_miniapp_login_reuses_existing_user() -> None:
         second_response.json()["user"]["last_visit_at"]
         >= first_response.json()["user"]["last_visit_at"]
     )
+
+
+def test_miniapp_login_persists_unionid_from_wechat_session() -> None:
+    with TestClient(app) as client:
+        response = client.post("/api/miniapp/auth/login", json={"code": "union-code"})
+
+    assert response.status_code == 200
+    user_id = response.json()["user"]["id"]
+
+    with SessionLocal() as db:
+        user = db.get(MiniappUser, user_id)
+        assert user is not None
+        assert user.openid == "test-openid-union-code"
+        assert user.unionid == "test-unionid-union-code"
 
 
 def test_miniapp_profile_update_persists_nickname_and_avatar() -> None:

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.api.deps import get_current_miniapp_user
@@ -15,7 +15,11 @@ from backend.schemas.miniapp import (
     MiniappProfileUpdateRequest,
 )
 from backend.services.content_safety import ensure_safe_text
-from backend.services.miniapp_auth import resolve_openid_from_code
+from backend.services.miniapp_auth import (
+    MiniappAuthConfigurationError,
+    MiniappAuthExchangeError,
+    resolve_miniapp_session_from_code,
+)
 from backend.services.storage import save_miniapp_avatar
 
 router = APIRouter(prefix="/miniapp/auth")
@@ -36,14 +40,27 @@ def serialize_miniapp_profile(user: MiniappUser) -> MiniappProfileResponse:
 
 @router.post("/login", response_model=MiniappLoginResponse)
 def login(payload: MiniappLoginRequest, db: Session = Depends(get_db)) -> MiniappLoginResponse:
-    openid = resolve_openid_from_code(payload.code)
+    try:
+        session_info = resolve_miniapp_session_from_code(payload.code)
+    except MiniappAuthConfigurationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
+    except MiniappAuthExchangeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(error),
+        ) from error
+
+    openid = session_info.openid
     now = datetime.now(UTC)
     user = db.query(MiniappUser).filter(MiniappUser.openid == openid).first()
 
     if user is None:
         user = MiniappUser(
             openid=openid,
-            unionid=None,
+            unionid=session_info.unionid,
             nickname=None,
             avatar_url=None,
             first_visit_at=now,
@@ -51,6 +68,8 @@ def login(payload: MiniappLoginRequest, db: Session = Depends(get_db)) -> Miniap
         )
         db.add(user)
     else:
+        if session_info.unionid and user.unionid != session_info.unionid:
+            user.unionid = session_info.unionid
         user.last_visit_at = now
         db.add(user)
 

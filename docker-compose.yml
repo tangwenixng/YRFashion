@@ -8,6 +8,8 @@ services:
       DATABASE_URL: sqlite:////app/data/app.db
       STORAGE_BACKEND: local
       SECRET_KEY: change-me-in-production
+      MINIAPP_APP_ID: ${MINIAPP_APP_ID:-}
+      MINIAPP_APP_SECRET: ${MINIAPP_APP_SECRET:-}
     volumes:
       - backend_data:/app/data
     ports:

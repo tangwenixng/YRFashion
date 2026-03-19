@@ -59,6 +59,10 @@ uv run uvicorn backend.main:app --reload
   `https://admin.example.com,https://preview.example.com`
 - `SECRET_KEY`
   在任何非本地环境中都必须替换。
+- `MINIAPP_APP_ID`
+  微信小程序 AppID，用于调用官方 `code2Session`。
+- `MINIAPP_APP_SECRET`
+  微信小程序 AppSecret。
 
 ### CloudBase 风格 MySQL 配置示例
 
@@ -76,6 +80,8 @@ STORAGE_SECRET_KEY=your_secret_key
 STORAGE_PUBLIC_BASE_URL=
 CORS_ALLOW_ORIGINS=https://admin.example.com
 SECRET_KEY=replace-with-a-random-secret
+MINIAPP_APP_ID=wx1234567890abcdef
+MINIAPP_APP_SECRET=replace-with-miniapp-secret
 ```
 
 ## Docker 镜像

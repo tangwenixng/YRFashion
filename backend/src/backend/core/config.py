@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     secret_key: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
+    miniapp_app_id: str = ""
+    miniapp_app_secret: str = ""
     bootstrap_admin_username: str = "admin"
     bootstrap_admin_password: str = "admin123456"
     bootstrap_admin_display_name: str = "Store Admin"
