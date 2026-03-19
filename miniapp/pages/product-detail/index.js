@@ -3,6 +3,10 @@ const { request } = require("../../utils/http")
 const { normalizeProduct } = require("../../utils/media")
 
 const MESSAGE_POLL_INTERVAL = 15000
+const DEFAULT_HERO_HEIGHT = 960
+const MIN_HERO_HEIGHT = 720
+const MAX_HERO_HEIGHT = 1280
+const imageHeightCache = {}
 
 const STATUS_META_MAP = {
   unread: {
@@ -63,6 +67,9 @@ Page({
   data: {
     productId: null,
     product: null,
+    heroCurrent: 0,
+    heroHeight: DEFAULT_HERO_HEIGHT,
+    heroHeights: [],
     messages: [],
     messagesLoading: false,
     messagesError: "",
@@ -124,7 +131,15 @@ Page({
     this.setData({ loading: true, error: "" })
     try {
       const product = normalizeProduct(await request({ url: `/miniapp/products/${productId}` }))
-      this.setData({ product, loading: false, error: "" })
+      const heroHeights = await this.buildHeroHeights(product.images || [])
+      this.setData({
+        product,
+        heroCurrent: 0,
+        heroHeight: heroHeights[0] || DEFAULT_HERO_HEIGHT,
+        heroHeights,
+        loading: false,
+        error: "",
+      })
       wx.setNavigationBarTitle({ title: product.name })
       this.loadMessageHistory({ silent: true, background: true })
     } catch (error) {
@@ -241,6 +256,60 @@ Page({
       current,
       urls,
     })
+  },
+
+  handleHeroChange(event) {
+    const heroCurrent = Number(event.detail.current || 0)
+    this.setData({
+      heroCurrent,
+      heroHeight: this.data.heroHeights[heroCurrent] || DEFAULT_HERO_HEIGHT,
+    })
+  },
+
+  async buildHeroHeights(images = []) {
+    if (!images.length) {
+      return [DEFAULT_HERO_HEIGHT]
+    }
+
+    return Promise.all(
+      images.map((item) => this.getImageDisplayHeight(item.image_url)),
+    )
+  },
+
+  getImageDisplayHeight(url) {
+    if (!url) {
+      return Promise.resolve(DEFAULT_HERO_HEIGHT)
+    }
+
+    if (imageHeightCache[url]) {
+      return Promise.resolve(imageHeightCache[url])
+    }
+
+    return new Promise((resolve) => {
+      wx.getImageInfo({
+        src: url,
+        success: (result) => {
+          const height = this.normalizeHeroHeight(result)
+          imageHeightCache[url] = height
+          resolve(height)
+        },
+        fail: () => {
+          imageHeightCache[url] = DEFAULT_HERO_HEIGHT
+          resolve(DEFAULT_HERO_HEIGHT)
+        },
+      })
+    })
+  },
+
+  normalizeHeroHeight(imageInfo = {}) {
+    const width = Number(imageInfo.width || 0)
+    const height = Number(imageInfo.height || 0)
+    if (!width || !height) {
+      return DEFAULT_HERO_HEIGHT
+    }
+
+    const heightRpx = (height / width) * 750
+    return Math.round(Math.min(Math.max(heightRpx, MIN_HERO_HEIGHT), MAX_HERO_HEIGHT))
   },
 
   goToRelatedDetail(event) {

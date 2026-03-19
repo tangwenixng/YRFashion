@@ -4,9 +4,14 @@
   background: linear-gradient(180deg, #fcf7f1 0%, #eee3d6 100%);
 }
 
+.hero-wrap {
+  position: relative;
+  background: #f6efe7;
+}
+
 .hero {
   width: 100%;
-  height: 720rpx;
+  min-height: 720rpx;
   background: rgba(255, 255, 255, 0.65);
 }
 
@@ -16,11 +21,42 @@
   height: 100%;
 }
 
+.hero-image {
+  background: #f6efe7;
+}
+
 .hero-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   color: #8f7463;
+}
+
+.hero-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 24rpx;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(34, 24, 18, 0.22);
+}
+
+.hero-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  transition: all 0.2s ease;
+}
+
+.hero-dot-active {
+  width: 28rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
 }
 
 .panel {
