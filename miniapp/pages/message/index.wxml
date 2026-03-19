@@ -54,7 +54,7 @@
       <view class="nickname-block {{nicknameFocused ? 'nickname-block-active' : ''}}">
         <input
           class="nickname-input"
-          type="nickname"
+          type="text"
           maxlength="100"
           placeholder="请输入昵称"
           value="{{profileNickname}}"

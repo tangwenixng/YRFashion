@@ -156,7 +156,7 @@
   width: 100%;
   min-height: 78rpx;
   padding: 0 22rpx;
-  border-radius: 18rpx;
+  border-radius: 14rpx;
   background: #f8f2ec;
   color: #432d21;
   box-sizing: border-box;
