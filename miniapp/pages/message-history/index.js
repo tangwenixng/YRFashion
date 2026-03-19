@@ -1,5 +1,29 @@
 const { request } = require("../../utils/http")
 
+function buildNavigationState(navTitle = "") {
+  const systemInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const statusBarHeight = Number(systemInfo.statusBarHeight || 20)
+  const windowWidth = Number(systemInfo.windowWidth || 375)
+  let navBarHeight = 44
+  let navRightSpaceWidth = 96
+
+  if (wx.getMenuButtonBoundingClientRect) {
+    const menuButtonRect = wx.getMenuButtonBoundingClientRect()
+    if (menuButtonRect && menuButtonRect.width) {
+      navBarHeight = menuButtonRect.height + (menuButtonRect.top - statusBarHeight) * 2
+      navRightSpaceWidth = menuButtonRect.width + (windowWidth - menuButtonRect.right) * 2
+    }
+  }
+
+  return {
+    navTitle,
+    statusBarHeight,
+    navBarHeight,
+    navBarTotalHeight: statusBarHeight + navBarHeight,
+    navRightSpaceWidth,
+  }
+}
+
 const STATUS_META_MAP = {
   unread: {
     label: "待查看",
@@ -63,6 +87,7 @@ Page({
     const productId = Number(query.productId || 0)
     const productName = query.productName ? decodeURIComponent(query.productName) : ""
     this.setData({
+      ...buildNavigationState("留言记录"),
       productId,
       productName,
     })
@@ -118,5 +143,17 @@ Page({
     }
 
     wx.navigateTo({ url: `/pages/product-detail/index?id=${productId}` })
+  },
+
+  goHome() {
+    wx.reLaunch({ url: "/pages/home/index" })
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({ delta: 1 })
+      return
+    }
+    this.goHome()
   },
 })

@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "联系我"
+  "navigationBarTitleText": "联系我",
+  "navigationStyle": "custom"
 }

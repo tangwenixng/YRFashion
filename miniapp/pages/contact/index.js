@@ -1,5 +1,29 @@
 const { request } = require("../../utils/http")
 
+function buildNavigationState(navTitle = "") {
+  const systemInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const statusBarHeight = Number(systemInfo.statusBarHeight || 20)
+  const windowWidth = Number(systemInfo.windowWidth || 375)
+  let navBarHeight = 44
+  let navRightSpaceWidth = 96
+
+  if (wx.getMenuButtonBoundingClientRect) {
+    const menuButtonRect = wx.getMenuButtonBoundingClientRect()
+    if (menuButtonRect && menuButtonRect.width) {
+      navBarHeight = menuButtonRect.height + (menuButtonRect.top - statusBarHeight) * 2
+      navRightSpaceWidth = menuButtonRect.width + (windowWidth - menuButtonRect.right) * 2
+    }
+  }
+
+  return {
+    navTitle,
+    statusBarHeight,
+    navBarHeight,
+    navBarTotalHeight: statusBarHeight + navBarHeight,
+    navRightSpaceWidth,
+  }
+}
+
 const CONSOLE_ENTRY_TAP_THRESHOLD = 10
 const CONSOLE_ENTRY_TAP_INTERVAL = 1500
 
@@ -13,6 +37,7 @@ Page({
   onLoad() {
     this.consoleEntryTapCount = 0
     this.consoleEntryTapTimer = null
+    this.setData(buildNavigationState("联系我"))
     this.loadContact()
   },
 
@@ -47,6 +72,18 @@ Page({
       return
     }
     wx.setClipboardData({ data: wechatId })
+  },
+
+  goHome() {
+    wx.reLaunch({ url: "/pages/home/index" })
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({ delta: 1 })
+      return
+    }
+    this.goHome()
   },
 
   handleConsoleEntryTap() {

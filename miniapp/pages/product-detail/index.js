@@ -8,6 +8,30 @@ const MIN_HERO_HEIGHT = 720
 const MAX_HERO_HEIGHT = 1280
 const imageHeightCache = {}
 
+function buildNavigationState(navTitle = "") {
+  const systemInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const statusBarHeight = Number(systemInfo.statusBarHeight || 20)
+  const windowWidth = Number(systemInfo.windowWidth || 375)
+  let navBarHeight = 44
+  let navRightSpaceWidth = 96
+
+  if (wx.getMenuButtonBoundingClientRect) {
+    const menuButtonRect = wx.getMenuButtonBoundingClientRect()
+    if (menuButtonRect && menuButtonRect.width) {
+      navBarHeight = menuButtonRect.height + (menuButtonRect.top - statusBarHeight) * 2
+      navRightSpaceWidth = menuButtonRect.width + (windowWidth - menuButtonRect.right) * 2
+    }
+  }
+
+  return {
+    navTitle,
+    statusBarHeight,
+    navBarHeight,
+    navBarTotalHeight: statusBarHeight + navBarHeight,
+    navRightSpaceWidth,
+  }
+}
+
 const STATUS_META_MAP = {
   unread: {
     label: "待查看",
@@ -85,6 +109,7 @@ Page({
     this.messagesRequesting = false
     this.setData({
       productId: Number(query.id || 0),
+      ...buildNavigationState("穿搭详情"),
     })
     this.loadProduct(this.data.productId)
   },
@@ -134,13 +159,13 @@ Page({
       const heroHeights = await this.buildHeroHeights(product.images || [])
       this.setData({
         product,
+        navTitle: product.name || "穿搭详情",
         heroCurrent: 0,
         heroHeight: heroHeights[0] || DEFAULT_HERO_HEIGHT,
         heroHeights,
         loading: false,
         error: "",
       })
-      wx.setNavigationBarTitle({ title: product.name })
       this.loadMessageHistory({ silent: true, background: true })
     } catch (error) {
       this.setData({ loading: false, error: "穿搭详情加载失败，请稍后重试。" })
@@ -227,6 +252,18 @@ Page({
 
   goToContact() {
     wx.navigateTo({ url: "/pages/contact/index" })
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({ delta: 1 })
+      return
+    }
+    this.goHome()
+  },
+
+  goHome() {
+    wx.reLaunch({ url: "/pages/home/index" })
   },
 
   goToMessageHistory() {

@@ -1,6 +1,8 @@
+@import "../../styles/custom-nav.wxss";
+
 .page {
   min-height: 100vh;
-  padding: 32rpx;
+  padding: 0 32rpx 32rpx;
   background: linear-gradient(180deg, #f9f2ea 0%, #efe2d5 100%);
 }
 

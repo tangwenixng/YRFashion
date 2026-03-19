@@ -1,4 +1,5 @@
 {
   "navigationBarTitleText": "留言记录",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "navigationStyle": "custom"
 }

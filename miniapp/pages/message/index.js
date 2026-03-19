@@ -2,6 +2,30 @@ const { fetchMiniappProfile, getMiniappUser, updateMiniappProfile } = require(".
 const { request } = require("../../utils/http")
 const { normalizeMediaUrl } = require("../../utils/media")
 
+function buildNavigationState(navTitle = "") {
+  const systemInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+  const statusBarHeight = Number(systemInfo.statusBarHeight || 20)
+  const windowWidth = Number(systemInfo.windowWidth || 375)
+  let navBarHeight = 44
+  let navRightSpaceWidth = 96
+
+  if (wx.getMenuButtonBoundingClientRect) {
+    const menuButtonRect = wx.getMenuButtonBoundingClientRect()
+    if (menuButtonRect && menuButtonRect.width) {
+      navBarHeight = menuButtonRect.height + (menuButtonRect.top - statusBarHeight) * 2
+      navRightSpaceWidth = menuButtonRect.width + (windowWidth - menuButtonRect.right) * 2
+    }
+  }
+
+  return {
+    navTitle,
+    statusBarHeight,
+    navBarHeight,
+    navBarTotalHeight: statusBarHeight + navBarHeight,
+    navRightSpaceWidth,
+  }
+}
+
 function buildProfileState(user) {
   const nickname = (user && user.nickname) || ""
   const avatarUrl = (user && (user.pending_avatar_url || user.avatar_url)) || ""
@@ -56,6 +80,7 @@ Page({
         {
           productId,
           productName,
+          ...buildNavigationState(productName || "留言交流"),
         },
         buildProfileState(getMiniappUser()),
       ),
@@ -174,5 +199,17 @@ Page({
         icon: "none",
       })
     }
+  },
+
+  goHome() {
+    wx.reLaunch({ url: "/pages/home/index" })
+  },
+
+  goBack() {
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack({ delta: 1 })
+      return
+    }
+    this.goHome()
   },
 })

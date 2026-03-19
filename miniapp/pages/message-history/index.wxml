@@ -1,4 +1,24 @@
 <view class="page">
+  <view class="nav-shell" style="height: {{navBarTotalHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content" style="height: {{navBarHeight}}px;">
+      <view class="nav-left">
+        <view class="nav-icon-button" bindtap="goBack">
+          <view class="nav-back-icon"></view>
+        </view>
+        <view class="nav-icon-button" bindtap="goHome">
+          <view class="nav-home-icon">
+            <view class="nav-home-roof"></view>
+            <view class="nav-home-body"></view>
+            <view class="nav-home-door"></view>
+          </view>
+        </view>
+      </view>
+      <text class="nav-title">{{navTitle}}</text>
+      <view class="nav-right-space" style="width: {{navRightSpaceWidth}}px;"></view>
+    </view>
+  </view>
+  <view class="nav-placeholder" style="height: {{navBarTotalHeight}}px;"></view>
+
   <view class="page-header">
     <text class="title">留言记录</text>
     <text class="subtitle">{{productName ? ('当前筛选：' + productName) : '查看你提交过的留言内容和回复'}}</text>
