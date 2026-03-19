@@ -25,13 +25,11 @@
     <text class="hint">留言提交后会显示在记录中，我会在这里继续回复你。</text>
   </view>
 
-  <view class="card">
+  <view class="card profile-card">
     <view class="profile-header">
       <view>
         <text class="profile-title">留言身份</text>
-        <text class="profile-hint">
-          留言前请补充昵称和头像，方便在记录中识别你的留言内容。
-        </text>
+        <text class="profile-hint">补充头像和昵称，方便在记录中识别你的留言内容。</text>
         <text wx:if="{{avatarReviewStatus === 'pending'}}" class="profile-status status-pending">
           当前头像审核中，审核通过后会显示在你的留言记录里。
         </text>
@@ -43,13 +41,17 @@
     </view>
 
     <view class="profile-row">
-      <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="handleChooseAvatar">
-        <image wx:if="{{profileAvatarUrl}}" class="avatar-image" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
-        <view wx:else class="avatar-placeholder">选头像</view>
-      </button>
+      <view class="avatar-column">
+        <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="handleChooseAvatar">
+          <image wx:if="{{profileAvatarUrl}}" class="avatar-image" src="{{profileAvatarUrl}}" mode="aspectFill"></image>
+          <view wx:else class="avatar-placeholder">
+            <text class="avatar-placeholder-main">头像</text>
+          </view>
+        </button>
+        <text class="avatar-tip">点击更换</text>
+      </view>
 
-      <view class="nickname-block">
-        <text class="nickname-label">昵称</text>
+      <view class="nickname-block {{nicknameFocused ? 'nickname-block-active' : ''}}">
         <input
           class="nickname-input"
           type="nickname"
@@ -57,7 +59,12 @@
           placeholder="请输入昵称"
           value="{{profileNickname}}"
           bindinput="handleNicknameInput"
+          bindfocus="handleNicknameFocus"
+          bindblur="handleNicknameBlur"
         />
+        <view class="nickname-hint-row">
+          <text class="nickname-hint">留言记录中会显示这个昵称</text>
+        </view>
       </view>
     </view>
   </view>

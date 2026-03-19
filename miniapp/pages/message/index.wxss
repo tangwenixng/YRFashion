@@ -3,7 +3,7 @@
 .page {
   min-height: 100vh;
   padding: 0 32rpx 32rpx;
-  background: linear-gradient(180deg, #f9f2ea 0%, #efe2d5 100%);
+  background: linear-gradient(180deg, #f9f2ea 0%, #efe4d8 100%);
 }
 
 .card {
@@ -11,10 +11,12 @@
   border-radius: 30rpx;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+  margin-top: 16rpx;
 }
 
 .intro-card {
   background: linear-gradient(135deg, #4a3022 0%, #7a5640 100%);
+  padding: 26rpx 32rpx 28rpx;
 }
 
 .label {
@@ -53,10 +55,10 @@
 
 .profile-hint {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   line-height: 1.7;
   color: #8c7060;
-  font-size: 24rpx;
+  font-size: 22rpx;
 }
 
 .profile-status {
@@ -87,30 +89,40 @@
 .profile-row {
   margin-top: 24rpx;
   display: flex;
+  align-items: stretch;
+  gap: 20rpx;
+}
+
+.avatar-column {
+  width: 132rpx;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 24rpx;
+  justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .avatar-button {
-  width: 128rpx;
-  height: 128rpx;
+  width: 104rpx;
+  height: 104rpx;
   margin: 0;
   padding: 0;
-  border: 0;
+  border: 2rpx solid rgba(111, 82, 64, 0.1);
   border-radius: 999rpx;
   overflow: hidden;
-  background: transparent;
+  background: rgba(248, 242, 236, 0.72);
   line-height: 1;
 }
 
 .avatar-button::after {
-  border: 0;
+  border: 2rpx solid rgba(111, 82, 64, 0.1);
+  border-radius: 999rpx;
 }
 
 .avatar-image,
 .avatar-placeholder {
-  width: 128rpx;
-  height: 128rpx;
+  width: 104rpx;
+  height: 104rpx;
   border-radius: 999rpx;
 }
 
@@ -121,34 +133,66 @@
   background: linear-gradient(135deg, #efe2d5 0%, #dfc7b2 100%);
   color: #6e4d3a;
   font-size: 24rpx;
+  font-weight: 700;
+}
+
+.avatar-tip {
+  margin-top: 10rpx;
+  color: #9a7f6f;
+  font-size: 20rpx;
+  line-height: 1.5;
 }
 
 .nickname-block {
   flex: 1;
-}
-
-.nickname-label {
-  display: block;
-  margin-bottom: 12rpx;
-  color: #6e4d3a;
-  font-size: 24rpx;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 6rpx;
 }
 
 .nickname-input {
   width: 100%;
-  min-height: 88rpx;
-  padding: 0 24rpx;
-  border-radius: 22rpx;
+  min-height: 78rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
   background: #f8f2ec;
   color: #432d21;
   box-sizing: border-box;
+  font-size: 26rpx;
+  font-weight: 500;
+  border: 2rpx solid transparent;
+}
+
+.nickname-block-active .nickname-input {
+  border-color: rgba(122, 86, 64, 0.2);
+  background: #f6eee6;
+}
+
+.nickname-hint-row {
+  margin-top: 10rpx;
+  min-height: 30rpx;
+  display: flex;
+  align-items: flex-start;
+}
+
+.nickname-hint {
+  display: block;
+  color: #9a7f6f;
+  font-size: 22rpx;
+  line-height: 1.5;
 }
 
 .textarea {
   width: 100%;
   min-height: 320rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 22rpx;
+  background: #f8f2ec;
   line-height: 1.8;
   color: #432d21;
+  box-sizing: border-box;
 }
 
 .counter-row {
@@ -162,6 +206,29 @@
 
 .submit-button {
   margin-top: 28rpx;
+  width: 100%;
   background: #3f2a1f;
   color: #fff8f2;
+}
+
+.submit-button::after {
+  border: 0;
+}
+
+@media (max-width: 520px) {
+  .profile-row {
+    align-items: flex-start;
+    gap: 18rpx;
+  }
+
+  .avatar-column {
+    width: 116rpx;
+  }
+
+  .avatar-button,
+  .avatar-image,
+  .avatar-placeholder {
+    width: 92rpx;
+    height: 92rpx;
+  }
 }

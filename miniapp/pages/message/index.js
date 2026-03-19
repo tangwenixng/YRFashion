@@ -68,6 +68,7 @@ Page({
     savedProfileNickname: "",
     savedProfileAvatarUrl: "",
     needsProfileCompletion: true,
+    nicknameFocused: false,
     avatarReviewStatus: "approved",
     avatarRejectReason: "",
   },
@@ -103,6 +104,14 @@ Page({
 
   handleNicknameInput(event) {
     this.setData({ profileNickname: event.detail.value })
+  },
+
+  handleNicknameFocus() {
+    this.setData({ nicknameFocused: true })
+  },
+
+  handleNicknameBlur() {
+    this.setData({ nicknameFocused: false })
   },
 
   handleChooseAvatar(event) {
