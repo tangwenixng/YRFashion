@@ -36,6 +36,14 @@ function clearSession() {
   syncGlobalMiniappUser(null)
 }
 
+function isTemporaryMiniappFilePath(value) {
+  if (!value || typeof value !== "string") {
+    return false
+  }
+
+  return /^wxfile:\/\//i.test(value) || /^https?:\/\/(tmp|usr)\//i.test(value)
+}
+
 function loginWithCode(code) {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -164,7 +172,11 @@ function updateMiniappProfile(payload) {
   const persist = () => {
     const normalizedPayload = Object.assign({}, payload)
     const avatarPath = normalizedPayload.avatar_url || ""
-    if (avatarPath && !/^https?:\/\//.test(avatarPath) && !avatarPath.startsWith("/")) {
+    if (
+      avatarPath &&
+      (isTemporaryMiniappFilePath(avatarPath) ||
+        (!/^https?:\/\//.test(avatarPath) && !avatarPath.startsWith("/")))
+    ) {
       return uploadMiniappAvatar(avatarPath).then((avatarUrl) =>
         send(Object.assign({}, normalizedPayload, { avatar_url: avatarUrl })),
       )

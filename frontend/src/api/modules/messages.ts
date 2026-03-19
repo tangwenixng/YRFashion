@@ -3,8 +3,13 @@ import { http } from '../http'
 const configuredBaseURL = (import.meta.env.VITE_API_BASE_URL || '/api').trim()
 const mediaBaseURL = configuredBaseURL.replace(/\/$/, '').replace(/\/api$/, '')
 
+const isTemporaryMiniappFilePath = (url: string) => /^wxfile:\/\//i.test(url) || /^https?:\/\/(tmp|usr)\//i.test(url)
+
 const normalizeMediaUrl = (url: string | null) => {
   if (!url) {
+    return null
+  }
+  if (isTemporaryMiniappFilePath(url)) {
     return null
   }
   if (/^https?:\/\//.test(url)) {

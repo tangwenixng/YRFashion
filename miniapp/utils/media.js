@@ -10,8 +10,20 @@ const MINIAPP_COPY_REPLACEMENTS = [
   [/时装馆/g, "穿搭馆"],
 ]
 
+function isTemporaryMiniappFilePath(url) {
+  if (!url || typeof url !== "string") {
+    return false
+  }
+
+  return /^wxfile:\/\//i.test(url) || /^https?:\/\/(tmp|usr)\//i.test(url)
+}
+
 function normalizeMediaUrl(url) {
   if (!url || typeof url !== "string") {
+    return ""
+  }
+
+  if (isTemporaryMiniappFilePath(url)) {
     return ""
   }
 
