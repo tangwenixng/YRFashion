@@ -1,6 +1,11 @@
 const { request } = require("../../utils/http")
 const { normalizeProduct } = require("../../utils/media")
 
+const DEFAULT_IMAGE_RATIO = 1.28
+const MIN_IMAGE_RATIO = 0.8
+const MAX_IMAGE_RATIO = 1.6
+const imageRatioCache = {}
+
 Page({
   data: {
     categories: [{ id: 0, name: "全部" }],
@@ -8,6 +13,7 @@ Page({
     keyword: "",
     draftKeyword: "",
     items: [],
+    productColumns: [],
     page: 1,
     pageSize: 10,
     total: 0,
@@ -49,6 +55,7 @@ Page({
     this.setData({
       keyword,
       items: [],
+      productColumns: [],
       page: 1,
       total: 0,
       hasMore: true,
@@ -66,6 +73,7 @@ Page({
       keyword: "",
       draftKeyword: "",
       items: [],
+      productColumns: [],
       page: 1,
       total: 0,
       hasMore: true,
@@ -107,6 +115,7 @@ Page({
     this.setData({
       activeCategoryId: categoryId,
       items: [],
+      productColumns: [],
       page: 1,
       total: 0,
       hasMore: true,
@@ -136,11 +145,14 @@ Page({
       const response = await request({
         url: `/miniapp/products?${query.join("&")}`,
       })
+      const nextItems = reset
+        ? response.items.map(normalizeProduct)
+        : this.data.items.concat(response.items.map(normalizeProduct))
+      const productColumns = await this.buildProductColumns(nextItems)
 
       this.setData({
-        items: reset
-          ? response.items.map(normalizeProduct)
-          : this.data.items.concat(response.items.map(normalizeProduct)),
+        items: nextItems,
+        productColumns,
         page: response.page + 1,
         total: response.total,
         hasMore: response.has_more,
@@ -163,5 +175,61 @@ Page({
   goToDetail(event) {
     const productId = event.currentTarget.dataset.productId
     wx.navigateTo({ url: `/pages/product-detail/index?id=${productId}` })
+  },
+
+  async buildProductColumns(products = []) {
+    const columns = [[], []]
+    const columnHeights = [0, 0]
+
+    const items = await Promise.all(
+      products.map(async (product) => {
+        const imageRatio = await this.getImageRatio(product.cover_image_url)
+        return Object.assign({}, product, { imageRatio })
+      }),
+    )
+
+    items.forEach((product) => {
+      const columnIndex = columnHeights[0] <= columnHeights[1] ? 0 : 1
+      columns[columnIndex].push(product)
+      columnHeights[columnIndex] += product.imageRatio + 0.62
+    })
+
+    return columns.filter((column) => column.length)
+  },
+
+  getImageRatio(url) {
+    if (!url) {
+      return Promise.resolve(DEFAULT_IMAGE_RATIO)
+    }
+
+    if (imageRatioCache[url]) {
+      return Promise.resolve(imageRatioCache[url])
+    }
+
+    return new Promise((resolve) => {
+      wx.getImageInfo({
+        src: url,
+        success: (result) => {
+          const ratio = this.normalizeImageRatio(result)
+          imageRatioCache[url] = ratio
+          resolve(ratio)
+        },
+        fail: () => {
+          imageRatioCache[url] = DEFAULT_IMAGE_RATIO
+          resolve(DEFAULT_IMAGE_RATIO)
+        },
+      })
+    })
+  },
+
+  normalizeImageRatio(imageInfo = {}) {
+    const width = Number(imageInfo.width || 0)
+    const height = Number(imageInfo.height || 0)
+    if (!width || !height) {
+      return DEFAULT_IMAGE_RATIO
+    }
+
+    const ratio = height / width
+    return Math.min(Math.max(ratio, MIN_IMAGE_RATIO), MAX_IMAGE_RATIO)
   },
 })
