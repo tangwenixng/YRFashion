@@ -29,13 +29,13 @@
       <view class="tag-row">
         <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
       </view>
-      <text class="description">{{product.description || '店主暂未补充更多穿搭介绍。'}}</text>
+      <text class="description">{{product.description || '这里会持续更新这套穿搭的更多介绍。'}}</text>
     </view>
 
     <view class="action-bar">
-      <button class="primary-button" bindtap="handleConsult">留言咨询</button>
-      <button class="secondary-button" bindtap="goToMessageHistory">查看咨询记录</button>
-      <button class="secondary-button" bindtap="goToContact">联系店主</button>
+      <button class="primary-button" bindtap="handleConsult">留言交流</button>
+      <button class="secondary-button" bindtap="goToMessageHistory">查看留言记录</button>
+      <button class="secondary-button" bindtap="goToContact">联系我</button>
     </view>
 
     <view class="panel history-panel">
@@ -54,8 +54,8 @@
 
       <view wx:if="{{messagesLoading}}" class="history-placeholder">留言记录加载中...</view>
       <view wx:elif="{{messagesError}}" class="history-placeholder">{{messagesError}}</view>
-      <view wx:elif="{{!hasMiniappSession}}" class="history-placeholder">提交留言后，可在此查看自己的咨询记录和店主回复。</view>
-      <view wx:elif="{{!messages.length}}" class="history-placeholder">还没有留言，点击上方按钮开始咨询。</view>
+      <view wx:elif="{{!hasMiniappSession}}" class="history-placeholder">提交留言后，可在这里查看自己的留言和回复。</view>
+      <view wx:elif="{{!messages.length}}" class="history-placeholder">还没有留言，点击上方按钮开始交流。</view>
       <view wx:else class="history-list">
         <view wx:for="{{messages}}" wx:key="id" class="history-item {{item.status_tone === 'replied' ? 'history-item-replied' : ''}}">
           <view class="history-meta">
@@ -66,7 +66,7 @@
 
           <view wx:if="{{item.reply_content}}" class="reply-card">
             <view class="reply-header">
-              <text class="reply-title">店主回复</text>
+              <text class="reply-title">我的回复</text>
               <text class="reply-time">{{item.reply_at_text}}</text>
             </view>
             <text class="reply-content">{{item.reply_content}}</text>
@@ -78,8 +78,8 @@
     <view wx:if="{{product.related_products && product.related_products.length}}" class="panel related-panel">
       <view class="history-header">
         <view>
-          <text class="section-title">相关推荐</text>
-          <text class="section-subtitle">继续看看同风格或同分类的精选穿搭</text>
+          <text class="section-title">更多分享</text>
+          <text class="section-subtitle">继续看看同风格或同分类的穿搭内容</text>
         </view>
       </view>
 

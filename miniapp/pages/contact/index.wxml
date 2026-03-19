@@ -14,9 +14,9 @@
 
   <block wx:elif="{{contact}}">
     <view class="card intro-card">
-      <text class="label">门店联系</text>
+      <text class="label">联系我</text>
       <text class="shop-name">{{contact.shop_name || '伊人Fashion 穿搭馆'}}</text>
-      <text class="field-value">可通过电话或微信联系店主，也可以先查看自己的咨询记录。</text>
+      <text class="field-value">可通过电话或微信联系我，也可以先查看自己的留言记录。</text>
     </view>
 
     <view class="card">
@@ -37,21 +37,21 @@
 
     <view class="card info-grid">
       <view>
-        <text class="field-label">门店地址</text>
+        <text class="field-label">所在地区</text>
         <text class="field-value">{{contact.address || '暂未设置'}}</text>
       </view>
       <view>
-        <text class="field-label">营业时间</text>
+        <text class="field-label">回复时段</text>
         <text class="field-value">{{contact.business_hours || '暂未设置'}}</text>
       </view>
     </view>
 
     <view class="card">
       <view class="field-row">
-        <text class="field-label">咨询记录</text>
-        <text class="field-value">如果你已经提交过咨询，可以在这里继续查看店主回复。</text>
+        <text class="field-label">留言记录</text>
+        <text class="field-value">如果你已经提交过留言，可以在这里继续查看我的回复。</text>
       </view>
-      <button class="action-button secondary" bindtap="goToMessageHistory">查看咨询记录</button>
+      <button class="action-button secondary" bindtap="goToMessageHistory">查看留言记录</button>
     </view>
 
     <view class="page-footer" bindtap="handleConsoleEntryTap">

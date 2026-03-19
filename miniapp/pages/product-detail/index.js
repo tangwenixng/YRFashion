@@ -6,15 +6,15 @@ const MESSAGE_POLL_INTERVAL = 15000
 
 const STATUS_META_MAP = {
   unread: {
-    label: "待店主查看",
+    label: "待查看",
     tone: "pending",
   },
   read: {
-    label: "店主已查看",
+    label: "已查看",
     tone: "read",
   },
   replied: {
-    label: "店主已回复",
+    label: "已回复",
     tone: "replied",
   },
 }
@@ -181,7 +181,7 @@ Page({
       })
 
       if (hasNewReply) {
-        wx.showToast({ title: "店主已回复你的留言", icon: "none" })
+        wx.showToast({ title: "有新回复了", icon: "none" })
       }
 
       this.startMessagePolling()

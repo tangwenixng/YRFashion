@@ -2,15 +2,15 @@ const { request } = require("../../utils/http")
 
 const STATUS_META_MAP = {
   unread: {
-    label: "待店主查看",
+    label: "待查看",
     tone: "pending",
   },
   read: {
-    label: "店主已查看",
+    label: "已查看",
     tone: "read",
   },
   replied: {
-    label: "店主已回复",
+    label: "已回复",
     tone: "replied",
   },
 }
@@ -103,7 +103,7 @@ Page({
     } catch (error) {
       this.setData({
         loading: false,
-        error: "咨询记录加载失败，请稍后重试。",
+        error: "留言记录加载失败，请稍后重试。",
       })
       wx.showToast({ title: "加载失败", icon: "none" })
     } finally {

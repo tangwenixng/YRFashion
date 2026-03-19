@@ -1,8 +1,8 @@
 <view class="page">
   <view class="card intro-card">
-    <text class="label">咨询穿搭</text>
+    <text class="label">留言交流</text>
     <text class="title">{{productName || '当前穿搭'}}</text>
-    <text class="hint">留言会发送到店主后台，店主可在后台查看并回复。</text>
+    <text class="hint">留言提交后会显示在记录中，我会在这里继续回复你。</text>
   </view>
 
   <view class="card">
@@ -10,10 +10,10 @@
       <view>
         <text class="profile-title">留言身份</text>
         <text class="profile-hint">
-          留言前请补充昵称和头像，店主后台会同时看到你的 openid、昵称和头像。
+          留言前请补充昵称和头像，方便在记录中识别你的留言内容。
         </text>
         <text wx:if="{{avatarReviewStatus === 'pending'}}" class="profile-status status-pending">
-          当前头像审核中，审核通过后才会在店主后台正式展示。
+          当前头像审核中，审核通过后会显示在你的留言记录里。
         </text>
         <text wx:if="{{avatarReviewStatus === 'rejected'}}" class="profile-status status-rejected">
           当前头像未通过审核：{{avatarRejectReason || '请重新上传清晰、合规的头像'}}
@@ -45,7 +45,7 @@
   <view class="card">
     <textarea
       class="textarea"
-      placeholder="请输入你的咨询内容，例如尺码、颜色、库存或试穿需求。"
+      placeholder="请输入你想交流的内容，例如搭配想法、颜色偏好或穿着场景。"
       maxlength="{{maxLength}}"
       value="{{content}}"
       bindinput="handleInput"

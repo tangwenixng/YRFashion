@@ -16,10 +16,10 @@
     <view class="hero">
       <text class="eyebrow">STYLE SHOWROOM</text>
       <text class="title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
-      <text class="subtitle">{{home.shop_intro || '分享轻时尚女装搭配与穿搭灵感，欢迎到店体验或联系店主了解更多。'}}</text>
+      <text class="subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎浏览近期搭配记录，也可以直接联系我。'}}</text>
       <view class="hero-actions">
         <button class="primary-button" bindtap="goToProducts">查看穿搭</button>
-        <button class="ghost-button" bindtap="goToContact">联系店主</button>
+        <button class="ghost-button" bindtap="goToContact">联系我</button>
       </view>
     </view>
 
@@ -30,14 +30,14 @@
         </swiper-item>
       </block>
       <swiper-item wx:if="{{!home.homepage_banner_urls.length}}">
-        <view class="banner-empty">门店展示图将在后台配置后显示</view>
+        <view class="banner-empty">封面图片将在这里显示</view>
       </swiper-item>
     </swiper>
 
     <view class="panel">
       <view class="panel-header">
-        <text class="panel-title">本周推荐</text>
-        <text class="panel-caption">展示本店精选穿搭搭配</text>
+        <text class="panel-title">近期分享</text>
+        <text class="panel-caption">看看最近整理的穿搭内容</text>
       </view>
       <block wx:if="{{home.featured_products.length}}">
         <view class="product-list">
@@ -55,7 +55,7 @@
           </block>
         </view>
       </block>
-      <view wx:else class="empty-text">门店推荐穿搭将在整理后显示</view>
+      <view wx:else class="empty-text">近期穿搭内容整理后会显示在这里</view>
     </view>
   </block>
 </view>

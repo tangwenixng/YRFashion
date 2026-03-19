@@ -1,7 +1,7 @@
 <view class="page">
   <view class="page-header">
-    <text class="title">穿搭展示</text>
-    <text class="subtitle">展示本店精选穿搭搭配</text>
+    <text class="title">穿搭分享</text>
+    <text class="subtitle">浏览近期整理的搭配灵感</text>
   </view>
 
   <view class="search-bar">
@@ -61,8 +61,8 @@
 
   <block wx:else>
     <view class="card empty-card">
-      <text class="empty-title">{{keyword ? '没有找到匹配的穿搭' : (activeCategoryId ? '当前分类下还没有可展示的穿搭' : '当前还没有可展示的穿搭')}}</text>
-      <text class="empty-subtitle">{{keyword ? '换个关键词，或者切换分类再试试' : (activeCategoryId ? '试试切换其他分类看看' : '店主整理完成后会在这里展示')}}</text>
+      <text class="empty-title">{{keyword ? '没有找到匹配的穿搭' : (activeCategoryId ? '当前分类下还没有相关穿搭' : '当前还没有可浏览的穿搭')}}</text>
+      <text class="empty-subtitle">{{keyword ? '换个关键词，或者切换分类再试试' : (activeCategoryId ? '试试切换其他分类看看' : '整理完成后会在这里更新')}}</text>
     </view>
   </block>
 </view>
