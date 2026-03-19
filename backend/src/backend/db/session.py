@@ -75,6 +75,8 @@ def ensure_runtime_schema() -> None:
     if inspector.has_table("shop_settings"):
         shop_setting_columns = {column["name"] for column in inspector.get_columns("shop_settings")}
         statements = []
+        if "contact_intro" not in shop_setting_columns:
+            statements.append("ALTER TABLE shop_settings ADD COLUMN contact_intro TEXT DEFAULT ''")
         if "draft_payload" not in shop_setting_columns:
             statements.append("ALTER TABLE shop_settings ADD COLUMN draft_payload JSON")
         if "draft_updated_at" not in shop_setting_columns:

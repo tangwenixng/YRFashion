@@ -3,6 +3,7 @@ import { http } from '../http'
 export interface ShopSettings {
   shop_name: string
   shop_intro: string
+  contact_intro: string
   contact_phone: string
   wechat_id: string
   address: string
@@ -21,6 +22,7 @@ export const fetchSettings = async () => {
 export interface ShopSettingsPayload {
   shop_name: string
   shop_intro: string
+  contact_intro: string
   contact_phone: string
   wechat_id: string
   address: string

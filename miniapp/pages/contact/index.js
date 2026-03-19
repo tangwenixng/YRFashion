@@ -37,7 +37,7 @@ Page({
   onLoad() {
     this.consoleEntryTapCount = 0
     this.consoleEntryTapTimer = null
-    this.setData(buildNavigationState("联系我"))
+    this.setData(buildNavigationState("留言反馈"))
     this.loadContact()
   },
 

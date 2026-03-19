@@ -35,11 +35,11 @@
   <block wx:elif="{{contact}}">
     <view class="card intro-card">
       <view class="intro-head">
-        <text class="label label-light">CONTACT</text>
+        <text class="label label-light">FEEDBACK</text>
         <text class="intro-badge">轻松交流</text>
       </view>
       <text class="shop-name">{{contact.shop_name || '伊人Fashion 穿搭馆'}}</text>
-      <text class="field-value">欢迎通过电话或微信联系我。看到消息后，我会尽快回复你。</text>
+      <text class="field-value">{{contact.contact_intro || '欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。'}}</text>
     </view>
 
     <view class="card contact-card">

@@ -78,7 +78,7 @@
 
     <view class="message-entry">
       <view class="message-entry-input" bindtap="handleConsult">
-        <text class="message-entry-placeholder">说说你的想法，欢迎留言交流</text>
+        <text class="message-entry-placeholder">欢迎分享你的穿搭想法或建议</text>
       </view>
       <view class="message-entry-button" bindtap="handleConsult">
         <text>留言</text>

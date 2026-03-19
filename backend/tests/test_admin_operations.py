@@ -122,6 +122,7 @@ def test_user_list_and_settings() -> None:
             json={
                 "shop_name": "YRFasion",
                 "shop_intro": "Elegant fashion store",
+                "contact_intro": "欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。",
                 "contact_phone": "18800001111",
                 "wechat_id": "yrfasion-shop",
                 "address": "Shanghai",
@@ -140,6 +141,10 @@ def test_user_list_and_settings() -> None:
         get_response = client.get("/api/admin/settings", headers=headers)
 
     assert get_response.status_code == 200
+    assert (
+        get_response.json()["contact_intro"]
+        == "欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。"
+    )
     assert get_response.json()["homepage_banner_urls"] == ["/uploads/banner-1.jpg"]
     assert get_response.json()["has_unpublished_changes"] is False
 

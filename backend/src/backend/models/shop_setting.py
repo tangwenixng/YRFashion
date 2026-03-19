@@ -13,6 +13,7 @@ class ShopSetting(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     shop_name: Mapped[str] = mapped_column(Text(), default="")
     shop_intro: Mapped[str] = mapped_column(Text(), default="")
+    contact_intro: Mapped[str] = mapped_column(Text(), default="")
     contact_phone: Mapped[str] = mapped_column(Text(), default="")
     wechat_id: Mapped[str] = mapped_column(Text(), default="")
     address: Mapped[str] = mapped_column(Text(), default="")

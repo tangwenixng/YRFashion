@@ -135,6 +135,7 @@ class MiniappHomeResponse(BaseModel):
 
 class MiniappContactResponse(BaseModel):
     shop_name: str
+    contact_intro: str
     contact_phone: str
     wechat_id: str
     address: str

@@ -18,6 +18,7 @@ def build_settings_payload(setting: ShopSetting) -> dict[str, str | list[str]]:
         return {
             "shop_name": str(draft_payload.get("shop_name", setting.shop_name or "")),
             "shop_intro": str(draft_payload.get("shop_intro", setting.shop_intro or "")),
+            "contact_intro": str(draft_payload.get("contact_intro", setting.contact_intro or "")),
             "contact_phone": str(draft_payload.get("contact_phone", setting.contact_phone or "")),
             "wechat_id": str(draft_payload.get("wechat_id", setting.wechat_id or "")),
             "address": str(draft_payload.get("address", setting.address or "")),
@@ -32,6 +33,7 @@ def build_settings_payload(setting: ShopSetting) -> dict[str, str | list[str]]:
     return {
         "shop_name": setting.shop_name,
         "shop_intro": setting.shop_intro,
+        "contact_intro": setting.contact_intro,
         "contact_phone": setting.contact_phone,
         "wechat_id": setting.wechat_id,
         "address": setting.address,
@@ -45,6 +47,7 @@ def serialize_settings(setting: ShopSetting) -> ShopSettingResponse:
     return ShopSettingResponse(
         shop_name=str(payload["shop_name"]),
         shop_intro=str(payload["shop_intro"]),
+        contact_intro=str(payload["contact_intro"]),
         contact_phone=str(payload["contact_phone"]),
         wechat_id=str(payload["wechat_id"]),
         address=str(payload["address"]),
@@ -61,6 +64,9 @@ def normalize_settings_payload(payload: ShopSettingUpdateRequest) -> dict[str, s
         "shop_name": payload.shop_name.strip(),
         "shop_intro": ensure_compliant_storefront_text(
             payload.shop_intro, field_label="店铺介绍"
+        ),
+        "contact_intro": ensure_compliant_storefront_text(
+            payload.contact_intro, field_label="留言反馈页文案"
         ),
         "contact_phone": ensure_compliant_storefront_text(
             payload.contact_phone, field_label="联系电话"
@@ -80,6 +86,7 @@ def build_live_payload(setting: ShopSetting) -> dict[str, str | list[str]]:
     return {
         "shop_name": setting.shop_name or "",
         "shop_intro": setting.shop_intro or "",
+        "contact_intro": setting.contact_intro or "",
         "contact_phone": setting.contact_phone or "",
         "wechat_id": setting.wechat_id or "",
         "address": setting.address or "",
@@ -129,6 +136,7 @@ def publish_settings(
     if draft_payload:
         setting.shop_name = str(draft_payload.get("shop_name", ""))
         setting.shop_intro = str(draft_payload.get("shop_intro", ""))
+        setting.contact_intro = str(draft_payload.get("contact_intro", ""))
         setting.contact_phone = str(draft_payload.get("contact_phone", ""))
         setting.wechat_id = str(draft_payload.get("wechat_id", ""))
         setting.address = str(draft_payload.get("address", ""))

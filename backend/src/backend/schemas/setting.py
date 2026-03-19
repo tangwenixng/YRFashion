@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class ShopSettingResponse(BaseModel):
     shop_name: str
     shop_intro: str
+    contact_intro: str
     contact_phone: str
     wechat_id: str
     address: str
@@ -19,6 +20,7 @@ class ShopSettingResponse(BaseModel):
 class ShopSettingUpdateRequest(BaseModel):
     shop_name: str = ""
     shop_intro: str = ""
+    contact_intro: str = ""
     contact_phone: str = ""
     wechat_id: str = ""
     address: str = ""

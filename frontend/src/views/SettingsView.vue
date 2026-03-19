@@ -33,6 +33,7 @@ const selectedBannerUrls = ref<string[]>([])
 const form = reactive({
   shop_name: '',
   shop_intro: '',
+  contact_intro: '',
   contact_phone: '',
   wechat_id: '',
   address: '',
@@ -94,6 +95,7 @@ const loadSettings = async () => {
     ])
     form.shop_name = data.shop_name
     form.shop_intro = data.shop_intro
+    form.contact_intro = data.contact_intro
     form.contact_phone = data.contact_phone
     form.wechat_id = data.wechat_id
     form.address = data.address
@@ -117,6 +119,7 @@ const saveSettings = async () => {
     const data = await updateSettings({
       shop_name: form.shop_name.trim(),
       shop_intro: form.shop_intro.trim(),
+      contact_intro: form.contact_intro.trim(),
       contact_phone: form.contact_phone.trim(),
       wechat_id: form.wechat_id.trim(),
       address: form.address.trim(),
@@ -319,6 +322,15 @@ void loadSettings()
             type="textarea"
             :rows="5"
             placeholder="介绍店铺定位、主营风格和到店信息，避免导流和夸张营销话术"
+          />
+        </el-form-item>
+
+        <el-form-item label="留言反馈页文案">
+          <el-input
+            v-model="form.contact_intro"
+            type="textarea"
+            :rows="4"
+            placeholder="用于留言反馈页顶部说明，建议使用欢迎交流、分享想法、稍后回复等弱导流表达"
           />
         </el-form-item>
 

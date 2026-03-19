@@ -17,6 +17,7 @@ def seed_storefront_data() -> tuple[int, int]:
         setting = db.get(ShopSetting, 1)
         setting.shop_name = f"YRFasion-{unique}"
         setting.shop_intro = "精选穿搭与女装系列"
+        setting.contact_intro = "欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。"
         setting.contact_phone = "18800001111"
         setting.wechat_id = "yrfasion-shop"
         setting.address = "上海市静安区南京西路"
@@ -91,6 +92,7 @@ def test_contact_returns_shop_contact_data() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["contact_phone"] == "18800001111"
+    assert payload["contact_intro"] == "欢迎分享你的穿搭想法或建议，我会在看到后尽快回复。"
     assert payload["wechat_id"] == "yrfasion-shop"
     assert payload["address"] == "上海市静安区南京西路"
 
@@ -110,6 +112,7 @@ def test_storefront_only_reads_published_settings() -> None:
             json={
                 "shop_name": "仅草稿店铺",
                 "shop_intro": "仅草稿介绍",
+                "contact_intro": "仅草稿联系页文案",
                 "contact_phone": "19900002222",
                 "wechat_id": "draft-only",
                 "address": "草稿地址",

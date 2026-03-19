@@ -32,7 +32,7 @@
         <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎浏览近期搭配记录，也可以直接联系我。'}}</text>
         <view class="hero-actions">
           <button class="hero-chip hero-chip-primary" bindtap="goToProducts">查看穿搭</button>
-          <button class="hero-chip hero-chip-secondary" bindtap="goToContact">联系我</button>
+          <button class="hero-chip hero-chip-secondary" bindtap="goToContact">留言反馈</button>
         </view>
       </view>
     </view>
