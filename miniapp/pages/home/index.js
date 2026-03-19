@@ -30,9 +30,18 @@ Page({
     try {
       const home = normalizeHome(await request({ url: "/miniapp/home" }))
       const featuredColumns = await this.buildFeaturedColumns(home.featured_products || [])
-      this.setData({ home, featuredColumns, loading: false, error: "" })
+      this.setData({
+        home,
+        featuredColumns,
+        loading: false,
+        error: "",
+      })
     } catch (error) {
-      this.setData({ loading: false, error: "首页加载失败，请稍后重试。", featuredColumns: [] })
+      this.setData({
+        loading: false,
+        error: "首页加载失败，请稍后重试。",
+        featuredColumns: [],
+      })
       if (!options.silent) {
         wx.showToast({ title: "首页加载失败", icon: "none" })
       }
@@ -52,6 +61,22 @@ Page({
 
   goToContact() {
     wx.navigateTo({ url: "/pages/contact/index" })
+  },
+
+  previewBanner(event) {
+    const current = event.currentTarget.dataset.imageUrl || ""
+    const urls = this.data.home && Array.isArray(this.data.home.homepage_banner_urls)
+      ? this.data.home.homepage_banner_urls.filter(Boolean)
+      : []
+
+    if (!current || !urls.length) {
+      return
+    }
+
+    wx.previewImage({
+      current,
+      urls,
+    })
   },
 
   async buildFeaturedColumns(products = []) {

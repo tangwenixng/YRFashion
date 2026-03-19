@@ -18,7 +18,15 @@
       <swiper class="banner-swiper" indicator-dots="{{home.homepage_banner_urls.length > 1}}" autoplay="{{home.homepage_banner_urls.length > 1}}" circular="true">
         <block wx:for="{{home.homepage_banner_urls}}" wx:key="*this">
           <swiper-item>
-            <image class="banner-image" src="{{item}}" mode="aspectFill"></image>
+            <view class="banner-image-frame">
+              <image
+                class="banner-image"
+                src="{{item}}"
+                mode="widthFix"
+                data-image-url="{{item}}"
+                bindtap="previewBanner"
+              ></image>
+            </view>
           </swiper-item>
         </block>
         <swiper-item wx:if="{{!home.homepage_banner_urls.length}}">
