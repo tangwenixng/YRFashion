@@ -5,16 +5,23 @@
   </view>
 
   <view class="search-bar">
-    <input
-      class="search-input"
-      placeholder="搜索穿搭名称或关键词"
-      confirm-type="search"
-      value="{{draftKeyword}}"
-      bindinput="onKeywordInput"
-      bindconfirm="submitSearch"
-    />
-    <button class="search-button" bindtap="submitSearch">搜索</button>
-    <button wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</button>
+    <view class="search-shell">
+      <input
+        class="search-input"
+        placeholder="搜索穿搭名称或关键词"
+        confirm-type="search"
+        value="{{draftKeyword}}"
+        bindinput="onKeywordInput"
+        bindconfirm="submitSearch"
+      />
+      <view class="search-button" bindtap="submitSearch">
+        <view class="search-button-icon">
+          <view class="search-icon-circle"></view>
+          <view class="search-icon-handle"></view>
+        </view>
+      </view>
+    </view>
+    <text wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</text>
   </view>
 
   <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
