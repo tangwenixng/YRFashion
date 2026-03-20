@@ -330,6 +330,7 @@ onBeforeUnmount(() => {
           <el-icon><ArrowLeft /></el-icon>
           返回列表
         </button>
+        <span class="editor-kicker">{{ isEditing ? 'CONTENT ATELIER' : 'NEW ENTRY' }}</span>
         <h1>{{ pageTitle }}</h1>
         <p>{{ pageSubtitle }}</p>
       </div>
@@ -343,15 +344,19 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="editor-grid">
-      <el-form label-position="top">
-        <el-tabs v-model="editorActiveTab" class="editor-tabs">
-          <el-tab-pane name="basic" label="基本信息">
-            <section class="editor-section">
-              <div class="editor-section-header">
-                <div>
-                  <h3>基础信息</h3>
-                  <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
+      <div class="editor-canvas">
+        <el-form label-position="top">
+          <el-tabs v-model="editorActiveTab" class="editor-tabs">
+            <el-tab-pane name="basic" label="基本信息">
+              <section class="editor-section editor-section-basic">
+                <div class="section-shell">
+                  <div class="section-kicker">BASIC</div>
                 </div>
+                <div class="editor-section-header">
+                  <div>
+                    <h3>基础信息</h3>
+                    <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
+                  </div>
               </div>
 
               <div class="basic-form-layout">
@@ -397,16 +402,19 @@ onBeforeUnmount(() => {
                   </el-form-item>
                 </div>
               </div>
-            </section>
-          </el-tab-pane>
+              </section>
+            </el-tab-pane>
 
-          <el-tab-pane name="media" label="图片维护">
-            <section class="editor-section editor-media-panel">
-              <div class="editor-section-header">
-                <div>
-                  <h3>图片管理</h3>
-                  <p>上传图片后可直接拖拽排序，单击缩略图查看大图，第一张或封面图会优先用于列表展示。</p>
+            <el-tab-pane name="media" label="图片维护">
+              <section class="editor-section editor-media-panel">
+                <div class="section-shell">
+                  <div class="section-kicker">MEDIA</div>
                 </div>
+                <div class="editor-section-header">
+                  <div>
+                    <h3>图片管理</h3>
+                    <p>上传图片后可直接拖拽排序，单击缩略图查看大图，第一张或封面图会优先用于列表展示。</p>
+                  </div>
               </div>
 
               <div class="media-subsection image-manager">
@@ -496,10 +504,11 @@ onBeforeUnmount(() => {
                   </article>
                 </div>
               </div>
-            </section>
-          </el-tab-pane>
-        </el-tabs>
-      </el-form>
+              </section>
+            </el-tab-pane>
+          </el-tabs>
+        </el-form>
+      </div>
     </div>
 
     <div class="editor-footer">
@@ -516,7 +525,7 @@ onBeforeUnmount(() => {
 .product-editor-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 }
 
 .editor-page-header,
@@ -543,19 +552,35 @@ onBeforeUnmount(() => {
 
 .editor-page-header {
   align-items: flex-start;
+  padding: 8px 4px 0;
+}
+
+.editor-kicker {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.9);
+  color: #9a7b61;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
 }
 
 .editor-page-heading h1 {
-  margin: 12px 0 6px;
+  margin: 14px 0 8px;
   font-family: 'Fraunces', serif;
-  font-size: 30px;
+  font-size: 36px;
   color: #2f241a;
+  letter-spacing: -0.02em;
 }
 
 .editor-page-heading p {
   margin: 0;
   color: #8d765f;
   line-height: 1.7;
+  max-width: 640px;
 }
 
 .back-button {
@@ -563,33 +588,56 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   border: 0;
-  padding: 0;
+  padding: 0 2px;
   background: transparent;
   color: #7d5535;
   font-weight: 600;
   cursor: pointer;
 }
 
+.editor-page-actions {
+  padding: 10px 12px;
+  border: 1px solid rgba(122, 92, 65, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 251, 246, 0.82);
+  box-shadow: 0 12px 28px rgba(99, 74, 53, 0.08);
+}
+
 .editor-grid {
-  padding: 8px 0 4px;
-  background: #f7f4ef;
+  padding: 4px 0;
+}
+
+.editor-canvas {
+  padding: 22px;
+  border: 1px solid rgba(122, 92, 65, 0.08);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 246, 235, 0.95), transparent 28%),
+    linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(250, 245, 237, 0.95));
+  box-shadow: 0 26px 60px rgba(107, 77, 50, 0.08);
 }
 
 .editor-tabs :deep(.el-tabs__header) {
-  margin: 0 0 18px;
+  margin: 0 0 22px;
 }
 
 .editor-tabs :deep(.el-tabs__nav-wrap::after) {
   display: none;
 }
 
+.editor-tabs :deep(.el-tabs__nav-wrap) {
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(246, 237, 227, 0.92);
+}
+
 .editor-tabs :deep(.el-tabs__nav) {
-  gap: 10px;
+  gap: 6px;
 }
 
 .editor-tabs :deep(.el-tabs__item) {
-  height: 40px;
-  padding: 0 18px;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 999px;
   color: #8a755d;
   font-weight: 600;
@@ -602,15 +650,16 @@ onBeforeUnmount(() => {
 .editor-tabs :deep(.el-tabs__item.is-active) {
   color: #3d2b1f;
   background: #fff;
-  box-shadow: 0 8px 18px rgba(99, 74, 53, 0.08);
+  box-shadow: 0 10px 20px rgba(99, 74, 53, 0.1);
 }
 
 .editor-section {
-  padding: 20px;
-  border: 1px solid rgba(122, 92, 65, 0.12);
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(99, 74, 53, 0.06);
+  position: relative;
+  padding: 24px;
+  border: 1px solid rgba(122, 92, 65, 0.1);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 252, 247, 0.94));
+  box-shadow: 0 18px 42px rgba(99, 74, 53, 0.08);
 }
 
 .editor-section-header,
@@ -618,28 +667,45 @@ onBeforeUnmount(() => {
   display: grid;
 }
 
+.section-shell {
+  margin-bottom: 14px;
+}
+
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(193, 137, 78, 0.12);
+  color: #9f6841;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
 .editor-section-header {
-  gap: 6px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 22px;
 }
 
 .editor-section-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #3d2b1f;
+  font-size: 24px;
+  font-family: 'Fraunces', serif;
+  color: #332419;
 }
 
 .editor-section-header p {
   margin: 0;
   color: #8a755d;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
 .basic-form-layout {
   display: grid;
-  gap: 24px;
-  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
   align-items: start;
 }
 
@@ -647,6 +713,20 @@ onBeforeUnmount(() => {
 .basic-form-side {
   display: grid;
   gap: 16px;
+}
+
+.basic-form-main {
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fffdf9 0%, #fff8f0 100%);
+  border: 1px solid rgba(122, 92, 65, 0.08);
+}
+
+.basic-form-side {
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fdf6ee 0%, #faf0e3 100%);
+  border: 1px solid rgba(193, 137, 78, 0.12);
 }
 
 .sort-field {
@@ -667,10 +747,10 @@ onBeforeUnmount(() => {
 }
 
 .media-subsection {
-  padding: 16px;
-  border: 1px solid rgba(122, 92, 65, 0.12);
-  border-radius: 18px;
-  background: #fff;
+  padding: 18px;
+  border: 1px solid rgba(122, 92, 65, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.96), rgba(255, 249, 240, 0.9));
 }
 
 .image-manager-header {
@@ -695,7 +775,7 @@ onBeforeUnmount(() => {
 
 .image-grid {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -717,7 +797,7 @@ onBeforeUnmount(() => {
 
 .image-upload-tile-inner,
 .image-thumb-card {
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(122, 92, 65, 0.12);
   background: #fffdfa;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -754,7 +834,7 @@ onBeforeUnmount(() => {
 
 .image-thumb-card.cover {
   border-color: rgba(169, 127, 78, 0.42);
-  box-shadow: 0 12px 24px rgba(117, 86, 53, 0.08);
+  box-shadow: 0 16px 28px rgba(117, 86, 53, 0.12);
 }
 
 .image-thumb-card.dragging {
@@ -863,7 +943,8 @@ onBeforeUnmount(() => {
 }
 
 .editor-save-button {
-  min-width: 128px;
+  min-width: 136px;
+  height: 42px;
   border: 0;
   background: linear-gradient(135deg, #c68457 0%, #9d5c38 100%);
   box-shadow: 0 12px 24px rgba(157, 92, 56, 0.24);
@@ -877,8 +958,8 @@ onBeforeUnmount(() => {
 .editor-footer {
   width: 100%;
   justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(122, 92, 65, 0.12);
+  padding: 12px 6px 0;
+  border-top: 1px solid rgba(122, 92, 65, 0.08);
 }
 
 .editor-footer-tip {
@@ -888,6 +969,50 @@ onBeforeUnmount(() => {
 .muted {
   color: #907e6a;
   font-size: 13px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+:deep(.el-form-item__label) {
+  padding-bottom: 8px;
+  color: #5b4330;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner),
+:deep(.el-select__wrapper),
+:deep(.el-input-number) {
+  border-radius: 16px;
+  box-shadow: none;
+  border: 1px solid rgba(122, 92, 65, 0.1);
+  background: rgba(255, 252, 248, 0.96);
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper) {
+  min-height: 46px;
+}
+
+:deep(.el-textarea__inner) {
+  padding: 14px 16px;
+  line-height: 1.75;
+  min-height: 220px;
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-textarea__inner:focus),
+:deep(.el-select__wrapper.is-focused),
+:deep(.el-input-number:hover) {
+  border-color: rgba(193, 137, 78, 0.42);
+  box-shadow: 0 0 0 4px rgba(193, 137, 78, 0.08);
+}
+
+:deep(.el-button:not(.editor-save-button)) {
+  border-radius: 14px;
 }
 
 @media (max-width: 1100px) {
@@ -911,6 +1036,11 @@ onBeforeUnmount(() => {
   .basic-form-layout {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .editor-canvas {
+    padding: 18px;
+    border-radius: 24px;
   }
 
   .image-grid {
