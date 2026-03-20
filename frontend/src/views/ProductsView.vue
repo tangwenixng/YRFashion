@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Delete, EditPen, Picture, Plus, RefreshRight, Sort, Star } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { nextTick, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
@@ -66,6 +66,31 @@ const filters = reactive({
   keyword: '',
   status: '' as '' | 'draft' | 'published' | 'archived',
   category_id: null as number | null,
+})
+
+const hasActiveFilters = computed(() =>
+  Boolean(filters.keyword.trim() || filters.status || filters.category_id),
+)
+
+const activeFilterSummary = computed(() => {
+  const summary: string[] = []
+
+  if (filters.keyword.trim()) {
+    summary.push(`关键词：${filters.keyword.trim()}`)
+  }
+
+  if (filters.status) {
+    summary.push(`状态：${formatStatusLabel(filters.status)}`)
+  }
+
+  if (filters.category_id) {
+    const currentCategory = categories.value.find((category) => category.id === filters.category_id)
+    if (currentCategory) {
+      summary.push(`分类：${currentCategory.name}`)
+    }
+  }
+
+  return summary.length ? summary.join(' / ') : '全部商品'
 })
 
 const statusLabelMap: Record<ProductItem['status'], string> = {
@@ -538,32 +563,41 @@ void loadCategories()
 <template>
   <section class="products-page">
     <div class="page-header">
-      <div>
+      <div class="page-heading">
         <h1 class="page-title">商品管理</h1>
         <p class="page-subtitle">商品文案、图片、发布状态和展示顺序都在这里一次性完成。</p>
       </div>
 
       <div class="header-actions">
-        <el-button plain @click="loadProducts">
-          <el-icon><RefreshRight /></el-icon>
-          刷新
-        </el-button>
-        <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('published')">
-          批量发布
-        </el-button>
-        <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('archived')">
-          批量归档
-        </el-button>
-        <el-button type="primary" @click="openCreate">
-          <el-icon><Plus /></el-icon>
-          新增商品
-        </el-button>
+        <div class="header-batch-actions">
+          <span class="header-selection muted">
+            {{ selectedProductIds.length ? `已选 ${selectedProductIds.length} 项` : '未选择商品' }}
+          </span>
+          <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('published')">
+            批量发布
+          </el-button>
+          <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('archived')">
+            批量归档
+          </el-button>
+        </div>
+
+        <div class="header-main-actions">
+          <el-button plain @click="loadProducts">
+            <el-icon><RefreshRight /></el-icon>
+            刷新
+          </el-button>
+          <el-button type="primary" @click="openCreate">
+            <el-icon><Plus /></el-icon>
+            新增商品
+          </el-button>
+        </div>
       </div>
     </div>
 
     <section class="content-card filter-card">
       <div class="filter-grid">
         <el-input
+          class="keyword-input"
           v-model="filters.keyword"
           placeholder="按名称、标签或描述搜索"
           clearable
@@ -581,6 +615,12 @@ void loadCategories()
           <el-button type="primary" @click="applyFilters">筛选</el-button>
           <el-button plain @click="resetFilters">重置</el-button>
         </div>
+      </div>
+
+      <div class="filter-summary">
+        <span class="muted">共 {{ total }} 条</span>
+        <span class="muted">当前筛选：{{ activeFilterSummary }}</span>
+        <span v-if="hasActiveFilters" class="filter-summary-indicator">已启用筛选</span>
       </div>
     </section>
 
@@ -844,6 +884,10 @@ void loadCategories()
   gap: 18px;
 }
 
+.page-heading {
+  min-width: 0;
+}
+
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -852,6 +896,8 @@ void loadCategories()
 }
 
 .header-actions,
+.header-batch-actions,
+.header-main-actions,
 .tag-list,
 .image-summary,
 .filter-actions,
@@ -864,6 +910,26 @@ void loadCategories()
   flex-wrap: wrap;
 }
 
+.header-actions {
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.header-batch-actions,
+.header-main-actions {
+  padding: 10px 12px;
+  border: 1px solid rgba(122, 92, 65, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 252, 247, 0.78);
+}
+
+.header-selection {
+  padding-right: 2px;
+  line-height: 32px;
+  white-space: nowrap;
+}
+
 .tag-list {
   gap: 6px;
 }
@@ -874,7 +940,7 @@ void loadCategories()
 
 .table-card,
 .filter-card {
-  padding: 14px;
+  padding: 16px;
 }
 
 .table-tip {
@@ -885,8 +951,38 @@ void loadCategories()
 
 .filter-grid {
   display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(320px, 2.2fr) minmax(160px, 0.9fr) minmax(180px, 1fr) auto;
+}
+
+.keyword-input {
+  min-width: 0;
+}
+
+.filter-actions {
+  justify-content: flex-end;
+}
+
+.filter-summary {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(122, 92, 65, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(180px, 1fr)) auto;
+  flex-wrap: wrap;
+}
+
+.filter-summary-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(118, 174, 80, 0.14);
+  color: #679343;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .pagination-bar {
@@ -1157,6 +1253,17 @@ void loadCategories()
 @media (max-width: 900px) {
   .page-header {
     flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .header-batch-actions,
+  .header-main-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .inline-grid,
