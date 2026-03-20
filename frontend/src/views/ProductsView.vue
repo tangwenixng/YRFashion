@@ -907,11 +907,11 @@ void loadCategories()
                     </div>
 
                     <div class="image-card-actions">
-                      <el-button plain :disabled="image.is_cover" @click="setEditorCover(image.key)">
+                      <el-button plain size="small" :disabled="image.is_cover" @click="setEditorCover(image.key)">
                         <el-icon><Star /></el-icon>
-                        {{ image.is_cover ? '当前封面' : '设为封面' }}
+                        {{ image.is_cover ? '已封面' : '设封面' }}
                       </el-button>
-                      <el-button plain type="danger" @click="removeEditorImage(image.key)">
+                      <el-button plain size="small" type="danger" @click="removeEditorImage(image.key)">
                         <el-icon><Delete /></el-icon>
                         删除
                       </el-button>
@@ -929,7 +929,7 @@ void loadCategories()
           <span class="muted editor-footer-tip">保存后将同步更新列表展示与封面预览。</span>
           <div class="editor-footer-actions">
             <el-button @click="editorVisible = false">取消</el-button>
-            <el-button type="primary" :loading="saving" @click="saveProduct">保存商品</el-button>
+            <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
           </div>
         </div>
       </template>
@@ -1222,17 +1222,16 @@ void loadCategories()
 
 .image-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 14px;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .image-card {
   position: relative;
   border: 1px solid rgba(122, 92, 65, 0.12);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  background: rgba(255, 252, 247, 0.96);
+  background: #fffdfa;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1253,28 +1252,29 @@ void loadCategories()
 
 .image-card-handle {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 4px;
+  padding: 5px 8px;
   border-radius: 999px;
   background: rgba(50, 33, 22, 0.68);
   color: #fffaf6;
-  font-size: 12px;
+  font-size: 11px;
   cursor: grab;
 }
 
 .managed-image {
   width: 100%;
-  height: 220px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   display: block;
 }
 
 .image-card-body {
-  padding: 14px;
+  padding: 10px;
 }
 
 .image-card-status strong,
@@ -1291,13 +1291,15 @@ void loadCategories()
 
 .image-card-meta span,
 .image-summary-meta span {
-  margin-top: 6px;
+  margin-top: 4px;
   color: #8a755d;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .image-card-status {
+  flex-direction: column;
   align-items: flex-start;
+  gap: 6px;
 }
 
 .image-card-meta {
@@ -1311,14 +1313,21 @@ void loadCategories()
 }
 
 .image-card-tags {
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 6px;
+  justify-content: flex-start;
 }
 
 .image-card-actions {
-  margin-top: 14px;
-  justify-content: space-between;
-  flex-wrap: nowrap;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.image-card-actions :deep(.el-button) {
+  margin: 0;
+  min-width: 0;
+  border-radius: 10px;
 }
 
 .cover-thumb {
@@ -1430,6 +1439,18 @@ void loadCategories()
   line-height: 1.5;
 }
 
+.editor-save-button {
+  min-width: 128px;
+  border: 0;
+  background: linear-gradient(135deg, #c68457 0%, #9d5c38 100%);
+  box-shadow: 0 12px 24px rgba(157, 92, 56, 0.24);
+}
+
+.editor-save-button:hover,
+.editor-save-button:focus {
+  background: linear-gradient(135deg, #d18f62 0%, #a76440 100%);
+}
+
 :deep(.product-editor-dialog) {
   border-radius: 24px;
   overflow: hidden;
@@ -1477,7 +1498,7 @@ void loadCategories()
   }
 
   .image-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1500,6 +1521,10 @@ void loadCategories()
   .inline-grid,
   .filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .editor-footer {
