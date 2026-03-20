@@ -762,7 +762,7 @@ void loadCategories()
     <el-dialog
       v-model="editorVisible"
       :title="editingProductId ? '编辑商品' : '新增商品'"
-      width="920px"
+      width="980px"
       destroy-on-close
       @closed="handleEditorClosed"
     >
@@ -819,33 +819,43 @@ void loadCategories()
             </div>
           </section>
 
-          <div class="editor-media-panel">
-            <div class="editor-media-header">
+          <section class="editor-section editor-media-panel">
+            <div class="editor-section-header">
               <div>
-                <h3>展示图片</h3>
-                <p>可一次选择多张图片，保存商品时会随文字一起提交。</p>
+                <h3>图片管理</h3>
+                <p>先上传需要展示的图片，再整理顺序与封面，列表和首页会优先使用封面图。</p>
               </div>
-              <span class="muted">支持 JPG / PNG / WEBP，单张不超过 5MB</span>
             </div>
 
-            <el-upload
-              ref="editorUploadRef"
-              :key="imageUploadKey"
-              drag
-              multiple
-              :auto-upload="false"
-              :show-file-list="false"
-              accept=".jpg,.jpeg,.png,.webp"
-              :on-change="handleEditorFileChange"
-            >
-              <el-icon class="upload-icon"><Picture /></el-icon>
-              <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
-            </el-upload>
+            <div class="media-subsection">
+              <div class="editor-media-header">
+                <div>
+                  <h4>上传图片</h4>
+                  <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
+                </div>
+              </div>
 
-            <div v-if="editorImages.length" class="image-manager">
+              <el-upload
+                ref="editorUploadRef"
+                :key="imageUploadKey"
+                drag
+                multiple
+                :auto-upload="false"
+                :show-file-list="false"
+                accept=".jpg,.jpeg,.png,.webp"
+                :on-change="handleEditorFileChange"
+              >
+                <el-icon class="upload-icon"><Picture /></el-icon>
+                <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
+              </el-upload>
+            </div>
+
+            <div v-if="editorImages.length" class="media-subsection image-manager">
               <div class="image-manager-header">
-                <h3>图片顺序与封面</h3>
-                <span class="muted">拖动图片卡片调整顺序，封面会用于首页和列表预览。</span>
+                <div>
+                  <h4>图片顺序与封面</h4>
+                  <p>拖动卡片调整顺序，封面将用于列表和首页预览。</p>
+                </div>
               </div>
 
               <div class="image-grid">
@@ -883,20 +893,22 @@ void loadCategories()
                   </el-image>
 
                   <div class="image-card-body">
-                    <div class="image-card-meta">
+                    <div class="image-card-status">
                       <strong>{{ image.is_cover ? '当前封面' : `第 ${image.sort_order + 1} 张` }}</strong>
-                      <span>{{ image.original_name }}</span>
+                      <div class="image-card-tags">
+                        <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
+                        <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
+                      </div>
                     </div>
 
-                    <div class="image-card-tags">
-                      <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
-                      <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
+                    <div class="image-card-meta">
+                      <span class="image-file-name" :title="image.original_name">{{ image.original_name }}</span>
                     </div>
 
                     <div class="image-card-actions">
-                      <el-button plain @click="setEditorCover(image.key)">
+                      <el-button plain :disabled="image.is_cover" @click="setEditorCover(image.key)">
                         <el-icon><Star /></el-icon>
-                        设为封面
+                        {{ image.is_cover ? '当前封面' : '设为封面' }}
                       </el-button>
                       <el-button plain type="danger" @click="removeEditorImage(image.key)">
                         <el-icon><Delete /></el-icon>
@@ -907,13 +919,18 @@ void loadCategories()
                 </article>
               </div>
             </div>
-          </div>
+          </section>
         </el-form>
       </div>
 
       <template #footer>
-        <el-button @click="editorVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveProduct">保存商品</el-button>
+        <div class="editor-footer">
+          <span class="muted editor-footer-tip">保存后将同步更新列表展示与封面预览。</span>
+          <div class="editor-footer-actions">
+            <el-button @click="editorVisible = false">取消</el-button>
+            <el-button type="primary" :loading="saving" @click="saveProduct">保存商品</el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
   </section>
@@ -1141,14 +1158,22 @@ void loadCategories()
 
 .editor-media-panel {
   margin-top: 16px;
-  padding: 18px;
+}
+
+.media-subsection {
+  padding: 16px;
   border: 1px solid rgba(122, 92, 65, 0.12);
-  border-radius: 20px;
-  background: rgba(255, 252, 247, 0.82);
+  border-radius: 18px;
+  background: rgba(255, 254, 250, 0.86);
+}
+
+.media-subsection + .media-subsection {
+  margin-top: 16px;
 }
 
 .editor-media-header,
 .image-manager-header,
+.image-card-status,
 .image-card-actions,
 .drag-cell,
 .image-summary-meta {
@@ -1159,22 +1184,24 @@ void loadCategories()
 }
 
 .editor-media-header {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.editor-media-header h3,
-.image-manager-header h3 {
+.editor-media-header h4,
+.image-manager-header h4 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   color: #3d2b1f;
 }
 
-.editor-media-header p {
+.editor-media-header p,
+.image-manager-header p {
   margin: 6px 0 0;
   color: #8a755d;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .upload-icon {
@@ -1182,13 +1209,9 @@ void loadCategories()
   color: #7d5535;
 }
 
-.image-manager {
-  margin-top: 22px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(122, 92, 65, 0.12);
-}
-
 .image-manager-header {
+  margin-bottom: 14px;
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
@@ -1249,14 +1272,14 @@ void loadCategories()
   padding: 14px;
 }
 
-.image-card-meta strong,
+.image-card-status strong,
 .image-card-meta span,
 .image-summary-meta strong,
 .image-summary-meta span {
   display: block;
 }
 
-.image-card-meta strong,
+.image-card-status strong,
 .image-summary-meta strong {
   color: #3a291d;
 }
@@ -1266,17 +1289,31 @@ void loadCategories()
   margin-top: 6px;
   color: #8a755d;
   font-size: 13px;
-  word-break: break-all;
+}
+
+.image-card-status {
+  align-items: flex-start;
+}
+
+.image-card-meta {
+  min-width: 0;
+}
+
+.image-file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .image-card-tags {
-  margin-top: 12px;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .image-card-actions {
   margin-top: 14px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-wrap: nowrap;
 }
 
 .cover-thumb {
@@ -1370,6 +1407,24 @@ void loadCategories()
   color: var(--el-color-danger);
 }
 
+.editor-footer,
+.editor-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editor-footer {
+  width: 100%;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(122, 92, 65, 0.12);
+}
+
+.editor-footer-tip {
+  line-height: 1.5;
+}
+
 :deep(.el-table__body-wrapper tbody tr.is-row-dragging td) {
   background: rgba(247, 239, 231, 0.92);
 }
@@ -1407,6 +1462,15 @@ void loadCategories()
   .inline-grid,
   .filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .editor-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editor-footer-actions {
+    justify-content: flex-end;
   }
 
   .pagination-bar {
