@@ -354,46 +354,48 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <el-form-item label="商品名称">
-                <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-              </el-form-item>
+              <div class="basic-form-layout">
+                <div class="basic-form-main">
+                  <el-form-item label="商品名称">
+                    <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
+                  </el-form-item>
 
-              <el-form-item label="描述">
-                <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入商品描述" />
-              </el-form-item>
+                  <el-form-item label="描述">
+                    <el-input v-model="form.description" type="textarea" :rows="8" placeholder="请输入商品描述" />
+                  </el-form-item>
+                </div>
 
-              <div class="inline-grid">
-                <el-form-item label="分类">
-                  <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                    <el-option
-                      v-for="category in categories"
-                      :key="category.id"
-                      :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                      :value="category.id"
-                    />
-                  </el-select>
-                </el-form-item>
+                <div class="basic-form-side">
+                  <el-form-item label="分类">
+                    <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                      <el-option
+                        v-for="category in categories"
+                        :key="category.id"
+                        :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                        :value="category.id"
+                      />
+                    </el-select>
+                  </el-form-item>
 
-                <el-form-item label="标签">
-                  <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
-                </el-form-item>
-              </div>
+                  <el-form-item label="标签">
+                    <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
+                  </el-form-item>
 
-              <div class="inline-grid inline-grid-compact">
-                <el-form-item label="状态">
-                  <el-select v-model="form.status">
-                    <el-option label="草稿" value="draft" />
-                    <el-option label="已发布" value="published" />
-                    <el-option label="已归档" value="archived" />
-                  </el-select>
-                </el-form-item>
+                  <el-form-item label="状态">
+                    <el-select v-model="form.status">
+                      <el-option label="草稿" value="draft" />
+                      <el-option label="已发布" value="published" />
+                      <el-option label="已归档" value="archived" />
+                    </el-select>
+                  </el-form-item>
 
-                <el-form-item label="排序值">
-                  <div class="sort-field">
-                    <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-                    <span class="field-tip">值越小越靠前显示</span>
-                  </div>
-                </el-form-item>
+                  <el-form-item label="排序值">
+                    <div class="sort-field">
+                      <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
+                      <span class="field-tip">值越小越靠前显示</span>
+                    </div>
+                  </el-form-item>
+                </div>
               </div>
             </section>
           </el-tab-pane>
@@ -532,6 +534,13 @@ onBeforeUnmount(() => {
   justify-content: space-between;
 }
 
+.editor-page-header,
+.editor-grid,
+.editor-footer {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
 .editor-page-header {
   align-items: flex-start;
 }
@@ -562,9 +571,6 @@ onBeforeUnmount(() => {
 }
 
 .editor-grid {
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
   padding: 8px 0 4px;
   background: #f7f4ef;
 }
@@ -630,13 +636,17 @@ onBeforeUnmount(() => {
   line-height: 1.6;
 }
 
-.inline-grid {
-  gap: 16px;
-  grid-template-columns: 1fr;
+.basic-form-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+  align-items: start;
 }
 
-.inline-grid-compact {
-  align-items: start;
+.basic-form-main,
+.basic-form-side {
+  display: grid;
+  gap: 16px;
 }
 
 .sort-field {
@@ -896,6 +906,11 @@ onBeforeUnmount(() => {
   .editor-page-actions,
   .editor-footer-actions {
     justify-content: flex-end;
+  }
+
+  .basic-form-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .image-grid {
