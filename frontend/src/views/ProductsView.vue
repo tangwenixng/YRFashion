@@ -52,6 +52,7 @@ const categories = ref<CategoryItem[]>([])
 const productsTableRef = ref<{ $el: HTMLElement } | null>(null)
 const editorUploadRef = ref<{ clearFiles: () => void } | null>(null)
 const editorVisible = ref(false)
+const editorActiveTab = ref<'basic' | 'media'>('basic')
 const editingProductId = ref<number | null>(null)
 const editorImages = ref<EditorImageItem[]>([])
 const removedImageIds = ref<number[]>([])
@@ -163,6 +164,7 @@ const resetEditorImages = () => {
 }
 
 const resetForm = () => {
+  editorActiveTab.value = 'basic'
   editingProductId.value = null
   form.name = ''
   form.category_id = null
@@ -769,158 +771,164 @@ void loadCategories()
     >
       <div class="editor-grid">
         <el-form label-position="top">
-          <section class="editor-section">
-            <div class="editor-section-header">
-              <div>
-                <h3>基础信息</h3>
-                <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
-              </div>
-            </div>
-
-            <el-form-item label="商品名称">
-              <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-            </el-form-item>
-
-            <el-form-item label="描述">
-              <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入商品描述" />
-            </el-form-item>
-
-            <div class="inline-grid">
-              <el-form-item label="分类">
-                <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                  <el-option
-                    v-for="category in categories"
-                    :key="category.id"
-                    :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                    :value="category.id"
-                  />
-                </el-select>
-              </el-form-item>
-
-              <el-form-item label="标签">
-                <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
-              </el-form-item>
-            </div>
-
-            <div class="inline-grid inline-grid-compact">
-              <el-form-item label="状态">
-                <el-select v-model="form.status">
-                  <el-option label="草稿" value="draft" />
-                  <el-option label="已发布" value="published" />
-                  <el-option label="已归档" value="archived" />
-                </el-select>
-              </el-form-item>
-
-              <el-form-item label="排序值">
-                <div class="sort-field">
-                  <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-                  <span class="field-tip">值越小越靠前显示</span>
+          <el-tabs v-model="editorActiveTab" class="editor-tabs">
+            <el-tab-pane name="basic" label="基本信息">
+              <section class="editor-section">
+                <div class="editor-section-header">
+                  <div>
+                    <h3>基础信息</h3>
+                    <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
+                  </div>
                 </div>
-              </el-form-item>
-            </div>
-          </section>
 
-          <section class="editor-section editor-media-panel">
-            <div class="editor-section-header">
-              <div>
-                <h3>图片管理</h3>
-                <p>先上传需要展示的图片，再整理顺序与封面，列表和首页会优先使用封面图。</p>
-              </div>
-            </div>
+                <el-form-item label="商品名称">
+                  <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
+                </el-form-item>
 
-            <div class="media-subsection">
-              <div class="editor-media-header">
-                <div>
-                  <h4>上传图片</h4>
-                  <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
+                <el-form-item label="描述">
+                  <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入商品描述" />
+                </el-form-item>
+
+                <div class="inline-grid">
+                  <el-form-item label="分类">
+                    <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                      <el-option
+                        v-for="category in categories"
+                        :key="category.id"
+                        :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                        :value="category.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+
+                  <el-form-item label="标签">
+                    <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
+                  </el-form-item>
                 </div>
-              </div>
 
-              <el-upload
-                ref="editorUploadRef"
-                :key="imageUploadKey"
-                drag
-                multiple
-                :auto-upload="false"
-                :show-file-list="false"
-                accept=".jpg,.jpeg,.png,.webp"
-                :on-change="handleEditorFileChange"
-              >
-                <el-icon class="upload-icon"><Picture /></el-icon>
-                <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
-              </el-upload>
-            </div>
+                <div class="inline-grid inline-grid-compact">
+                  <el-form-item label="状态">
+                    <el-select v-model="form.status">
+                      <el-option label="草稿" value="draft" />
+                      <el-option label="已发布" value="published" />
+                      <el-option label="已归档" value="archived" />
+                    </el-select>
+                  </el-form-item>
 
-            <div v-if="editorImages.length" class="media-subsection image-manager">
-              <div class="image-manager-header">
-                <div>
-                  <h4>图片顺序与封面</h4>
-                  <p>拖动卡片调整顺序，封面将用于列表和首页预览。</p>
+                  <el-form-item label="排序值">
+                    <div class="sort-field">
+                      <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
+                      <span class="field-tip">值越小越靠前显示</span>
+                    </div>
+                  </el-form-item>
                 </div>
-              </div>
+              </section>
+            </el-tab-pane>
 
-              <div class="image-grid">
-                <article
-                  v-for="image in editorImages"
-                  :key="image.key"
-                  class="image-card"
-                  :class="{
-                    cover: image.is_cover,
-                    dragging: dragImageKey === image.key,
-                    'drag-over': dragOverImageKey === image.key,
-                  }"
-                  draggable="true"
-                  @dragstart="handleImageDragStart(image.key)"
-                  @dragenter.prevent="handleImageDragEnter(image.key)"
-                  @dragover.prevent
-                  @dragend="handleImageDragEnd"
-                  @drop.prevent="handleImageDrop(image.key)"
-                >
-                  <div class="image-card-handle">
-                    <el-icon><Sort /></el-icon>
-                    <span>{{ image.source === 'new' ? '待上传' : '已上传' }}</span>
+            <el-tab-pane name="media" label="图片维护">
+              <section class="editor-section editor-media-panel">
+                <div class="editor-section-header">
+                  <div>
+                    <h3>图片管理</h3>
+                    <p>上传需要展示的图片，再整理顺序与封面，列表和首页会优先使用封面图。</p>
+                  </div>
+                </div>
+
+                <div class="media-subsection">
+                  <div class="editor-media-header">
+                    <div>
+                      <h4>上传图片</h4>
+                      <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
+                    </div>
                   </div>
 
-                  <el-image
-                    :src="image.image_url"
-                    fit="cover"
-                    class="managed-image"
-                    :preview-src-list="editorImages.map((item) => item.image_url)"
-                    preview-teleported
+                  <el-upload
+                    ref="editorUploadRef"
+                    :key="imageUploadKey"
+                    drag
+                    multiple
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    :on-change="handleEditorFileChange"
                   >
-                    <template #error>
-                      <div class="cover-fallback">IMG</div>
-                    </template>
-                  </el-image>
+                    <el-icon class="upload-icon"><Picture /></el-icon>
+                    <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
+                  </el-upload>
+                </div>
 
-                  <div class="image-card-body">
-                    <div class="image-card-status">
-                      <strong>{{ image.is_cover ? '当前封面' : `第 ${image.sort_order + 1} 张` }}</strong>
-                      <div class="image-card-tags">
-                        <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
-                        <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
-                      </div>
-                    </div>
-
-                    <div class="image-card-meta">
-                      <span class="image-file-name" :title="image.original_name">{{ image.original_name }}</span>
-                    </div>
-
-                    <div class="image-card-actions">
-                      <el-button plain size="small" :disabled="image.is_cover" @click="setEditorCover(image.key)">
-                        <el-icon><Star /></el-icon>
-                        {{ image.is_cover ? '已封面' : '设封面' }}
-                      </el-button>
-                      <el-button plain size="small" type="danger" @click="removeEditorImage(image.key)">
-                        <el-icon><Delete /></el-icon>
-                        删除
-                      </el-button>
+                <div v-if="editorImages.length" class="media-subsection image-manager">
+                  <div class="image-manager-header">
+                    <div>
+                      <h4>图片顺序与封面</h4>
+                      <p>拖动卡片调整顺序，封面将用于列表和首页预览。</p>
                     </div>
                   </div>
-                </article>
-              </div>
-            </div>
-          </section>
+
+                  <div class="image-grid">
+                    <article
+                      v-for="image in editorImages"
+                      :key="image.key"
+                      class="image-card"
+                      :class="{
+                        cover: image.is_cover,
+                        dragging: dragImageKey === image.key,
+                        'drag-over': dragOverImageKey === image.key,
+                      }"
+                      draggable="true"
+                      @dragstart="handleImageDragStart(image.key)"
+                      @dragenter.prevent="handleImageDragEnter(image.key)"
+                      @dragover.prevent
+                      @dragend="handleImageDragEnd"
+                      @drop.prevent="handleImageDrop(image.key)"
+                    >
+                      <div class="image-card-handle">
+                        <el-icon><Sort /></el-icon>
+                        <span>{{ image.source === 'new' ? '待上传' : '已上传' }}</span>
+                      </div>
+
+                      <el-image
+                        :src="image.image_url"
+                        fit="cover"
+                        class="managed-image"
+                        :preview-src-list="editorImages.map((item) => item.image_url)"
+                        preview-teleported
+                      >
+                        <template #error>
+                          <div class="cover-fallback">IMG</div>
+                        </template>
+                      </el-image>
+
+                      <div class="image-card-body">
+                        <div class="image-card-status">
+                          <strong>{{ image.is_cover ? '当前封面' : `第 ${image.sort_order + 1} 张` }}</strong>
+                          <div class="image-card-tags">
+                            <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
+                            <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
+                          </div>
+                        </div>
+
+                        <div class="image-card-meta">
+                          <span class="image-file-name" :title="image.original_name">{{ image.original_name }}</span>
+                        </div>
+
+                        <div class="image-card-actions">
+                          <el-button plain size="small" :disabled="image.is_cover" @click="setEditorCover(image.key)">
+                            <el-icon><Star /></el-icon>
+                            {{ image.is_cover ? '已封面' : '设封面' }}
+                          </el-button>
+                          <el-button plain size="small" type="danger" @click="removeEditorImage(image.key)">
+                            <el-icon><Delete /></el-icon>
+                            删除
+                          </el-button>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+              </section>
+            </el-tab-pane>
+          </el-tabs>
         </el-form>
       </div>
 
@@ -1103,6 +1111,36 @@ void loadCategories()
   background: #f7f4ef;
 }
 
+.editor-tabs :deep(.el-tabs__header) {
+  margin: 0 0 18px;
+}
+
+.editor-tabs :deep(.el-tabs__nav-wrap::after) {
+  display: none;
+}
+
+.editor-tabs :deep(.el-tabs__nav) {
+  gap: 10px;
+}
+
+.editor-tabs :deep(.el-tabs__item) {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: #8a755d;
+  font-weight: 600;
+}
+
+.editor-tabs :deep(.el-tabs__active-bar) {
+  display: none;
+}
+
+.editor-tabs :deep(.el-tabs__item.is-active) {
+  color: #3d2b1f;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(99, 74, 53, 0.08);
+}
+
 .editor-section {
   padding: 20px;
   border: 1px solid rgba(122, 92, 65, 0.12);
@@ -1162,7 +1200,7 @@ void loadCategories()
 }
 
 .editor-media-panel {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .media-subsection {
