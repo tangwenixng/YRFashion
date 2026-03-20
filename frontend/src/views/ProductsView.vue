@@ -42,6 +42,7 @@ type EditorImageItem = {
 
 const PAGE_SORT_STEP = 10
 const PAGE_SORT_GROUP = 1000
+const PRODUCT_TAG_PREVIEW_LIMIT = 2
 
 const loading = ref(false)
 const saving = ref(false)
@@ -187,6 +188,23 @@ const toEditorImage = (image: ProductImage): EditorImageItem => ({
 const formatStatusLabel = (status: ProductItem['status']) => statusLabelMap[status] ?? status
 
 const formatTagLabel = (tag: string) => tagLabelMap[tag] ?? tag
+
+const getProductSummary = (product: ProductItem) => {
+  const description = product.description.trim().replace(/\s+/g, ' ')
+  if (description) {
+    return description
+  }
+
+  if (product.tags.length) {
+    return product.tags.map((tag) => formatTagLabel(tag)).join(' / ')
+  }
+
+  return '暂未补充描述'
+}
+
+const getVisibleTags = (tags: string[]) => tags.slice(0, PRODUCT_TAG_PREVIEW_LIMIT)
+
+const getHiddenTagCount = (tags: string[]) => Math.max(tags.length - PRODUCT_TAG_PREVIEW_LIMIT, 0)
 
 const loadProducts = async () => {
   loading.value = true
@@ -630,12 +648,12 @@ void loadCategories()
         ref="productsTableRef"
         :data="products"
         v-loading="loading"
-        table-layout="auto"
+        table-layout="fixed"
         row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column label="排序" width="74">
+        <el-table-column label="排序" width="72">
           <template #default="{ row }">
             <div class="drag-cell">
               <span class="drag-handle" :data-product-id="row.id" title="拖动排序">
@@ -645,30 +663,42 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="name" label="商品名称" min-width="160" />
-        <el-table-column label="分类" min-width="96">
+        <el-table-column label="商品信息" min-width="300">
           <template #default="{ row }">
-            <span>{{ row.category_name || '未分类' }}</span>
+            <div class="product-main-cell">
+              <strong class="product-main-title">{{ row.name }}</strong>
+              <span class="product-main-subtitle" :title="getProductSummary(row)">
+                {{ getProductSummary(row) }}
+              </span>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" min-width="88">
+        <el-table-column label="分类" width="112">
+          <template #default="{ row }">
+            <span class="category-text" :class="{ muted: !row.category_name }">{{ row.category_name || '未分类' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="96">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'warning' : 'info'">
               {{ formatStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="标签" min-width="132">
+        <el-table-column label="标签" width="188">
           <template #default="{ row }">
-            <div class="tag-list">
-              <el-tag v-for="tag in row.tags" :key="tag" effect="plain">
+            <div class="tag-list tag-list-compact">
+              <el-tag v-for="tag in getVisibleTags(row.tags)" :key="tag" effect="plain" size="small">
                 {{ formatTagLabel(tag) }}
+              </el-tag>
+              <el-tag v-if="getHiddenTagCount(row.tags)" effect="plain" size="small" class="tag-overflow">
+                +{{ getHiddenTagCount(row.tags) }}
               </el-tag>
               <span v-if="row.tags.length === 0" class="muted">未设置</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="图片" min-width="210">
+        <el-table-column label="图片" width="152">
           <template #default="{ row }">
             <div class="image-summary">
               <el-image
@@ -683,14 +713,14 @@ void loadCategories()
                   <div class="cover-fallback">IMG</div>
                 </template>
               </el-image>
-              <div class="image-summary-meta">
-                <strong>{{ row.images.length }} 张</strong>
-                <span>{{ row.images[0]?.original_name || '暂无图片' }}</span>
+              <div class="image-summary-meta" :title="row.images[0]?.original_name || ''">
+                <strong>{{ row.images.length ? `${row.images.length} 张` : '暂无图片' }}</strong>
+                <span>{{ row.images[0] ? '封面预览' : '进入编辑后上传' }}</span>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" min-width="280" fixed="right">
+        <el-table-column label="操作" width="208" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button text class="action-link" @click="openEdit(row)">
@@ -934,8 +964,16 @@ void loadCategories()
   gap: 6px;
 }
 
+.tag-list-compact {
+  align-items: center;
+}
+
 .tag-list :deep(.el-tag) {
   margin: 0;
+}
+
+.tag-overflow {
+  color: #7d5535;
 }
 
 .table-card,
@@ -993,6 +1031,39 @@ void loadCategories()
 .muted {
   color: #907e6a;
   font-size: 13px;
+}
+
+.product-main-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.product-main-title,
+.product-main-subtitle {
+  display: block;
+}
+
+.product-main-title {
+  color: #3a291d;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.product-main-subtitle {
+  color: #8a755d;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-text {
+  display: inline-block;
+  line-height: 1.5;
 }
 
 .editor-grid {
@@ -1146,8 +1217,8 @@ void loadCategories()
 }
 
 .cover-thumb {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(122, 92, 65, 0.12);
@@ -1166,8 +1237,9 @@ void loadCategories()
 }
 
 .image-summary {
+  align-items: center;
   justify-content: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .image-summary :deep(.el-image) {
@@ -1179,10 +1251,12 @@ void loadCategories()
   align-items: flex-start;
   justify-content: center;
   gap: 0;
+  min-width: 0;
 }
 
 .drag-cell {
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 6px;
 }
@@ -1205,6 +1279,7 @@ void loadCategories()
 }
 
 .row-actions {
+  justify-content: flex-end;
   gap: 14px;
   flex-wrap: nowrap;
 }
