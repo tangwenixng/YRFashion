@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ArrowLeft, Delete, Picture, Sort, Star } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ArrowLeft, Delete, InfoFilled, Picture, Sort, Star } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
@@ -20,7 +20,7 @@ type ProductFormState = {
   name: string
   category_id: number | null
   description: string
-  tagsText: string
+  tags: string[]
   status: 'draft' | 'published' | 'archived'
   sort_order: number
 }
@@ -40,6 +40,11 @@ type EditorImageItem = {
 const route = useRoute()
 const router = useRouter()
 
+const DESCRIPTION_MAX_LENGTH = 500
+const TAG_MAX_COUNT = 8
+const TAG_MAX_LENGTH = 16
+const SUGGESTED_TAGS = ['通勤', '春季', '夏季', '秋冬', '日常', '约会']
+
 const saving = ref(false)
 const loading = ref(false)
 const categories = ref<CategoryItem[]>([])
@@ -50,12 +55,15 @@ const removedImageIds = ref<number[]>([])
 const imageUploadKey = ref(0)
 const dragImageKey = ref('')
 const dragOverImageKey = ref('')
+const tagInput = ref('')
+const initialSnapshot = ref('')
+const allowLeave = ref(false)
 
 const form = reactive<ProductFormState>({
   name: '',
   category_id: null,
   description: '',
-  tagsText: '',
+  tags: [],
   status: 'draft',
   sort_order: 0,
 })
@@ -88,13 +96,15 @@ const resetEditorImages = () => {
 }
 
 const resetForm = () => {
+  allowLeave.value = false
   editorActiveTab.value = 'basic'
   form.name = ''
   form.category_id = null
   form.description = ''
-  form.tagsText = ''
+  form.tags = []
   form.status = 'draft'
   form.sort_order = 0
+  tagInput.value = ''
   resetEditorImages()
 }
 
@@ -138,16 +148,21 @@ const loadCategoriesAndProduct = async () => {
     form.name = product.name
     form.category_id = product.category_id
     form.description = product.description
-    form.tagsText = product.tags.join(', ')
+    form.tags = [...product.tags]
     form.status = product.status
     form.sort_order = product.sort_order
     normalizeEditorImages(product.images.map(toEditorImage))
+    markSnapshot()
+    return
   } catch (error) {
     ElMessage.error(isEditing.value ? '商品加载失败' : '初始化失败')
     if (isEditing.value) {
       void router.push('/products')
     }
   } finally {
+    if (!productId.value) {
+      markSnapshot()
+    }
     loading.value = false
   }
 }
@@ -156,12 +171,73 @@ const buildPayload = () => ({
   name: form.name.trim(),
   category_id: form.category_id,
   description: form.description.trim(),
-  tags: form.tagsText
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean),
+  tags: [...form.tags],
   status: form.status,
   sort_order: form.sort_order,
+})
+
+const normalizeTag = (value: string) => value.trim().replace(/\s+/g, ' ')
+
+const addTag = (rawTag: string) => {
+  const tag = normalizeTag(rawTag)
+  if (!tag) {
+    return
+  }
+  if (tag.length > TAG_MAX_LENGTH) {
+    ElMessage.warning(`单个标签不超过 ${TAG_MAX_LENGTH} 个字`)
+    return
+  }
+  if (form.tags.includes(tag)) {
+    return
+  }
+  if (form.tags.length >= TAG_MAX_COUNT) {
+    ElMessage.warning(`最多添加 ${TAG_MAX_COUNT} 个标签`)
+    return
+  }
+  form.tags = form.tags.concat(tag)
+}
+
+const appendTagFromInput = () => {
+  if (!tagInput.value.trim()) {
+    return
+  }
+  addTag(tagInput.value)
+  tagInput.value = ''
+}
+
+const removeTag = (tag: string) => {
+  form.tags = form.tags.filter((item) => item !== tag)
+}
+
+const addSuggestedTag = (tag: string) => {
+  addTag(tag)
+}
+
+const editorSnapshot = () =>
+  JSON.stringify({
+    name: form.name.trim(),
+    category_id: form.category_id,
+    description: form.description,
+    tags: [...form.tags],
+    status: form.status,
+    sort_order: form.sort_order,
+    image_keys: editorImages.value.map((item) => item.key),
+    image_ids: editorImages.value.map((item) => item.id),
+    image_cover: editorImages.value.map((item) => item.is_cover),
+    image_sort: editorImages.value.map((item) => item.sort_order),
+    image_source: editorImages.value.map((item) => item.source),
+    removed: [...removedImageIds.value].sort((a, b) => a - b),
+  })
+
+const markSnapshot = () => {
+  initialSnapshot.value = editorSnapshot()
+}
+
+const hasPendingChanges = computed(() => {
+  if (!initialSnapshot.value) {
+    return false
+  }
+  return editorSnapshot() !== initialSnapshot.value
 })
 
 const handleEditorFileChange = (uploadFile: { raw?: File }) => {
@@ -249,7 +325,12 @@ const saveProduct = async () => {
 
   const payload = buildPayload()
   if (!payload.name) {
-    ElMessage.warning('商品名称不能为空')
+    ElMessage.warning('请填写商品名称（必填）')
+    editorActiveTab.value = 'basic'
+    return
+  }
+  if (!payload.category_id) {
+    ElMessage.warning('请选择分类（必填）')
     editorActiveTab.value = 'basic'
     return
   }
@@ -299,6 +380,7 @@ const saveProduct = async () => {
     }
 
     ElMessage.success(productId.value ? '商品已更新' : '商品已创建')
+    allowLeave.value = true
     void router.push('/products')
   } finally {
     saving.value = false
@@ -306,8 +388,55 @@ const saveProduct = async () => {
 }
 
 const goBack = () => {
-  void router.push('/products')
+  if (allowLeave.value || !hasPendingChanges.value) {
+    void router.push('/products')
+    return
+  }
+  void ElMessageBox.confirm('当前有未保存修改，确认离开吗？', '离开确认', {
+    type: 'warning',
+    confirmButtonText: '离开',
+    cancelButtonText: '继续编辑',
+  })
+    .then(() => {
+      allowLeave.value = true
+      void router.push('/products')
+    })
+    .catch(() => {})
 }
+
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  if (allowLeave.value || !hasPendingChanges.value) {
+    return
+  }
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+onBeforeRouteLeave((_to, _from, next) => {
+  if (allowLeave.value || !hasPendingChanges.value) {
+    next()
+    return
+  }
+  void ElMessageBox.confirm('当前有未保存修改，确认离开吗？', '离开确认', {
+    type: 'warning',
+    confirmButtonText: '离开',
+    cancelButtonText: '继续编辑',
+  })
+    .then(() => {
+      allowLeave.value = true
+      next()
+    })
+    .catch(() => next(false))
+})
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  resetEditorImages()
+})
 
 watch(
   () => route.fullPath,
@@ -316,10 +445,6 @@ watch(
   },
   { immediate: true },
 )
-
-onBeforeUnmount(() => {
-  resetEditorImages()
-})
 </script>
 
 <template>
@@ -336,10 +461,8 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="editor-page-actions">
+        <span v-if="hasPendingChanges" class="unsaved-indicator">未保存修改</span>
         <el-button @click="goBack">取消</el-button>
-        <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">
-          保存商品
-        </el-button>
       </div>
     </div>
 
@@ -361,17 +484,32 @@ onBeforeUnmount(() => {
 
               <div class="basic-form-layout">
                 <div class="basic-form-main">
-                  <el-form-item label="商品名称">
+                  <el-form-item required>
+                    <template #label>
+                      商品名称
+                      <span class="required-mark">*</span>
+                    </template>
                     <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
                   </el-form-item>
 
                   <el-form-item label="描述">
-                    <el-input v-model="form.description" type="textarea" :rows="8" placeholder="请输入商品描述" />
+                    <el-input
+                      v-model="form.description"
+                      type="textarea"
+                      :rows="8"
+                      :maxlength="DESCRIPTION_MAX_LENGTH"
+                      placeholder="用于详情页展示穿搭亮点、面料与场景。"
+                    />
+                    <div class="field-counter">{{ form.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}</div>
                   </el-form-item>
                 </div>
 
                 <div class="basic-form-side">
-                  <el-form-item label="分类">
+                  <el-form-item required>
+                    <template #label>
+                      分类
+                      <span class="required-mark">*</span>
+                    </template>
                     <el-select v-model="form.category_id" clearable placeholder="请选择分类">
                       <el-option
                         v-for="category in categories"
@@ -383,7 +521,38 @@ onBeforeUnmount(() => {
                   </el-form-item>
 
                   <el-form-item label="标签">
-                    <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
+                    <div class="tag-editor">
+                      <div v-if="form.tags.length" class="tag-chip-list">
+                        <el-tag
+                          v-for="tag in form.tags"
+                          :key="tag"
+                          closable
+                          size="small"
+                          effect="plain"
+                          @close="removeTag(tag)"
+                        >
+                          {{ tag }}
+                        </el-tag>
+                      </div>
+                      <el-input
+                        v-model="tagInput"
+                        placeholder="输入标签后回车，如：通勤"
+                        @keyup.enter.prevent="appendTagFromInput"
+                        @blur="appendTagFromInput"
+                      />
+                      <div class="tag-suggestions">
+                        <span class="tag-suggestions-label">推荐</span>
+                        <button
+                          v-for="tag in SUGGESTED_TAGS"
+                          :key="tag"
+                          type="button"
+                          class="suggestion-chip"
+                          @click="addSuggestedTag(tag)"
+                        >
+                          {{ tag }}
+                        </button>
+                      </div>
+                    </div>
                   </el-form-item>
 
                   <el-form-item label="状态">
@@ -394,7 +563,13 @@ onBeforeUnmount(() => {
                     </el-select>
                   </el-form-item>
 
-                  <el-form-item label="排序值">
+                  <el-form-item>
+                    <template #label>
+                      排序值
+                      <el-tooltip content="值越小越靠前，支持直接输入或点击步进" placement="top">
+                        <el-icon class="hint-icon"><InfoFilled /></el-icon>
+                      </el-tooltip>
+                    </template>
                     <div class="sort-field">
                       <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
                       <span class="field-tip">值越小越靠前显示</span>
@@ -603,6 +778,15 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 28px rgba(99, 74, 53, 0.08);
 }
 
+.unsaved-indicator {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(172, 86, 76, 0.12);
+  color: #9f473d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .editor-grid {
   padding: 4px 0;
 }
@@ -663,7 +847,7 @@ onBeforeUnmount(() => {
 }
 
 .editor-section-header,
-.inline-grid {
+.section-shell {
   display: grid;
 }
 
@@ -740,6 +924,65 @@ onBeforeUnmount(() => {
   color: #907e6a;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.field-counter {
+  margin-top: 8px;
+  color: #9a7b61;
+  font-size: 12px;
+  text-align: right;
+}
+
+.required-mark {
+  margin-left: 4px;
+  color: #ad4d3f;
+  font-weight: 700;
+}
+
+.hint-icon {
+  margin-left: 6px;
+  color: #987455;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.tag-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.tag-chip-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag-suggestions-label {
+  color: #9a7b61;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.suggestion-chip {
+  border: 1px solid rgba(157, 107, 74, 0.2);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(255, 248, 240, 0.95);
+  color: #7b563b;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.suggestion-chip:hover {
+  border-color: rgba(157, 107, 74, 0.4);
 }
 
 .editor-media-panel {
@@ -982,13 +1225,17 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+:deep(.el-tag) {
+  border-radius: 999px;
+}
+
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner),
 :deep(.el-select__wrapper),
 :deep(.el-input-number) {
   border-radius: 16px;
   box-shadow: none;
-  border: 1px solid rgba(122, 92, 65, 0.1);
+  border: 1px solid rgba(122, 92, 65, 0.18);
   background: rgba(255, 252, 248, 0.96);
 }
 
@@ -1007,8 +1254,8 @@ onBeforeUnmount(() => {
 :deep(.el-textarea__inner:focus),
 :deep(.el-select__wrapper.is-focused),
 :deep(.el-input-number:hover) {
-  border-color: rgba(193, 137, 78, 0.42);
-  box-shadow: 0 0 0 4px rgba(193, 137, 78, 0.08);
+  border-color: rgba(157, 92, 56, 0.5);
+  box-shadow: 0 0 0 4px rgba(157, 92, 56, 0.1);
 }
 
 :deep(.el-button:not(.editor-save-button)) {
