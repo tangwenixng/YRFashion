@@ -79,6 +79,11 @@ export const fetchProducts = async (params: ProductListParams = {}) => {
   return data
 }
 
+export const fetchProduct = async (id: number) => {
+  const { data } = await http.get<ProductItem>(`/admin/products/${id}`)
+  return data
+}
+
 export const createProduct = async (payload: ProductPayload) => {
   const { data } = await http.post<ProductItem>('/admin/products', payload)
   return data

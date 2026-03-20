@@ -54,6 +54,22 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'products/create',
+        name: 'product-create',
+        component: () => import('../views/ProductEditorView.vue'),
+        meta: {
+          title: '新增商品',
+        },
+      },
+      {
+        path: 'products/:id/edit',
+        name: 'product-edit',
+        component: () => import('../views/ProductEditorView.vue'),
+        meta: {
+          title: '编辑商品',
+        },
+      },
+      {
         path: 'messages',
         name: 'messages',
         component: () => import('../views/MessagesView.vue'),
