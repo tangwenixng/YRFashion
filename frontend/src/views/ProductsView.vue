@@ -762,7 +762,8 @@ void loadCategories()
     <el-dialog
       v-model="editorVisible"
       :title="editingProductId ? '编辑商品' : '新增商品'"
-      width="980px"
+      width="800px"
+      class="product-editor-dialog"
       destroy-on-close
       @closed="handleEditorClosed"
     >
@@ -1096,14 +1097,18 @@ void loadCategories()
 }
 
 .editor-grid {
-  padding-top: 8px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 8px 0 4px;
+  background: #f7f4ef;
 }
 
 .editor-section {
-  padding: 18px;
+  padding: 20px;
   border: 1px solid rgba(122, 92, 65, 0.12);
   border-radius: 20px;
-  background: rgba(255, 252, 247, 0.82);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(99, 74, 53, 0.06);
 }
 
 .editor-section-header,
@@ -1136,7 +1141,7 @@ void loadCategories()
 .inline-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .inline-grid-compact {
@@ -1157,14 +1162,14 @@ void loadCategories()
 }
 
 .editor-media-panel {
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .media-subsection {
   padding: 16px;
   border: 1px solid rgba(122, 92, 65, 0.12);
   border-radius: 18px;
-  background: rgba(255, 254, 250, 0.86);
+  background: #fff;
 }
 
 .media-subsection + .media-subsection {
@@ -1417,12 +1422,45 @@ void loadCategories()
 .editor-footer {
   width: 100%;
   justify-content: space-between;
-  padding-top: 8px;
+  padding-top: 12px;
   border-top: 1px solid rgba(122, 92, 65, 0.12);
 }
 
 .editor-footer-tip {
   line-height: 1.5;
+}
+
+:deep(.product-editor-dialog) {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+:deep(.product-editor-dialog .el-dialog) {
+  max-width: 800px;
+  border-radius: 24px;
+  background: #f7f4ef;
+}
+
+:deep(.product-editor-dialog .el-dialog__header) {
+  margin-right: 0;
+  padding: 24px 24px 12px;
+  background: #f7f4ef;
+}
+
+:deep(.product-editor-dialog .el-dialog__title) {
+  font-size: 24px;
+  font-weight: 700;
+  color: #34241a;
+}
+
+:deep(.product-editor-dialog .el-dialog__body) {
+  padding: 0 24px 18px;
+  background: #f7f4ef;
+}
+
+:deep(.product-editor-dialog .el-dialog__footer) {
+  padding: 0 24px 24px;
+  background: #f7f4ef;
 }
 
 :deep(.el-table__body-wrapper tbody tr.is-row-dragging td) {
