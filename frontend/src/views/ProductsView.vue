@@ -768,44 +768,56 @@ void loadCategories()
     >
       <div class="editor-grid">
         <el-form label-position="top">
-          <el-form-item label="商品名称">
-            <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-          </el-form-item>
+          <section class="editor-section">
+            <div class="editor-section-header">
+              <div>
+                <h3>基础信息</h3>
+                <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
+              </div>
+            </div>
 
-          <el-form-item label="描述">
-            <el-input v-model="form.description" type="textarea" :rows="5" placeholder="请输入商品描述" />
-          </el-form-item>
-
-          <div class="inline-grid">
-            <el-form-item label="分类">
-              <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                <el-option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                  :value="category.id"
-                />
-              </el-select>
+            <el-form-item label="商品名称">
+              <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
             </el-form-item>
 
-            <el-form-item label="标签">
-              <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
-            </el-form-item>
-          </div>
-
-          <div class="inline-grid">
-            <el-form-item label="状态">
-              <el-select v-model="form.status">
-                <el-option label="草稿" value="draft" />
-                <el-option label="已发布" value="published" />
-                <el-option label="已归档" value="archived" />
-              </el-select>
+            <el-form-item label="描述">
+              <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入商品描述" />
             </el-form-item>
 
-            <el-form-item label="排序值">
-              <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-            </el-form-item>
-          </div>
+            <div class="inline-grid">
+              <el-form-item label="分类">
+                <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                  <el-option
+                    v-for="category in categories"
+                    :key="category.id"
+                    :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                    :value="category.id"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="标签">
+                <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
+              </el-form-item>
+            </div>
+
+            <div class="inline-grid inline-grid-compact">
+              <el-form-item label="状态">
+                <el-select v-model="form.status">
+                  <el-option label="草稿" value="draft" />
+                  <el-option label="已发布" value="published" />
+                  <el-option label="已归档" value="archived" />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="排序值">
+                <div class="sort-field">
+                  <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
+                  <span class="field-tip">值越小越靠前显示</span>
+                </div>
+              </el-form-item>
+            </div>
+          </section>
 
           <div class="editor-media-panel">
             <div class="editor-media-header">
@@ -1070,14 +1082,65 @@ void loadCategories()
   padding-top: 8px;
 }
 
+.editor-section {
+  padding: 18px;
+  border: 1px solid rgba(122, 92, 65, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 252, 247, 0.82);
+}
+
+.editor-section-header,
+.inline-grid {
+  display: grid;
+}
+
+.editor-section-header {
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.editor-section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #3d2b1f;
+}
+
+.editor-section-header p {
+  margin: 0;
+  color: #8a755d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.editor-grid :deep(.el-form-item:last-child) {
+  margin-bottom: 0;
+}
+
 .inline-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.inline-grid-compact {
+  align-items: start;
+}
+
+.sort-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.field-tip {
+  color: #907e6a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .editor-media-panel {
-  margin-top: 10px;
+  margin-top: 16px;
   padding: 18px;
   border: 1px solid rgba(122, 92, 65, 0.12);
   border-radius: 20px;
