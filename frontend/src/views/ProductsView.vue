@@ -1,66 +1,30 @@
 <script setup lang="ts">
-import { Delete, EditPen, Picture, Plus, RefreshRight, Sort, Star } from '@element-plus/icons-vue'
+import { Delete, EditPen, Plus, RefreshRight, Sort } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, nextTick, onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
   batchUpdateProductSort,
   batchUpdateProductStatus,
-  createProduct,
   deleteProduct,
-  deleteProductImage,
   fetchProducts,
-  updateProduct,
-  updateProductImageCover,
-  updateProductImagesSort,
-  type ProductImage,
   type ProductItem,
-  uploadProductImage,
 } from '../api/modules/products'
-
-type ProductFormState = {
-  name: string
-  category_id: number | null
-  description: string
-  tagsText: string
-  status: 'draft' | 'published' | 'archived'
-  sort_order: number
-}
-
-type EditorImageItem = {
-  key: string
-  id: number | null
-  image_url: string
-  original_name: string
-  sort_order: number
-  is_cover: boolean
-  source: 'existing' | 'new'
-  file: File | null
-  object_url: string | null
-}
 
 const PAGE_SORT_STEP = 10
 const PAGE_SORT_GROUP = 1000
 const PRODUCT_TAG_PREVIEW_LIMIT = 2
 
+const router = useRouter()
 const loading = ref(false)
-const saving = ref(false)
 const actionLoadingProductId = ref<number | null>(null)
 const products = ref<ProductItem[]>([])
 const categories = ref<CategoryItem[]>([])
 const productsTableRef = ref<{ $el: HTMLElement } | null>(null)
-const editorUploadRef = ref<{ clearFiles: () => void } | null>(null)
-const editorVisible = ref(false)
-const editorActiveTab = ref<'basic' | 'media'>('basic')
-const editingProductId = ref<number | null>(null)
-const editorImages = ref<EditorImageItem[]>([])
-const removedImageIds = ref<number[]>([])
-const imageUploadKey = ref(0)
 const selectedProductIds = ref<number[]>([])
 const dragProductId = ref<number | null>(null)
-const dragImageKey = ref('')
-const dragOverImageKey = ref('')
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -120,72 +84,7 @@ const tagLabelMap: Record<string, string> = {
   skirt: '半裙',
 }
 
-const form = reactive<ProductFormState>({
-  name: '',
-  category_id: null,
-  description: '',
-  tagsText: '',
-  status: 'draft',
-  sort_order: 0,
-})
-
 const buildPageSortOrder = (index: number) => (page.value - 1) * PAGE_SORT_GROUP + index * PAGE_SORT_STEP
-
-const normalizeEditorImages = (nextImages: EditorImageItem[], preferredCoverKey = '') => {
-  const fallbackCoverKey =
-    nextImages.find((item) => item.key === preferredCoverKey)?.key ||
-    nextImages.find((item) => item.is_cover)?.key ||
-    nextImages[0]?.key ||
-    ''
-
-  editorImages.value = nextImages.map((item, index) => ({
-    ...item,
-    sort_order: index,
-    is_cover: item.key === fallbackCoverKey,
-  }))
-}
-
-const revokeEditorObjectUrls = () => {
-  editorImages.value.forEach((image) => {
-    if (image.object_url) {
-      URL.revokeObjectURL(image.object_url)
-    }
-  })
-}
-
-const resetEditorImages = () => {
-  revokeEditorObjectUrls()
-  editorImages.value = []
-  removedImageIds.value = []
-  dragImageKey.value = ''
-  dragOverImageKey.value = ''
-  imageUploadKey.value += 1
-  editorUploadRef.value?.clearFiles?.()
-}
-
-const resetForm = () => {
-  editorActiveTab.value = 'basic'
-  editingProductId.value = null
-  form.name = ''
-  form.category_id = null
-  form.description = ''
-  form.tagsText = ''
-  form.status = 'draft'
-  form.sort_order = 0
-  resetEditorImages()
-}
-
-const toEditorImage = (image: ProductImage): EditorImageItem => ({
-  key: `existing-${image.id}`,
-  id: image.id,
-  image_url: image.image_url,
-  original_name: image.original_name,
-  sort_order: image.sort_order,
-  is_cover: image.is_cover,
-  source: 'existing',
-  file: null,
-  object_url: null,
-})
 
 const formatStatusLabel = (status: ProductItem['status']) => statusLabelMap[status] ?? status
 
@@ -260,175 +159,11 @@ const handleSelectionChange = (selection: ProductItem[]) => {
 }
 
 const openCreate = () => {
-  resetForm()
-  editorVisible.value = true
+  void router.push('/products/create')
 }
 
 const openEdit = (product: ProductItem) => {
-  resetForm()
-  editingProductId.value = product.id
-  form.name = product.name
-  form.category_id = product.category_id
-  form.description = product.description
-  form.tagsText = product.tags.join(', ')
-  form.status = product.status
-  form.sort_order = product.sort_order
-  normalizeEditorImages(product.images.map(toEditorImage))
-  editorVisible.value = true
-}
-
-const buildPayload = () => ({
-  name: form.name.trim(),
-  category_id: form.category_id,
-  description: form.description.trim(),
-  tags: form.tagsText
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean),
-  status: form.status,
-  sort_order: form.sort_order,
-})
-
-const handleEditorFileChange = (uploadFile: { raw?: File }) => {
-  const rawFile = uploadFile.raw
-  if (!rawFile) {
-    return
-  }
-
-  const objectUrl = URL.createObjectURL(rawFile)
-  const nextImages = editorImages.value.concat({
-    key: `new-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-    id: null,
-    image_url: objectUrl,
-    original_name: rawFile.name,
-    sort_order: editorImages.value.length,
-    is_cover: editorImages.value.length === 0,
-    source: 'new',
-    file: rawFile,
-    object_url: objectUrl,
-  })
-  normalizeEditorImages(nextImages)
-}
-
-const setEditorCover = (imageKey: string) => {
-  normalizeEditorImages(editorImages.value, imageKey)
-}
-
-const removeEditorImage = (imageKey: string) => {
-  const target = editorImages.value.find((item) => item.key === imageKey)
-  if (!target) {
-    return
-  }
-
-  if (target.source === 'existing' && target.id) {
-    removedImageIds.value.push(target.id)
-  }
-  if (target.object_url) {
-    URL.revokeObjectURL(target.object_url)
-  }
-
-  const nextImages = editorImages.value.filter((item) => item.key !== imageKey)
-  normalizeEditorImages(nextImages)
-}
-
-const handleImageDragStart = (imageKey: string) => {
-  dragImageKey.value = imageKey
-}
-
-const handleImageDragEnter = (imageKey: string) => {
-  if (dragImageKey.value && dragImageKey.value !== imageKey) {
-    dragOverImageKey.value = imageKey
-  }
-}
-
-const handleImageDragEnd = () => {
-  dragImageKey.value = ''
-  dragOverImageKey.value = ''
-}
-
-const handleImageDrop = (targetKey: string) => {
-  const sourceKey = dragImageKey.value
-  dragImageKey.value = ''
-  dragOverImageKey.value = ''
-
-  if (!sourceKey || sourceKey === targetKey) {
-    return
-  }
-
-  const nextImages = [...editorImages.value]
-  const sourceIndex = nextImages.findIndex((item) => item.key === sourceKey)
-  const targetIndex = nextImages.findIndex((item) => item.key === targetKey)
-  if (sourceIndex === -1 || targetIndex === -1) {
-    return
-  }
-
-  const [movedImage] = nextImages.splice(sourceIndex, 1)
-  nextImages.splice(targetIndex, 0, movedImage)
-  normalizeEditorImages(nextImages, movedImage.is_cover ? movedImage.key : '')
-}
-
-const saveProduct = async () => {
-  if (saving.value) {
-    return
-  }
-
-  const payload = buildPayload()
-  if (!payload.name) {
-    ElMessage.warning('商品名称不能为空')
-    return
-  }
-
-  saving.value = true
-  try {
-    const savedProduct = editingProductId.value
-      ? await updateProduct(editingProductId.value, payload)
-      : await createProduct(payload)
-    const productId = savedProduct.id
-
-    for (const imageId of removedImageIds.value) {
-      await deleteProductImage(productId, imageId)
-    }
-
-    const uploadedImageMap = new Map<string, ProductImage>()
-    for (const image of editorImages.value) {
-      if (image.source !== 'new' || !image.file) {
-        continue
-      }
-
-      const uploadedImage = await uploadProductImage(productId, image.file, image.sort_order, false)
-      uploadedImageMap.set(image.key, uploadedImage)
-    }
-
-    const finalSortItems = editorImages.value
-      .map((image, index) => {
-        const imageId = image.source === 'existing' ? image.id : uploadedImageMap.get(image.key)?.id
-        if (!imageId) {
-          return null
-        }
-        return {
-          id: imageId,
-          sort_order: index,
-        }
-      })
-      .filter((item): item is { id: number; sort_order: number } => item !== null)
-
-    if (finalSortItems.length) {
-      await updateProductImagesSort(productId, { items: finalSortItems })
-      const coverImage = editorImages.value.find((image) => image.is_cover)
-      const coverImageId = coverImage
-        ? (coverImage.source === 'existing' ? coverImage.id : uploadedImageMap.get(coverImage.key)?.id) || null
-        : null
-      if (coverImageId) {
-        await updateProductImageCover(productId, coverImageId)
-      }
-    }
-
-    ElMessage.success(editingProductId.value ? '商品已更新' : '商品已创建')
-    editorVisible.value = false
-    await loadProducts()
-  } finally {
-    saving.value = false
-  }
+  void router.push(`/products/${product.id}/edit`)
 }
 
 const toggleProductPublish = async (product: ProductItem) => {
@@ -567,14 +302,6 @@ const bindProductRowDrag = () => {
     }
   })
 }
-
-const handleEditorClosed = () => {
-  resetForm()
-}
-
-onBeforeUnmount(() => {
-  revokeEditorObjectUrls()
-})
 
 void loadProducts()
 void loadCategories()
@@ -760,183 +487,6 @@ void loadCategories()
         />
       </div>
     </section>
-
-    <el-dialog
-      v-model="editorVisible"
-      :title="editingProductId ? '编辑商品' : '新增商品'"
-      width="800px"
-      class="product-editor-dialog"
-      destroy-on-close
-      @closed="handleEditorClosed"
-    >
-      <div class="editor-grid">
-        <el-form label-position="top">
-          <el-tabs v-model="editorActiveTab" class="editor-tabs">
-            <el-tab-pane name="basic" label="基本信息">
-              <section class="editor-section">
-                <div class="editor-section-header">
-                  <div>
-                    <h3>基础信息</h3>
-                    <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
-                  </div>
-                </div>
-
-                <el-form-item label="商品名称">
-                  <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-                </el-form-item>
-
-                <el-form-item label="描述">
-                  <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请输入商品描述" />
-                </el-form-item>
-
-                <div class="inline-grid">
-                  <el-form-item label="分类">
-                    <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                      <el-option
-                        v-for="category in categories"
-                        :key="category.id"
-                        :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                        :value="category.id"
-                      />
-                    </el-select>
-                  </el-form-item>
-
-                  <el-form-item label="标签">
-                    <el-input v-model="form.tagsText" placeholder="用英文逗号分隔，如：通勤, 春季" />
-                  </el-form-item>
-                </div>
-
-                <div class="inline-grid inline-grid-compact">
-                  <el-form-item label="状态">
-                    <el-select v-model="form.status">
-                      <el-option label="草稿" value="draft" />
-                      <el-option label="已发布" value="published" />
-                      <el-option label="已归档" value="archived" />
-                    </el-select>
-                  </el-form-item>
-
-                  <el-form-item label="排序值">
-                    <div class="sort-field">
-                      <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-                      <span class="field-tip">值越小越靠前显示</span>
-                    </div>
-                  </el-form-item>
-                </div>
-              </section>
-            </el-tab-pane>
-
-            <el-tab-pane name="media" label="图片维护">
-              <section class="editor-section editor-media-panel">
-                <div class="editor-section-header">
-                  <div>
-                    <h3>图片管理</h3>
-                    <p>上传图片后可直接拖拽排序，单击缩略图查看大图，第一张或封面图会优先用于列表展示。</p>
-                  </div>
-                </div>
-
-                <div class="media-subsection image-manager">
-                  <div class="image-manager-header">
-                    <div>
-                      <h4>图片维护</h4>
-                      <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
-                    </div>
-                    <span class="muted">{{ editorImages.length ? `当前 ${editorImages.length} 张` : '还没有图片' }}</span>
-                  </div>
-
-                  <div class="image-grid image-grid-editor">
-                    <el-upload
-                      ref="editorUploadRef"
-                      :key="imageUploadKey"
-                      class="image-upload-tile"
-                      multiple
-                      :auto-upload="false"
-                      :show-file-list="false"
-                      accept=".jpg,.jpeg,.png,.webp"
-                      :on-change="handleEditorFileChange"
-                    >
-                      <div class="image-upload-tile-inner">
-                        <el-icon class="upload-icon"><Picture /></el-icon>
-                        <strong>添加图片</strong>
-                        <span>点击选择多张图片</span>
-                      </div>
-                    </el-upload>
-
-                    <article
-                      v-for="image in editorImages"
-                      :key="image.key"
-                      class="image-thumb-card"
-                      :class="{
-                        cover: image.is_cover,
-                        dragging: dragImageKey === image.key,
-                        'drag-over': dragOverImageKey === image.key,
-                      }"
-                      draggable="true"
-                      @dragstart="handleImageDragStart(image.key)"
-                      @dragenter.prevent="handleImageDragEnter(image.key)"
-                      @dragover.prevent
-                      @dragend="handleImageDragEnd"
-                      @drop.prevent="handleImageDrop(image.key)"
-                    >
-                      <div class="image-card-handle">
-                        <el-icon><Sort /></el-icon>
-                        <span>#{{ image.sort_order + 1 }}</span>
-                      </div>
-
-                      <el-image
-                        :src="image.image_url"
-                        fit="cover"
-                        class="managed-image managed-image-thumb"
-                        :preview-src-list="editorImages.map((item) => item.image_url)"
-                        preview-teleported
-                      >
-                        <template #error>
-                          <div class="cover-fallback">IMG</div>
-                        </template>
-                      </el-image>
-
-                      <div class="image-thumb-badges">
-                        <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
-                        <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
-                      </div>
-
-                      <div class="image-thumb-toolbar">
-                        <button
-                          type="button"
-                          class="thumb-icon-button"
-                          :class="{ active: image.is_cover }"
-                          :title="image.is_cover ? '当前封面' : '设为封面'"
-                          @click.stop="setEditorCover(image.key)"
-                        >
-                          <el-icon><Star /></el-icon>
-                        </button>
-                        <button
-                          type="button"
-                          class="thumb-icon-button danger"
-                          title="删除图片"
-                          @click.stop="removeEditorImage(image.key)"
-                        >
-                          <el-icon><Delete /></el-icon>
-                        </button>
-                      </div>
-                    </article>
-                  </div>
-                </div>
-              </section>
-            </el-tab-pane>
-          </el-tabs>
-        </el-form>
-      </div>
-
-      <template #footer>
-        <div class="editor-footer">
-          <span class="muted editor-footer-tip">保存后将同步更新列表展示与封面预览。</span>
-          <div class="editor-footer-actions">
-            <el-button @click="editorVisible = false">取消</el-button>
-            <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
-          </div>
-        </div>
-      </template>
-    </el-dialog>
   </section>
 </template>
 

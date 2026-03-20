@@ -30,7 +30,12 @@ const menuItems = [
   { index: '/settings', label: '店铺设置', icon: Setting },
 ]
 
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/products/')) {
+    return '/products'
+  }
+  return route.path
+})
 
 const handleSelect = (path: string) => {
   void router.push(path)
