@@ -830,46 +830,41 @@ void loadCategories()
                 <div class="editor-section-header">
                   <div>
                     <h3>图片管理</h3>
-                    <p>上传需要展示的图片，再整理顺序与封面，列表和首页会优先使用封面图。</p>
+                    <p>上传图片后可直接拖拽排序，单击缩略图查看大图，第一张或封面图会优先用于列表展示。</p>
                   </div>
                 </div>
 
-                <div class="media-subsection">
-                  <div class="editor-media-header">
-                    <div>
-                      <h4>上传图片</h4>
-                      <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
-                    </div>
-                  </div>
-
-                  <el-upload
-                    ref="editorUploadRef"
-                    :key="imageUploadKey"
-                    drag
-                    multiple
-                    :auto-upload="false"
-                    :show-file-list="false"
-                    accept=".jpg,.jpeg,.png,.webp"
-                    :on-change="handleEditorFileChange"
-                  >
-                    <el-icon class="upload-icon"><Picture /></el-icon>
-                    <div class="el-upload__text">拖拽图片到这里，或点击一次选择多张图片</div>
-                  </el-upload>
-                </div>
-
-                <div v-if="editorImages.length" class="media-subsection image-manager">
+                <div class="media-subsection image-manager">
                   <div class="image-manager-header">
                     <div>
-                      <h4>图片顺序与封面</h4>
-                      <p>拖动卡片调整顺序，封面将用于列表和首页预览。</p>
+                      <h4>图片维护</h4>
+                      <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
                     </div>
+                    <span class="muted">{{ editorImages.length ? `当前 ${editorImages.length} 张` : '还没有图片' }}</span>
                   </div>
 
-                  <div class="image-grid">
+                  <div class="image-grid image-grid-editor">
+                    <el-upload
+                      ref="editorUploadRef"
+                      :key="imageUploadKey"
+                      class="image-upload-tile"
+                      multiple
+                      :auto-upload="false"
+                      :show-file-list="false"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      :on-change="handleEditorFileChange"
+                    >
+                      <div class="image-upload-tile-inner">
+                        <el-icon class="upload-icon"><Picture /></el-icon>
+                        <strong>添加图片</strong>
+                        <span>点击选择多张图片</span>
+                      </div>
+                    </el-upload>
+
                     <article
                       v-for="image in editorImages"
                       :key="image.key"
-                      class="image-card"
+                      class="image-thumb-card"
                       :class="{
                         cover: image.is_cover,
                         dragging: dragImageKey === image.key,
@@ -884,13 +879,13 @@ void loadCategories()
                     >
                       <div class="image-card-handle">
                         <el-icon><Sort /></el-icon>
-                        <span>{{ image.source === 'new' ? '待上传' : '已上传' }}</span>
+                        <span>#{{ image.sort_order + 1 }}</span>
                       </div>
 
                       <el-image
                         :src="image.image_url"
                         fit="cover"
-                        class="managed-image"
+                        class="managed-image managed-image-thumb"
                         :preview-src-list="editorImages.map((item) => item.image_url)"
                         preview-teleported
                       >
@@ -899,29 +894,29 @@ void loadCategories()
                         </template>
                       </el-image>
 
-                      <div class="image-card-body">
-                        <div class="image-card-status">
-                          <strong>{{ image.is_cover ? '当前封面' : `第 ${image.sort_order + 1} 张` }}</strong>
-                          <div class="image-card-tags">
-                            <el-tag v-if="image.is_cover" type="warning" effect="plain">封面</el-tag>
-                            <el-tag v-if="image.source === 'new'" effect="plain">待上传</el-tag>
-                          </div>
-                        </div>
+                      <div class="image-thumb-badges">
+                        <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
+                        <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
+                      </div>
 
-                        <div class="image-card-meta">
-                          <span class="image-file-name" :title="image.original_name">{{ image.original_name }}</span>
-                        </div>
-
-                        <div class="image-card-actions">
-                          <el-button plain size="small" :disabled="image.is_cover" @click="setEditorCover(image.key)">
-                            <el-icon><Star /></el-icon>
-                            {{ image.is_cover ? '已封面' : '设封面' }}
-                          </el-button>
-                          <el-button plain size="small" type="danger" @click="removeEditorImage(image.key)">
-                            <el-icon><Delete /></el-icon>
-                            删除
-                          </el-button>
-                        </div>
+                      <div class="image-thumb-toolbar">
+                        <button
+                          type="button"
+                          class="thumb-icon-button"
+                          :class="{ active: image.is_cover }"
+                          :title="image.is_cover ? '当前封面' : '设为封面'"
+                          @click.stop="setEditorCover(image.key)"
+                        >
+                          <el-icon><Star /></el-icon>
+                        </button>
+                        <button
+                          type="button"
+                          class="thumb-icon-button danger"
+                          title="删除图片"
+                          @click.stop="removeEditorImage(image.key)"
+                        >
+                          <el-icon><Delete /></el-icon>
+                        </button>
                       </div>
                     </article>
                   </div>
@@ -1264,26 +1259,70 @@ void loadCategories()
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.image-card {
+.image-grid-editor {
+  align-items: stretch;
+}
+
+.image-upload-tile,
+.image-thumb-card {
   position: relative;
-  border: 1px solid rgba(122, 92, 65, 0.12);
+  min-height: 0;
+}
+
+.image-upload-tile :deep(.el-upload) {
+  width: 100%;
+  height: 100%;
+  min-height: 148px;
+}
+
+.image-upload-tile-inner,
+.image-thumb-card {
   border-radius: 16px;
-  overflow: hidden;
+  border: 1px solid rgba(122, 92, 65, 0.12);
   background: #fffdfa;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.image-card.cover {
+.image-upload-tile-inner {
+  height: 100%;
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #7d5535;
+}
+
+.image-upload-tile-inner strong,
+.image-upload-tile-inner span {
+  display: block;
+}
+
+.image-upload-tile-inner strong {
+  font-size: 14px;
+}
+
+.image-upload-tile-inner span {
+  font-size: 12px;
+  color: #8a755d;
+}
+
+.image-thumb-card {
+  overflow: hidden;
+}
+
+.image-thumb-card.cover {
   border-color: rgba(169, 127, 78, 0.42);
   box-shadow: 0 12px 24px rgba(117, 86, 53, 0.08);
 }
 
-.image-card.dragging {
+.image-thumb-card.dragging {
   opacity: 0.72;
   transform: scale(0.98);
 }
 
-.image-card.drag-over {
+.image-thumb-card.drag-over {
   border-color: rgba(92, 61, 37, 0.34);
   box-shadow: 0 14px 28px rgba(90, 60, 47, 0.12);
 }
@@ -1311,61 +1350,91 @@ void loadCategories()
   display: block;
 }
 
-.image-card-body {
-  padding: 10px;
+.managed-image-thumb {
+  cursor: zoom-in;
 }
 
-.image-card-status strong,
-.image-card-meta span,
+.image-thumb-badges {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.thumb-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(50, 33, 22, 0.7);
+  color: #fffaf6;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.thumb-badge-cover {
+  background: rgba(193, 137, 78, 0.88);
+}
+
+.thumb-badge-new {
+  background: rgba(72, 118, 88, 0.84);
+}
+
+.image-thumb-toolbar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.thumb-icon-button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(50, 33, 22, 0.72);
+  color: #fffaf6;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.thumb-icon-button:hover {
+  transform: translateY(-1px);
+}
+
+.thumb-icon-button.active {
+  background: rgba(193, 137, 78, 0.92);
+}
+
+.thumb-icon-button.danger {
+  background: rgba(172, 86, 76, 0.88);
+}
+
 .image-summary-meta strong,
 .image-summary-meta span {
   display: block;
 }
 
-.image-card-status strong,
 .image-summary-meta strong {
   color: #3a291d;
 }
 
-.image-card-meta span,
 .image-summary-meta span {
   margin-top: 4px;
   color: #8a755d;
   font-size: 12px;
-}
-
-.image-card-status {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.image-card-meta {
-  min-width: 0;
-}
-
-.image-file-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.image-card-tags {
-  gap: 6px;
-  justify-content: flex-start;
-}
-
-.image-card-actions {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.image-card-actions :deep(.el-button) {
-  margin: 0;
-  min-width: 0;
-  border-radius: 10px;
 }
 
 .cover-thumb {
