@@ -89,20 +89,23 @@
 .profile-row {
   margin-top: 24rpx;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 20rpx;
 }
 
 .avatar-column {
-  width: 132rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
   flex-shrink: 0;
+  width: 104rpx;
+  height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .avatar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 104rpx;
   height: 104rpx;
   margin: 0;
@@ -149,13 +152,15 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  padding-top: 6rpx;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .nickname-input {
+  display: block;
   width: 100%;
-  min-height: 78rpx;
+  height: 84rpx;
+  line-height: 84rpx;
   padding: 0 22rpx;
   border-radius: 14rpx;
   background: #f8f2ec;
@@ -218,12 +223,12 @@
 
 @media (max-width: 520px) {
   .profile-row {
-    align-items: flex-start;
     gap: 18rpx;
   }
 
   .avatar-column {
-    width: 116rpx;
+    width: 92rpx;
+    height: 92rpx;
   }
 
   .avatar-button,
