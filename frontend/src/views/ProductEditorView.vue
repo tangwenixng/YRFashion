@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Delete, InfoFilled, Picture, Plus, Sort, Star } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Picture, Plus, Sort, Star } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
@@ -43,14 +43,13 @@ const router = useRouter()
 const DESCRIPTION_MAX_LENGTH = 500
 const TAG_MAX_COUNT = 8
 const TAG_MAX_LENGTH = 16
-const SUGGESTED_TAGS = ['通勤', '春季', '夏季', '秋冬', '日常', '约会']
+const SUGGESTED_TAGS = ['春季', 'OODT', '简约', '休闲', '夏季', '穿搭', '日常']
 
 const saving = ref(false)
 const loading = ref(false)
 const creatingCategory = ref(false)
 const categories = ref<CategoryItem[]>([])
 const editorUploadRef = ref<{ clearFiles: () => void } | null>(null)
-const editorActiveTab = ref<'basic' | 'media'>('basic')
 const editorImages = ref<EditorImageItem[]>([])
 const removedImageIds = ref<number[]>([])
 const imageUploadKey = ref(0)
@@ -84,28 +83,54 @@ const statusLabelMap: Record<ProductFormState['status'], string> = {
   published: '已发布',
   archived: '已归档',
 }
+const statusOptions = [
+  {
+    value: 'draft' as const,
+    label: '草稿',
+    description: '仅自己可见，不会出现在商品列表',
+  },
+  {
+    value: 'published' as const,
+    label: '已发布',
+    description: '所有人可见，展示在商品列表中',
+  },
+  {
+    value: 'archived' as const,
+    label: '已归档',
+    description: '从商品列表隐藏，但保留后台记录',
+  },
+]
 const selectedCategoryName = computed(
   () => categories.value.find((category) => category.id === form.category_id)?.name ?? '未选择分类',
 )
 const currentStatusLabel = computed(() => statusLabelMap[form.status])
 const remainingTagCount = computed(() => Math.max(TAG_MAX_COUNT - form.tags.length, 0))
+const footerStatusHint = computed(() => {
+  if (form.status === 'published') {
+    return '商品将以已发布状态保存。'
+  }
+  if (form.status === 'archived') {
+    return '商品将以归档状态保存。'
+  }
+  return '商品将保存为草稿状态。'
+})
 const editorProgress = computed(() => [
   {
     key: 'name',
     label: '商品名称',
-    value: form.name.trim() ? '已填写' : '待填写',
+    value: form.name.trim() ? '已填写' : '未填写',
     done: Boolean(form.name.trim()),
   },
   {
     key: 'category',
-    label: '分类归属',
-    value: form.category_id ? selectedCategoryName.value : '待选择',
+    label: '商品分类',
+    value: form.category_id ? selectedCategoryName.value : '未选择',
     done: Boolean(form.category_id),
   },
   {
     key: 'images',
     label: '图片素材',
-    value: editorImages.value.length ? `${editorImages.value.length} 张` : '暂未添加',
+    value: `${editorImages.value.length} 张`,
     done: Boolean(editorImages.value.length),
   },
 ])
@@ -126,7 +151,6 @@ const resetEditorImages = () => {
 
 const resetForm = () => {
   allowLeave.value = false
-  editorActiveTab.value = 'basic'
   form.name = ''
   form.category_id = null
   form.description = ''
@@ -323,7 +347,6 @@ const handleEditorFileChange = (uploadFile: { raw?: File }) => {
     object_url: objectUrl,
   })
   normalizeEditorImages(nextImages)
-  editorActiveTab.value = 'media'
 }
 
 const setEditorCover = (imageKey: string) => {
@@ -390,12 +413,10 @@ const saveProduct = async () => {
   const payload = buildPayload()
   if (!payload.name) {
     ElMessage.warning('请填写商品名称（必填）')
-    editorActiveTab.value = 'basic'
     return
   }
   if (!payload.category_id) {
     ElMessage.warning('请选择分类（必填）')
-    editorActiveTab.value = 'basic'
     return
   }
 
@@ -449,6 +470,15 @@ const saveProduct = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const saveProductWithStatus = async (status: ProductFormState['status']) => {
+  form.status = status
+  await saveProduct()
+}
+
+const showPreviewHint = () => {
+  ElMessage.info('预览功能暂未开放')
 }
 
 const goBack = () => {
@@ -513,193 +543,216 @@ watch(
 
 <template>
   <section class="product-editor-page" v-loading="loading">
-    <div class="editor-page-header">
-      <div class="editor-page-heading">
+    <header class="editor-shell editor-topbar">
+      <div class="editor-topbar-main">
         <button class="back-button" type="button" @click="goBack">
           <el-icon><ArrowLeft /></el-icon>
           返回列表
         </button>
-        <h1>{{ pageTitle }}</h1>
-      </div>
-
-      <div class="editor-page-actions">
-        <div class="header-chip-row">
-          <span class="header-chip">{{ currentStatusLabel }}</span>
-          <span class="header-chip subtle">{{ editorImages.length ? `${editorImages.length} 张图片` : '未添加图片' }}</span>
-          <span v-if="hasPendingChanges" class="unsaved-indicator">未保存修改</span>
-        </div>
-
-        <div class="header-action-row">
-          <el-button @click="goBack">取消</el-button>
-          <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
+        <div class="editor-title-group">
+          <h1>{{ pageTitle }}</h1>
+          <div class="editor-title-meta">
+            <span class="status-chip">{{ currentStatusLabel }}</span>
+            <span class="editor-title-note">{{ hasPendingChanges ? '当前有未保存修改' : '表单已同步最新内容' }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="editor-workspace">
-      <div class="editor-main">
-        <div class="editor-canvas">
-          <el-form label-position="top">
-            <el-tabs v-model="editorActiveTab" class="editor-tabs">
-              <el-tab-pane name="basic" label="基本信息">
-                <section class="editor-section">
-                  <div class="basic-form-stack">
-                    <el-form-item required class="field-block field-block-hero">
-                      <template #label>
-                        商品名称
-                        <span class="required-mark">*</span>
-                      </template>
-                      <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-                    </el-form-item>
+      <div class="editor-topbar-actions">
+        <el-button class="header-action-button" @click="showPreviewHint">预览</el-button>
+        <el-button class="header-action-button" :loading="saving" @click="saveProductWithStatus('draft')">存为草稿</el-button>
+        <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
+      </div>
+    </header>
 
-                    <el-form-item label="描述" class="field-block">
-                      <el-input
-                        v-model="form.description"
-                        type="textarea"
-                        :rows="5"
-                        :maxlength="DESCRIPTION_MAX_LENGTH"
-                        placeholder="用于详情页展示穿搭亮点、面料与场景。"
-                      />
-                      <div class="field-counter">{{ form.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}</div>
-                    </el-form-item>
+    <div class="editor-shell editor-layout">
+      <main class="editor-main">
+        <section class="editor-card">
+          <div class="card-header">
+            <h2>基本信息</h2>
+          </div>
 
-                    <div class="basic-tips-grid">
-                      <article class="info-tile">
-                        <span class="info-tile-label">详情展示</span>
-                        <strong>描述建议控制在 2 到 4 句</strong>
-                        <p>优先写版型、面料、季节和适用场景，避免把标签内容重复写进描述。</p>
-                      </article>
-                      <article class="info-tile">
-                        <span class="info-tile-label">封面逻辑</span>
-                        <strong>首张或手动设置的封面优先用于列表</strong>
-                        <p>图片维护区支持拖拽排序，保存后会同步更新封面预览与后台列表顺序。</p>
-                      </article>
-                    </div>
-                  </div>
-                </section>
-              </el-tab-pane>
+          <el-form label-position="top" class="editor-form">
+            <el-form-item required class="editor-form-item">
+              <template #label>
+                商品名称
+                <span class="required-mark">*</span>
+              </template>
+              <el-input
+                v-model="form.name"
+                placeholder="请输入商品名称，例如：永远喜欢这种随性慵懒的穿搭～"
+              />
+            </el-form-item>
 
-              <el-tab-pane name="media" label="图片维护">
-                <section class="editor-section editor-media-panel">
-                  <div class="media-layout">
-                    <section class="media-panel media-upload-panel">
-                      <div class="media-panel-heading">
-                        <h4>上传图片</h4>
-                        <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
-                      </div>
-
-                      <el-upload
-                        ref="editorUploadRef"
-                        :key="imageUploadKey"
-                        class="image-upload-tile"
-                        multiple
-                        :auto-upload="false"
-                        :show-file-list="false"
-                        accept=".jpg,.jpeg,.png,.webp"
-                        :on-change="handleEditorFileChange"
-                      >
-                        <div class="image-upload-tile-inner">
-                          <el-icon class="upload-icon"><Picture /></el-icon>
-                          <strong>添加图片</strong>
-                          <span>点击后可连续选择多张图片</span>
-                        </div>
-                      </el-upload>
-                    </section>
-
-                    <section class="media-panel media-library-panel">
-                      <div class="image-manager-header">
-                        <div>
-                          <h4>图片顺序与封面</h4>
-                          <p>
-                            {{
-                              editorImages.length
-                                ? '拖动卡片调整顺序，单击星标设置封面。'
-                                : '上传图片后可在这里完成顺序整理和封面设置。'
-                            }}
-                          </p>
-                        </div>
-                        <span class="muted">{{ editorImages.length ? `当前 ${editorImages.length} 张` : '等待上传' }}</span>
-                      </div>
-
-                      <div v-if="editorImages.length" class="image-grid image-grid-editor">
-                        <article
-                          v-for="image in editorImages"
-                          :key="image.key"
-                          class="image-thumb-card"
-                          :class="{
-                            cover: image.is_cover,
-                            dragging: dragImageKey === image.key,
-                            'drag-over': dragOverImageKey === image.key,
-                          }"
-                          draggable="true"
-                          @dragstart="handleImageDragStart(image.key)"
-                          @dragenter.prevent="handleImageDragEnter(image.key)"
-                          @dragover.prevent
-                          @dragend="handleImageDragEnd"
-                          @drop.prevent="handleImageDrop(image.key)"
-                        >
-                          <div class="image-card-handle">
-                            <el-icon><Sort /></el-icon>
-                            <span>#{{ image.sort_order + 1 }}</span>
-                          </div>
-
-                          <el-image
-                            :src="image.image_url"
-                            fit="cover"
-                            class="managed-image managed-image-thumb"
-                            :preview-src-list="editorImages.map((item) => item.image_url)"
-                            preview-teleported
-                          >
-                            <template #error>
-                              <div class="cover-fallback">IMG</div>
-                            </template>
-                          </el-image>
-
-                          <div class="image-thumb-badges">
-                            <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
-                            <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
-                          </div>
-
-                          <div class="image-thumb-toolbar">
-                            <button
-                              type="button"
-                              class="thumb-icon-button"
-                              :class="{ active: image.is_cover }"
-                              :title="image.is_cover ? '当前封面' : '设为封面'"
-                              @click.stop="setEditorCover(image.key)"
-                            >
-                              <el-icon><Star /></el-icon>
-                            </button>
-                            <button
-                              type="button"
-                              class="thumb-icon-button danger"
-                              title="删除图片"
-                              @click.stop="removeEditorImage(image.key)"
-                            >
-                              <el-icon><Delete /></el-icon>
-                            </button>
-                          </div>
-                        </article>
-                      </div>
-
-                      <div v-else class="image-empty-state">
-                        <strong>还没有图片</strong>
-                        <p>先在左侧上传素材，随后即可拖拽排序并选择封面图。</p>
-                      </div>
-                    </section>
-                  </div>
-                </section>
-              </el-tab-pane>
-            </el-tabs>
+            <el-form-item label="商品描述" class="editor-form-item">
+              <el-input
+                v-model="form.description"
+                type="textarea"
+                :rows="6"
+                :maxlength="DESCRIPTION_MAX_LENGTH"
+                placeholder="详细描述商品特点、风格、适用场景等..."
+              />
+              <div class="field-meta-row">
+                <span>支持换行，推荐使用话题标签增加曝光度</span>
+                <span>{{ form.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}</span>
+              </div>
+            </el-form-item>
           </el-form>
-        </div>
-      </div>
+        </section>
+
+        <section class="editor-card">
+          <div class="card-header card-header-split">
+            <h2>
+              商品图片
+              <span class="required-mark">*</span>
+            </h2>
+            <span class="section-count">{{ editorImages.length }} 张图片</span>
+          </div>
+
+          <div class="image-panel">
+            <div class="image-upload-row">
+              <el-upload
+                ref="editorUploadRef"
+                :key="imageUploadKey"
+                class="image-upload-tile"
+                multiple
+                :auto-upload="false"
+                :show-file-list="false"
+                accept=".jpg,.jpeg,.png,.webp"
+                :on-change="handleEditorFileChange"
+              >
+                <div class="image-upload-tile-inner">
+                  <div class="upload-icon-wrap">
+                    <el-icon class="upload-icon"><Picture /></el-icon>
+                  </div>
+                  <strong>上传图片</strong>
+                  <span>{{ editorImages.length ? '继续补充商品素材' : '建议先上传封面图' }}</span>
+                </div>
+              </el-upload>
+
+              <div v-if="editorImages.length" class="image-grid image-grid-editor">
+                <article
+                  v-for="image in editorImages"
+                  :key="image.key"
+                  class="image-thumb-card"
+                  :class="{
+                    cover: image.is_cover,
+                    dragging: dragImageKey === image.key,
+                    'drag-over': dragOverImageKey === image.key,
+                  }"
+                  draggable="true"
+                  @dragstart="handleImageDragStart(image.key)"
+                  @dragenter.prevent="handleImageDragEnter(image.key)"
+                  @dragover.prevent
+                  @dragend="handleImageDragEnd"
+                  @drop.prevent="handleImageDrop(image.key)"
+                >
+                  <div class="image-card-handle">
+                    <el-icon><Sort /></el-icon>
+                    <span>#{{ image.sort_order + 1 }}</span>
+                  </div>
+
+                  <el-image
+                    :src="image.image_url"
+                    fit="cover"
+                    class="managed-image managed-image-thumb"
+                    :preview-src-list="editorImages.map((item) => item.image_url)"
+                    preview-teleported
+                  >
+                    <template #error>
+                      <div class="cover-fallback">IMG</div>
+                    </template>
+                  </el-image>
+
+                  <div class="image-thumb-badges">
+                    <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
+                    <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
+                  </div>
+
+                  <div class="image-thumb-toolbar">
+                    <button
+                      type="button"
+                      class="thumb-icon-button"
+                      :class="{ active: image.is_cover }"
+                      :title="image.is_cover ? '当前封面' : '设为封面'"
+                      @click.stop="setEditorCover(image.key)"
+                    >
+                      <el-icon><Star /></el-icon>
+                    </button>
+                    <button
+                      type="button"
+                      class="thumb-icon-button danger"
+                      title="删除图片"
+                      @click.stop="removeEditorImage(image.key)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div v-if="!editorImages.length" class="image-empty-state">
+              <strong>还没有上传图片</strong>
+              <p>建议上传 2-9 张高清图片，第一张将作为封面。</p>
+            </div>
+
+            <div class="image-tip-box">
+              <span class="image-tip-title">图片上传提示</span>
+              <ul class="image-tip-list">
+                <li>建议上传 2-9 张高清图片，第一张将作为封面</li>
+                <li>支持 JPG、PNG、WEBP 格式，单张图片不超过 5MB</li>
+                <li>建议图片尺寸为 800 x 800 像素以上</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="editor-card">
+          <div class="card-header">
+            <h2>标签与关键词</h2>
+          </div>
+
+          <div class="tag-editor">
+            <label class="field-label">商品标签</label>
+            <div class="tag-input-row">
+              <el-input
+                v-model="tagInput"
+                placeholder="输入标签后按回车添加"
+                @keyup.enter.prevent="appendTagFromInput"
+                @blur="appendTagFromInput"
+              />
+              <el-button type="primary" class="tag-add-button" @click="appendTagFromInput">添加</el-button>
+            </div>
+
+            <div v-if="form.tags.length" class="tag-chip-list">
+              <el-tag v-for="tag in form.tags" :key="tag" closable effect="plain" @close="removeTag(tag)">
+                {{ tag }}
+              </el-tag>
+            </div>
+
+            <div class="tag-suggestions">
+              <span class="tag-suggestions-label">推荐标签：</span>
+              <button
+                v-for="tag in SUGGESTED_TAGS"
+                :key="tag"
+                type="button"
+                class="suggestion-chip"
+                @click="addSuggestedTag(tag)"
+              >
+                + {{ tag }}
+              </button>
+            </div>
+
+            <span class="tag-helper">还可添加 {{ remainingTagCount }} 个标签</span>
+          </div>
+        </section>
+      </main>
 
       <aside class="editor-sidebar">
-        <section class="sidebar-panel">
-          <div class="sidebar-panel-header">
-            <span class="sidebar-kicker">编辑进度</span>
-            <h3>保存前检查</h3>
+        <section class="editor-card sidebar-card">
+          <div class="card-header">
+            <h2>保存前检查</h2>
           </div>
 
           <ul class="progress-list">
@@ -713,34 +766,30 @@ watch(
           </ul>
         </section>
 
-        <section class="sidebar-panel">
-          <div class="sidebar-panel-header">
-            <span class="sidebar-kicker">发布设置</span>
-            <h3>控制展示归属</h3>
+        <section class="editor-card sidebar-card">
+          <div class="card-header">
+            <h2>商品设置</h2>
           </div>
 
           <el-form label-position="top" class="sidebar-form">
-            <el-form-item required>
+            <el-form-item required class="sidebar-form-item">
               <template #label>
                 分类
                 <span class="required-mark">*</span>
               </template>
               <div class="category-field">
-                <div class="category-select-row">
-                  <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                    <el-option
-                      v-for="category in categories"
-                      :key="category.id"
-                      :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                      :value="category.id"
-                    />
-                  </el-select>
-                  <el-popover
-                    v-model:visible="categoryCreatorVisible"
-                    placement="bottom-end"
-                    :width="320"
-                    trigger="manual"
-                  >
+                <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                  <el-option
+                    v-for="category in categories"
+                    :key="category.id"
+                    :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                    :value="category.id"
+                  />
+                </el-select>
+
+                <div class="category-actions">
+                  <span class="field-tip">没有合适的分类时，可直接创建。</span>
+                  <el-popover v-model:visible="categoryCreatorVisible" placement="bottom-end" :width="320" trigger="manual">
                     <div class="category-popover">
                       <div class="category-popover-header">
                         <strong>新建分类</strong>
@@ -759,417 +808,189 @@ watch(
                       </div>
                     </div>
                     <template #reference>
-                      <el-button plain class="category-add-button" @click="toggleCategoryCreator">
+                      <button type="button" class="category-inline-button" @click="toggleCategoryCreator">
                         <el-icon><Plus /></el-icon>
-                        新建
-                      </el-button>
+                        新建分类
+                      </button>
                     </template>
                   </el-popover>
                 </div>
-                <span class="field-tip">没有合适的分类时，可直接在这里快速创建。</span>
               </div>
             </el-form-item>
 
-            <el-form-item label="状态">
-              <el-select v-model="form.status">
-                <el-option label="草稿" value="draft" />
-                <el-option label="已发布" value="published" />
-                <el-option label="已归档" value="archived" />
-              </el-select>
-            </el-form-item>
+            <div class="sidebar-field-block">
+              <label class="field-label">发布状态</label>
+              <div class="status-option-list">
+                <button
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  type="button"
+                  class="status-option"
+                  :class="{ active: form.status === option.value }"
+                  @click="form.status = option.value"
+                >
+                  <span class="status-radio" :class="{ active: form.status === option.value }" />
+                  <div class="status-option-copy">
+                    <strong>{{ option.label }}</strong>
+                    <span>{{ option.description }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
 
-            <el-form-item>
-              <template #label>
-                排序值
-                <el-tooltip content="值越小越靠前，支持直接输入或点击步进" placement="top">
-                  <el-icon class="hint-icon"><InfoFilled /></el-icon>
-                </el-tooltip>
-              </template>
+            <el-form-item label="排序值" class="sidebar-form-item">
               <div class="sort-field">
+                <span class="field-tip">数值越大越靠前</span>
                 <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-                <span class="field-tip">值越小越靠前显示</span>
               </div>
             </el-form-item>
           </el-form>
         </section>
 
-        <section class="sidebar-panel">
-          <div class="sidebar-panel-header">
-            <span class="sidebar-kicker">标签维护</span>
-            <h3>补充检索关键词</h3>
-            <p>最多 {{ TAG_MAX_COUNT }} 个标签，建议保留季节、风格与场景信息。</p>
+        <section class="editor-card sidebar-card image-guide-card">
+          <div class="guide-icon">
+            <el-icon><Picture /></el-icon>
           </div>
-
-          <div class="tag-editor">
-            <div v-if="form.tags.length" class="tag-chip-list">
-              <el-tag v-for="tag in form.tags" :key="tag" closable size="small" effect="plain" @close="removeTag(tag)">
-                {{ tag }}
-              </el-tag>
-            </div>
-            <el-input
-              v-model="tagInput"
-              placeholder="输入标签后回车，如：通勤"
-              @keyup.enter.prevent="appendTagFromInput"
-              @blur="appendTagFromInput"
-            />
-            <div class="tag-suggestions">
-              <span class="tag-suggestions-label">推荐</span>
-              <button
-                v-for="tag in SUGGESTED_TAGS"
-                :key="tag"
-                type="button"
-                class="suggestion-chip"
-                @click="addSuggestedTag(tag)"
-              >
-                {{ tag }}
-              </button>
-            </div>
-            <span class="tag-helper">还可添加 {{ remainingTagCount }} 个标签</span>
+          <div class="guide-copy">
+            <h3>图片优化建议</h3>
+            <p>上传清晰的商品图片可以提升转化率，并让封面展示更稳定。</p>
+            <el-button class="guide-action" @click="showPreviewHint">了解更多技巧</el-button>
           </div>
         </section>
       </aside>
     </div>
 
-    <div class="editor-footer">
+    <footer class="editor-shell editor-footer">
       <div class="editor-footer-copy">
-        <strong>保存后会同步更新商品列表</strong>
-        <p class="editor-footer-tip">封面图、排序值和发布状态会立即影响后台和前台展示。</p>
+        <span>保存后，{{ footerStatusHint }}</span>
       </div>
       <div class="editor-footer-actions">
         <el-button @click="goBack">取消</el-button>
         <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
       </div>
-    </div>
+    </footer>
   </section>
 </template>
 
 <style scoped>
 .product-editor-page {
+  --editor-bg: rgba(247, 244, 238, 0.94);
+  --editor-card-bg: rgba(255, 255, 255, 0.92);
+  --editor-border: rgba(115, 95, 67, 0.12);
+  --editor-border-strong: rgba(177, 142, 95, 0.24);
+  --editor-text: #2f271d;
+  --editor-muted: #8b7d6d;
+  --editor-primary: #a48a5d;
+  --editor-primary-deep: #8f764d;
+  --editor-primary-soft: rgba(164, 138, 93, 0.12);
+  --editor-tip-bg: rgba(225, 237, 255, 0.72);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 18px;
+  gap: 20px;
+  padding-bottom: 24px;
 }
 
-.editor-page-header,
-.editor-workspace,
+.editor-shell,
 .editor-footer {
-  width: min(1240px, 100%);
+  width: min(1220px, 100%);
   margin: 0 auto;
 }
 
-.editor-page-header {
+.editor-topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 6px 4px 0;
+  padding: 10px 0 4px;
 }
 
-.editor-page-heading {
+.editor-topbar-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
 }
 
-.editor-kicker,
-.section-kicker,
-.sidebar-kicker {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+.editor-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.editor-kicker {
-  margin-top: 14px;
-  padding: 6px 10px;
-  background: rgba(255, 250, 244, 0.9);
-  color: #9a7b61;
-}
-
-.editor-page-heading h1 {
-  margin: 14px 0 8px;
+.editor-title-group h1 {
+  margin: 0;
   font-family: 'Fraunces', serif;
-  font-size: clamp(32px, 4vw, 40px);
-  color: #2f241a;
+  font-size: clamp(28px, 3vw, 36px);
+  color: var(--editor-text);
   letter-spacing: -0.03em;
 }
 
-.editor-page-heading p {
-  margin: 0;
-  max-width: 700px;
-  color: #7c6855;
-  line-height: 1.75;
+.editor-title-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .back-button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0 2px;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: #7d5535;
+  color: #6f6253;
   font-weight: 600;
   cursor: pointer;
 }
 
-.editor-page-actions {
-  display: grid;
-  gap: 12px;
-  min-width: 320px;
-  padding: 16px;
-  border: 1px solid rgba(122, 92, 65, 0.1);
-  border-radius: 24px;
-  background: rgba(255, 251, 246, 0.88);
-  box-shadow: 0 20px 44px rgba(99, 74, 53, 0.08);
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--editor-primary-soft);
+  color: var(--editor-primary-deep);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.header-chip-row,
-.header-action-row,
+.editor-title-note {
+  color: var(--editor-muted);
+  font-size: 13px;
+}
+
+.editor-topbar-actions,
 .editor-footer,
 .editor-footer-actions,
-.image-manager-header {
+.tag-input-row,
+.category-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.header-chip-row {
+.editor-topbar-actions {
+  justify-content: flex-end;
   flex-wrap: wrap;
 }
 
-.header-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: rgba(139, 94, 60, 0.12);
-  color: #6b4526;
-  font-size: 12px;
-  font-weight: 700;
+.header-action-button {
+  border-radius: 12px;
 }
 
-.header-chip.subtle {
-  background: rgba(108, 89, 68, 0.08);
-  color: #7a6551;
-}
-
-.header-action-row {
-  justify-content: flex-end;
-}
-
-.unsaved-indicator {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: rgba(172, 86, 76, 0.12);
-  color: #9f473d;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.editor-workspace {
+.editor-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.68fr) minmax(320px, 0.82fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 320px);
   gap: 20px;
   align-items: start;
 }
 
-.editor-main,
-.editor-sidebar {
-  min-width: 0;
-}
-
-.editor-canvas,
-.sidebar-panel,
-.editor-footer {
-  border: 1px solid rgba(122, 92, 65, 0.09);
-  background: rgba(255, 251, 246, 0.88);
-  box-shadow: 0 22px 52px rgba(99, 74, 53, 0.07);
-  backdrop-filter: blur(16px);
-}
-
-.editor-canvas {
-  padding: 24px;
-  border-radius: 30px;
-}
-
-.editor-tabs :deep(.el-tabs__header) {
-  margin: 0 0 22px;
-}
-
-.editor-tabs :deep(.el-tabs__nav-wrap::after) {
-  display: none;
-}
-
-.editor-tabs :deep(.el-tabs__nav-wrap) {
-  padding: 6px;
-  border-radius: 18px;
-  background: rgba(245, 237, 228, 0.9);
-}
-
-.editor-tabs :deep(.el-tabs__item) {
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 14px;
-  color: #876d56;
-  font-weight: 600;
-}
-
-.editor-tabs :deep(.el-tabs__active-bar) {
-  display: none;
-}
-
-.editor-tabs :deep(.el-tabs__item.is-active) {
-  color: #332419;
-  background: #fffdfa;
-  box-shadow: 0 10px 22px rgba(99, 74, 53, 0.08);
-}
-
-.editor-tabs :deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
-.editor-tabs :deep(.el-form-item__label),
-.sidebar-form :deep(.el-form-item__label) {
-  margin-bottom: 8px;
-  color: #4b3625;
-  font-weight: 600;
-}
-
-.editor-tabs :deep(.el-input__wrapper),
-.editor-tabs :deep(.el-textarea__inner),
-.editor-tabs :deep(.el-select__wrapper),
-.sidebar-form :deep(.el-input__wrapper),
-.sidebar-form :deep(.el-select__wrapper),
-.sidebar-form :deep(.el-input-number) {
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgba(122, 92, 65, 0.1);
-  background: rgba(255, 255, 255, 0.96);
-}
-
-.editor-tabs :deep(.el-input__wrapper.is-focus),
-.editor-tabs :deep(.el-textarea__inner:focus),
-.editor-tabs :deep(.el-select__wrapper.is-focused),
-.sidebar-form :deep(.el-input__wrapper.is-focus),
-.sidebar-form :deep(.el-select__wrapper.is-focused),
-.sidebar-form :deep(.el-input-number:focus-within) {
-  box-shadow:
-    inset 0 0 0 1px rgba(139, 94, 60, 0.5),
-    0 0 0 4px rgba(139, 94, 60, 0.08);
-}
-
-.editor-section {
-  padding: 28px;
-  border-radius: 26px;
-  border: 1px solid rgba(122, 92, 65, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 246, 0.94));
-}
-
-.editor-section-header {
+.editor-main {
   display: grid;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.editor-section-header-split {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-}
-
-.section-kicker,
-.sidebar-kicker {
-  margin-bottom: 8px;
-  padding: 5px 10px;
-  background: rgba(193, 137, 78, 0.12);
-  color: #9f6841;
-}
-
-.editor-section-header h3,
-.sidebar-panel-header h3 {
-  margin: 0;
-  font-family: 'Fraunces', serif;
-  color: #332419;
-  letter-spacing: -0.02em;
-}
-
-.editor-section-header h3 {
-  font-size: 28px;
-}
-
-.editor-section-header p,
-.sidebar-panel-header p {
-  margin: 8px 0 0;
-  color: #86725f;
-  line-height: 1.7;
-}
-
-.section-meta {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(244, 233, 220, 0.86);
-  color: #6f5842;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.basic-form-stack {
-  display: grid;
-  gap: 18px;
-}
-
-.field-block {
-  padding: 18px 18px 16px;
-  border-radius: 22px;
-  border: 1px solid rgba(122, 92, 65, 0.08);
-  background: rgba(255, 252, 248, 0.9);
-}
-
-.field-block-hero {
-  padding: 20px;
-  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 247, 237, 0.94));
-}
-
-.basic-tips-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-}
-
-.info-tile {
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid rgba(122, 92, 65, 0.08);
-  background: rgba(249, 241, 231, 0.7);
-}
-
-.info-tile-label {
-  display: inline-flex;
-  margin-bottom: 8px;
-  color: #9d6f47;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.info-tile strong {
-  display: block;
-  color: #38291d;
-  font-size: 15px;
-}
-
-.info-tile p {
-  margin: 8px 0 0;
-  color: #7b6651;
-  font-size: 13px;
-  line-height: 1.65;
+  min-width: 0;
 }
 
 .editor-sidebar {
@@ -1179,29 +1000,95 @@ watch(
   gap: 16px;
 }
 
-.sidebar-panel {
-  padding: 20px;
-  border-radius: 24px;
+.editor-card,
+.editor-footer {
+  border: 1px solid var(--editor-border);
+  border-radius: 18px;
+  background: var(--editor-card-bg);
+  box-shadow: 0 12px 32px rgba(83, 67, 44, 0.06);
+  backdrop-filter: blur(18px);
 }
 
-.sidebar-panel-header {
-  margin-bottom: 16px;
+.editor-card {
+  padding: 0;
+  overflow: hidden;
 }
 
-.sidebar-panel-header h3 {
-  font-size: 24px;
+.card-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(115, 95, 67, 0.08);
 }
 
-.sidebar-form {
+.card-header h2 {
+  margin: 0;
+  color: var(--editor-text);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.card-header-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-count {
+  color: var(--editor-muted);
+  font-size: 12px;
+}
+
+.editor-form,
+.sidebar-form,
+.tag-editor,
+.image-panel {
+  padding: 18px 20px 20px;
+}
+
+.editor-form {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+}
+
+.editor-form :deep(.el-form-item),
+.sidebar-form :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.editor-form :deep(.el-form-item__label),
+.sidebar-form :deep(.el-form-item__label),
+.field-label {
+  margin-bottom: 8px;
+  color: #5e4f3d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.editor-form :deep(.el-input__wrapper),
+.editor-form :deep(.el-textarea__inner),
+.sidebar-form :deep(.el-select__wrapper),
+.sidebar-form :deep(.el-input-number),
+.tag-editor :deep(.el-input__wrapper) {
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(115, 95, 67, 0.12);
+  background: #fff;
+}
+
+.editor-form :deep(.el-input__wrapper.is-focus),
+.editor-form :deep(.el-textarea__inner:focus),
+.sidebar-form :deep(.el-select__wrapper.is-focused),
+.sidebar-form :deep(.el-input-number:focus-within),
+.tag-editor :deep(.el-input__wrapper.is-focus) {
+  box-shadow:
+    inset 0 0 0 1px rgba(164, 138, 93, 0.56),
+    0 0 0 4px rgba(164, 138, 93, 0.1);
 }
 
 .progress-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin: 0;
-  padding: 0;
+  padding: 18px 20px 20px;
   list-style: none;
 }
 
@@ -1209,64 +1096,59 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(250, 243, 235, 0.84);
-  border: 1px solid rgba(122, 92, 65, 0.08);
+  padding: 0;
 }
 
 .progress-item.done {
-  background: rgba(240, 248, 242, 0.94);
+  color: var(--editor-text);
 }
 
 .progress-dot {
-  width: 11px;
-  height: 11px;
+  width: 7px;
+  height: 7px;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: rgba(165, 109, 61, 0.28);
+  background: rgba(141, 125, 104, 0.42);
 }
 
 .progress-item.done .progress-dot {
-  background: #4e8a61;
-  box-shadow: 0 0 0 6px rgba(78, 138, 97, 0.12);
+  background: var(--editor-primary);
 }
 
 .progress-copy {
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .progress-copy strong {
-  color: #37291d;
-  font-size: 14px;
+  color: #433626;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .progress-copy span {
-  color: #7e6a57;
-  font-size: 13px;
+  color: var(--editor-muted);
+  font-size: 12px;
 }
 
+.field-meta-row,
 .category-field,
-.category-popover {
+.category-popover,
+.sort-field,
+.guide-copy {
   display: grid;
   gap: 10px;
 }
 
-.category-select-row {
-  display: grid;
+.field-meta-row {
+  margin-top: 8px;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
+  color: var(--editor-muted);
+  font-size: 12px;
 }
 
-.category-select-row :deep(.el-select) {
+.category-field :deep(.el-select) {
   width: 100%;
-}
-
-.category-add-button {
-  height: 40px;
-  padding: 0 14px;
 }
 
 .category-popover-header {
@@ -1275,12 +1157,12 @@ watch(
 }
 
 .category-popover-header strong {
-  color: #34261b;
+  color: var(--editor-text);
   font-size: 14px;
 }
 
 .category-popover-header span {
-  color: #8a755d;
+  color: var(--editor-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -1291,47 +1173,106 @@ watch(
   gap: 10px;
 }
 
-.sort-field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+.category-inline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--editor-primary-deep);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.field-tip,
-.field-counter,
-.tag-helper,
-.muted {
-  color: #907e6a;
+.sidebar-form {
+  display: grid;
+  gap: 16px;
+}
+
+.sidebar-field-block {
+  display: grid;
+  gap: 10px;
+}
+
+.status-option-list {
+  display: grid;
+  gap: 10px;
+}
+
+.status-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(115, 95, 67, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.status-option:hover {
+  transform: translateY(-1px);
+}
+
+.status-option.active {
+  border-color: var(--editor-border-strong);
+  background: rgba(252, 249, 241, 0.96);
+}
+
+.status-radio {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  border: 1px solid rgba(141, 125, 104, 0.5);
+  border-radius: 50%;
+}
+
+.status-radio.active::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--editor-primary);
+}
+
+.status-option-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.status-option-copy strong {
+  color: var(--editor-text);
+  font-size: 13px;
+}
+
+.status-option-copy span {
+  color: var(--editor-muted);
   font-size: 12px;
   line-height: 1.6;
 }
 
-.field-counter {
-  margin-top: 8px;
-  text-align: right;
-}
-
+.field-tip,
 .tag-helper {
-  display: inline-flex;
+  color: var(--editor-muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .required-mark {
   margin-left: 4px;
-  color: #ad4d3f;
+  color: #d36a51;
   font-weight: 700;
-}
-
-.hint-icon {
-  margin-left: 6px;
-  color: #987455;
-  font-size: 14px;
-  vertical-align: middle;
 }
 
 .tag-editor {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .tag-chip-list {
@@ -1349,66 +1290,48 @@ watch(
 }
 
 .tag-suggestions-label {
-  color: #9a7b61;
+  color: var(--editor-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .suggestion-chip {
-  border: 1px solid rgba(157, 107, 74, 0.2);
+  border: 1px solid rgba(141, 125, 104, 0.18);
   border-radius: 999px;
   padding: 4px 10px;
-  background: rgba(255, 248, 240, 0.95);
-  color: #7b563b;
+  background: #f5f3ef;
+  color: #6f6253;
   font-size: 12px;
   cursor: pointer;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .suggestion-chip:hover {
-  border-color: rgba(157, 107, 74, 0.42);
+  border-color: var(--editor-border-strong);
   transform: translateY(-1px);
 }
 
-.media-layout {
+.tag-add-button {
+  min-width: 74px;
+  border-radius: 12px;
+}
+
+.image-panel {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
-.media-panel {
-  padding: 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(122, 92, 65, 0.08);
-  background: rgba(255, 252, 248, 0.9);
-}
-
-.media-panel-heading h4,
-.image-manager-header h4 {
-  margin: 0;
-  color: #3d2b1f;
-  font-size: 16px;
-}
-
-.media-panel-heading p,
-.image-manager-header p,
-.image-empty-state p {
-  margin: 6px 0 0;
-  color: #8a755d;
-  font-size: 13px;
-  line-height: 1.65;
-}
-
-.image-manager-header {
-  margin-bottom: 14px;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
+.image-upload-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 208px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
 }
 
 .image-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .image-upload-tile {
@@ -1417,68 +1340,80 @@ watch(
 
 .image-upload-tile :deep(.el-upload) {
   width: 100%;
-  min-height: 168px;
+  min-height: 160px;
 }
 
 .image-upload-tile-inner,
 .image-thumb-card,
 .image-empty-state {
-  border-radius: 20px;
-  border: 1px solid rgba(122, 92, 65, 0.12);
-  background: #fffdfa;
+  border-radius: 14px;
+  border: 1px solid rgba(115, 95, 67, 0.12);
+  background: #fff;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .image-upload-tile-inner {
-  min-height: 168px;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(180deg, rgba(255, 252, 248, 1), rgba(252, 244, 235, 0.98));
-  color: #7d5535;
+  gap: 10px;
+  border-style: dashed;
+  background: #fbfaf7;
+  color: #6f6253;
+}
+
+.upload-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1efe9;
 }
 
 .upload-icon {
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .image-upload-tile-inner strong {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .image-upload-tile-inner span {
-  color: #8a755d;
+  color: var(--editor-muted);
   font-size: 12px;
 }
 
 .image-empty-state {
   display: grid;
   place-items: center;
-  min-height: 180px;
+  min-height: 96px;
   text-align: center;
-  padding: 20px;
+  padding: 18px;
 }
 
 .image-empty-state strong {
-  color: #3d2b1f;
-  font-size: 16px;
+  color: var(--editor-text);
+  font-size: 14px;
 }
 
-.image-grid-editor {
-  align-items: stretch;
+.image-empty-state p {
+  margin: 6px 0 0;
+  color: var(--editor-muted);
+  font-size: 12px;
 }
 
 .image-thumb-card {
   position: relative;
   overflow: hidden;
-  min-height: 0;
+  min-height: 120px;
 }
 
 .image-thumb-card.cover {
-  border-color: rgba(169, 127, 78, 0.42);
-  box-shadow: 0 16px 28px rgba(117, 86, 53, 0.12);
+  border-color: var(--editor-border-strong);
+  box-shadow: 0 12px 24px rgba(126, 102, 63, 0.12);
 }
 
 .image-thumb-card.dragging {
@@ -1487,22 +1422,22 @@ watch(
 }
 
 .image-thumb-card.drag-over {
-  border-color: rgba(92, 61, 37, 0.34);
-  box-shadow: 0 14px 28px rgba(90, 60, 47, 0.12);
+  border-color: var(--editor-primary);
+  box-shadow: 0 12px 20px rgba(126, 102, 63, 0.12);
 }
 
 .image-card-handle {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 5px 8px;
+  padding: 5px 7px;
   border-radius: 999px;
-  background: rgba(50, 33, 22, 0.68);
-  color: #fffaf6;
+  background: rgba(58, 47, 34, 0.72);
+  color: #fff;
   font-size: 11px;
   cursor: grab;
 }
@@ -1520,8 +1455,8 @@ watch(
 
 .image-thumb-badges {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -1534,25 +1469,25 @@ watch(
   align-items: center;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(50, 33, 22, 0.7);
-  color: #fffaf6;
+  background: rgba(58, 47, 34, 0.72);
+  color: #fff;
   font-size: 11px;
   line-height: 1;
 }
 
 .thumb-badge-cover {
-  background: rgba(193, 137, 78, 0.9);
+  background: rgba(164, 138, 93, 0.92);
 }
 
 .thumb-badge-new {
-  background: rgba(72, 118, 88, 0.86);
+  background: rgba(84, 132, 101, 0.9);
 }
 
 .image-thumb-toolbar {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1561,15 +1496,15 @@ watch(
 }
 
 .thumb-icon-button {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: 0;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(50, 33, 22, 0.72);
-  color: #fffaf6;
+  background: rgba(58, 47, 34, 0.78);
+  color: #fff;
   cursor: pointer;
   transition: transform 0.2s ease, background 0.2s ease;
 }
@@ -1579,67 +1514,115 @@ watch(
 }
 
 .thumb-icon-button.active {
-  background: rgba(193, 137, 78, 0.94);
+  background: rgba(164, 138, 93, 0.96);
 }
 
 .thumb-icon-button.danger {
-  background: rgba(172, 86, 76, 0.9);
+  background: rgba(196, 98, 79, 0.9);
 }
 
 .cover-fallback {
   display: grid;
   place-items: center;
   height: 100%;
-  color: #8a755d;
-  background: rgba(248, 239, 229, 0.86);
+  color: var(--editor-muted);
+  background: #f4efe7;
   font-weight: 700;
+}
+
+.image-tip-box {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid rgba(115, 95, 67, 0.08);
+  border-radius: 12px;
+  background: var(--editor-tip-bg);
+}
+
+.image-tip-title {
+  color: #4f77c6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.image-tip-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #4f77c6;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.image-guide-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(233, 242, 255, 0.86), rgba(240, 246, 255, 0.92));
+}
+
+.guide-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(89, 136, 223, 0.16);
+  color: #4f77c6;
+}
+
+.guide-copy h3 {
+  margin: 0;
+  color: var(--editor-text);
+  font-size: 16px;
+}
+
+.guide-copy p {
+  margin: 0;
+  color: #5c6f8f;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.guide-action {
+  width: 100%;
+  border-radius: 12px;
 }
 
 .editor-footer {
   justify-content: space-between;
-  padding: 18px 20px;
-  border-radius: 24px;
-}
-
-.editor-footer-copy strong {
-  display: block;
-  color: #34261b;
-  font-size: 15px;
-}
-
-.editor-footer-tip {
-  margin: 6px 0 0;
+  padding: 16px 18px;
+  border-radius: 16px;
 }
 
 .editor-save-button {
   min-width: 136px;
-  height: 42px;
+  height: 40px;
   border: 0;
-  background: linear-gradient(135deg, #c68457 0%, #9d5c38 100%);
-  box-shadow: 0 12px 24px rgba(157, 92, 56, 0.24);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #b49a6b 0%, #9b8357 100%);
+  box-shadow: 0 10px 20px rgba(155, 131, 87, 0.24);
 }
 
 .editor-save-button:hover,
 .editor-save-button:focus {
-  background: linear-gradient(135deg, #d18f62 0%, #a76440 100%);
+  background: linear-gradient(135deg, #bea577 0%, #a58a5d 100%);
 }
 
 :deep(.el-button:not(.editor-save-button)) {
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 @media (max-width: 1120px) {
-  .editor-workspace {
+  .editor-layout {
     grid-template-columns: 1fr;
   }
 
-  .editor-page-header {
+  .editor-topbar {
     flex-direction: column;
-  }
-
-  .editor-page-actions {
-    width: 100%;
-    min-width: 0;
+    align-items: stretch;
   }
 
   .editor-sidebar {
@@ -1647,7 +1630,7 @@ watch(
   }
 
   .image-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1656,27 +1639,12 @@ watch(
     gap: 18px;
   }
 
-  .editor-canvas,
-  .sidebar-panel,
-  .editor-footer {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .editor-section {
-    padding: 20px;
-  }
-
-  .editor-section-header-split {
-    grid-template-columns: 1fr;
-  }
-
-  .basic-tips-grid {
+  .image-upload-row {
     grid-template-columns: 1fr;
   }
 
   .image-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .editor-footer {
@@ -1685,37 +1653,54 @@ watch(
   }
 
   .editor-footer-actions,
-  .header-action-row {
+  .editor-topbar-actions,
+  .tag-input-row {
     justify-content: stretch;
   }
 
   .editor-footer-actions :deep(.el-button),
-  .header-action-row :deep(.el-button) {
+  .editor-topbar-actions :deep(.el-button),
+  .tag-input-row :deep(.el-button) {
     flex: 1;
   }
 }
 
 @media (max-width: 560px) {
-  .editor-canvas {
-    padding: 16px;
+  .card-header,
+  .editor-form,
+  .sidebar-form,
+  .tag-editor,
+  .image-panel,
+  .progress-list,
+  .editor-footer,
+  .image-guide-card {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  .editor-page-actions,
-  .sidebar-panel,
-  .editor-footer {
-    padding: 14px;
+  .card-header-split,
+  .field-meta-row,
+  .category-actions {
+    grid-template-columns: 1fr;
+    display: grid;
+    justify-items: start;
   }
 
-  .editor-section {
-    padding: 16px;
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .field-block,
-  .media-panel,
-  .info-tile {
-    padding: 14px;
+  .tag-input-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
+  .image-guide-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
   .image-grid {
     grid-template-columns: 1fr;
   }
