@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Delete, EditPen, Plus, RefreshRight } from '@element-plus/icons-vue'
+import { CollectionTag, Delete, Download, EditPen, Plus, RefreshRight, Search, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -195,6 +195,36 @@ const batchSetStatus = async (status: 'published' | 'archived') => {
   await loadProducts()
 }
 
+const confirmBatchDelete = async () => {
+  if (!selectedProductIds.value.length) {
+    ElMessage.warning('请先选择商品')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `删除后将同时移除已选 ${selectedProductIds.value.length} 个商品的图片与关联留言，是否继续？`,
+      '批量删除商品',
+      {
+        type: 'warning',
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+      },
+    )
+  } catch {
+    return
+  }
+
+  await Promise.all(selectedProductIds.value.map((productId) => deleteProduct(productId)))
+  ElMessage.success('已批量删除商品')
+
+  if (selectedProductIds.value.length >= products.value.length && page.value > 1) {
+    page.value -= 1
+  }
+  selectedProductIds.value = []
+  await loadProducts()
+}
+
 const confirmDeleteProduct = async (product: ProductItem) => {
   try {
     await ElMessageBox.confirm(`删除后将同时移除商品图片与关联留言：${product.name}`, '删除商品', {
@@ -309,65 +339,84 @@ void loadCategories()
 
 <template>
   <section class="products-page">
-    <div class="page-header">
-      <div class="header-actions">
-        <div class="header-batch-actions">
-          <span class="header-selection muted">
-            {{ selectedProductIds.length ? `已选 ${selectedProductIds.length} 项` : '未选择商品' }}
-          </span>
-          <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('published')">
-            批量上架
-          </el-button>
-          <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('archived')">
-            批量下架
-          </el-button>
+    <section class="content-card control-panel">
+      <div class="control-panel-top">
+        <div class="control-panel-overview">
+          <div class="control-panel-icon">
+            <el-icon><CollectionTag /></el-icon>
+          </div>
+          <div class="control-panel-copy">
+            <strong>商品控制中心</strong>
+            <p>当前共 <span class="control-panel-count">{{ total }}</span> 条商品</p>
+          </div>
         </div>
 
-        <div class="header-main-actions">
-          <el-button plain @click="loadProducts">
+        <el-button type="primary" class="create-product-button" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          新增商品
+        </el-button>
+      </div>
+
+      <div class="control-panel-middle" :class="{ 'is-selection-mode': selectedProductIds.length }">
+        <p v-if="!selectedProductIds.length" class="control-panel-helper">先筛选或选择商品，再进行批量处理或新增。</p>
+        <div class="control-panel-middle-actions" :class="{ 'is-selection-mode': selectedProductIds.length }">
+          <div v-if="selectedProductIds.length" class="selection-toolbar">
+            <span class="selection-pill">已选择 {{ selectedProductIds.length }} 项</span>
+            <el-button plain class="selection-action-button" @click="batchSetStatus('published')">
+              <el-icon><Upload /></el-icon>
+              批量上架
+            </el-button>
+            <el-button plain class="selection-action-button" @click="batchSetStatus('archived')">
+              <el-icon><Download /></el-icon>
+              批量下架
+            </el-button>
+            <el-button plain class="selection-action-button selection-action-button-danger" @click="confirmBatchDelete">
+              <el-icon><Delete /></el-icon>
+              批量删除
+            </el-button>
+          </div>
+
+          <el-button plain circle class="refresh-circle-button" @click="loadProducts">
             <el-icon><RefreshRight /></el-icon>
-            刷新
-          </el-button>
-          <el-button type="primary" @click="openCreate">
-            <el-icon><Plus /></el-icon>
-            新增商品
           </el-button>
         </div>
       </div>
-    </div>
 
-    <section class="content-card filter-card">
-      <div class="filter-grid">
-        <el-input
-          class="keyword-input"
-          v-model="filters.keyword"
-          placeholder="按名称、标签或描述搜索"
-          clearable
-          @keyup.enter="applyFilters"
-        />
-        <el-select v-model="filters.status" clearable placeholder="全部状态">
-          <el-option label="草稿" value="draft" />
-          <el-option label="已发布" value="published" />
-          <el-option label="已归档" value="archived" />
-        </el-select>
-        <el-select v-model="filters.category_id" clearable placeholder="全部分类">
-          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
-        </el-select>
-        <div class="filter-actions">
-          <el-button type="primary" @click="applyFilters">筛选</el-button>
-          <el-button plain @click="resetFilters">重置</el-button>
+      <div class="control-panel-bottom">
+        <div class="filter-grid">
+          <el-input
+            class="keyword-input"
+            v-model="filters.keyword"
+            placeholder="搜名称、标签或描述搜索"
+            clearable
+            @keyup.enter="applyFilters"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-select v-model="filters.status" clearable placeholder="全部状态">
+            <el-option label="草稿" value="draft" />
+            <el-option label="已发布" value="published" />
+            <el-option label="已归档" value="archived" />
+          </el-select>
+          <el-select v-model="filters.category_id" clearable placeholder="全部分类">
+            <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+          </el-select>
+          <div class="filter-actions">
+            <el-button type="primary" @click="applyFilters">筛选</el-button>
+            <el-button plain @click="resetFilters">重置</el-button>
+          </div>
         </div>
-      </div>
 
-      <div class="filter-summary">
-        <span class="muted">共 {{ total }} 条</span>
-        <span class="muted">当前筛选：{{ activeFilterSummary }}</span>
-        <span v-if="hasActiveFilters" class="filter-summary-indicator">已启用筛选</span>
+        <div class="filter-summary">
+          <span class="muted">共 {{ total }} 条结果 · 当前筛选：{{ activeFilterSummary }}</span>
+          <span v-if="hasActiveFilters" class="filter-summary-indicator">已启用筛选</span>
+        </div>
       </div>
     </section>
 
     <section class="content-card table-card">
-      <div class="table-tip">拖住商品信息区域可直接调整当前页商品顺序。</div>
       <el-table
         ref="productsTableRef"
         :data="products"
@@ -377,7 +426,7 @@ void loadCategories()
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column label="商品信息" min-width="300">
+        <el-table-column label="商品信息" min-width="360">
           <template #default="{ row }">
             <div class="product-main-cell">
               <div class="product-main-heading">
@@ -389,19 +438,19 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="分类" width="112">
+        <el-table-column label="分类" width="104">
           <template #default="{ row }">
             <span class="category-text" :class="{ muted: !row.category_name }">{{ row.category_name || '未分类' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="96">
+        <el-table-column label="状态" width="112">
           <template #default="{ row }">
             <el-tag :type="row.status === 'published' ? 'success' : row.status === 'draft' ? 'warning' : 'info'">
               {{ formatStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="标签" width="188">
+        <el-table-column label="标签" width="176">
           <template #default="{ row }">
             <div class="tag-list tag-list-compact">
               <el-tag v-for="tag in getVisibleTags(row.tags)" :key="tag" effect="plain" size="small">
@@ -414,7 +463,7 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="图片" width="152">
+        <el-table-column label="图片" width="136">
           <template #default="{ row }">
             <div class="image-summary">
               <el-image
@@ -426,34 +475,31 @@ void loadCategories()
                 preview-teleported
               >
                 <template #error>
-                  <div class="cover-fallback">IMG</div>
+                  <div class="cover-fallback" />
                 </template>
               </el-image>
               <div class="image-summary-meta" :title="row.images[0]?.original_name || ''">
                 <strong>{{ row.images.length ? `${row.images.length} 张` : '暂无图片' }}</strong>
-                <span>{{ row.images[0] ? '封面预览' : '进入编辑后上传' }}</span>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="208" fixed="right">
+        <el-table-column label="操作" width="196" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
-              <el-button text class="action-link" @click="openEdit(row)">
+              <el-button text class="action-icon-button" @click="openEdit(row)">
                 <el-icon><EditPen /></el-icon>
-                编辑
               </el-button>
               <el-button
                 text
-                class="action-link"
+                class="action-status-button"
                 :loading="actionLoadingProductId === row.id"
                 @click="toggleProductPublish(row)"
               >
                 {{ row.status === 'published' ? '下架' : '上架' }}
               </el-button>
-              <el-button text class="action-link danger-link" @click="confirmDeleteProduct(row)">
+              <el-button text class="action-icon-button action-icon-button-danger" @click="confirmDeleteProduct(row)">
                 <el-icon><Delete /></el-icon>
-                删除
               </el-button>
             </div>
           </template>
@@ -484,20 +530,116 @@ void loadCategories()
   gap: 18px;
 }
 
-.page-heading {
+.control-panel {
+  padding: 0;
+  overflow: hidden;
+  border-color: rgba(194, 204, 219, 0.76);
+  box-shadow: 0 18px 45px rgba(145, 154, 168, 0.12);
+}
+
+.control-panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 28px 18px;
+  background:
+    radial-gradient(circle at 22% 10%, rgba(74, 144, 226, 0.12), transparent 30%),
+    linear-gradient(180deg, rgba(246, 249, 255, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.control-panel-overview {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.control-panel-icon {
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #3e8cff, #2f73f6);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(48, 115, 246, 0.24);
+}
+
+.control-panel-icon :deep(.el-icon) {
+  font-size: 26px;
+}
+
+.control-panel-copy {
   min-width: 0;
 }
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+.control-panel-copy strong {
+  display: block;
+  color: #1f2f46;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.header-actions,
-.header-batch-actions,
-.header-main-actions,
+.control-panel-copy p {
+  margin: 4px 0 0;
+  color: #70809a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.control-panel-count {
+  color: #2f73f6;
+  font-weight: 700;
+}
+
+.create-product-button {
+  min-width: 164px;
+  height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #3e8cff, #2f73f6);
+  box-shadow: 0 10px 24px rgba(48, 115, 246, 0.24);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.create-product-button:hover,
+.create-product-button:focus {
+  background: linear-gradient(180deg, #4b95ff, #397cf8);
+}
+
+.control-panel-middle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 28px;
+  border-top: 1px solid rgba(207, 215, 228, 0.78);
+  background: linear-gradient(180deg, rgba(248, 250, 254, 0.98), rgba(245, 248, 252, 0.94));
+}
+
+.control-panel-helper {
+  margin: 0;
+  color: #6f7f98;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.control-panel-middle-actions {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.selection-toolbar,
 .tag-list,
 .image-summary,
 .filter-actions,
@@ -510,24 +652,43 @@ void loadCategories()
   flex-wrap: wrap;
 }
 
-.header-actions {
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 12px;
+.selection-toolbar {
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
-.header-batch-actions,
-.header-main-actions {
-  padding: 10px 12px;
-  border: 1px solid rgba(122, 92, 65, 0.12);
-  border-radius: 16px;
-  background: rgba(255, 252, 247, 0.78);
-}
-
-.header-selection {
-  padding-right: 2px;
-  line-height: 32px;
+.selection-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: rgba(47, 115, 246, 0.12);
+  color: #2f73f6;
+  font-weight: 700;
   white-space: nowrap;
+}
+
+.selection-action-button {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border-color: rgba(207, 215, 228, 0.96);
+  color: #2d3950;
+  font-weight: 600;
+}
+
+.selection-action-button :deep(.el-icon) {
+  margin-right: 6px;
+  font-size: 15px;
+}
+
+.selection-action-button-danger {
+  color: #f04438;
+  border-color: rgba(251, 189, 180, 0.96);
+  background: rgba(255, 246, 245, 0.98);
 }
 
 .tag-list {
@@ -543,38 +704,61 @@ void loadCategories()
 }
 
 .tag-overflow {
-  color: #7d5535;
+  color: #2f73f6;
 }
 
 .table-card,
-.filter-card {
-  padding: 16px;
+.control-panel-bottom {
+  padding: 16px 28px;
 }
 
-.table-tip {
-  margin-bottom: 12px;
-  color: #907e6a;
-  font-size: 13px;
+.table-card {
+  overflow: hidden;
+  border-color: rgba(194, 204, 219, 0.76);
+  box-shadow: 0 18px 45px rgba(145, 154, 168, 0.1);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(74, 144, 226, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(246, 249, 255, 0.95), rgba(255, 255, 255, 0.92));
+}
+
+.control-panel-bottom {
+  border-top: 1px solid rgba(207, 215, 228, 0.78);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .filter-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(320px, 2.2fr) minmax(160px, 0.9fr) minmax(180px, 1fr) auto;
+  gap: 12px;
+  grid-template-columns: minmax(360px, 2.6fr) minmax(180px, 0.95fr) minmax(180px, 0.95fr) auto;
 }
 
 .keyword-input {
   min-width: 0;
 }
 
+.keyword-input :deep(.el-input__wrapper),
+.filter-grid :deep(.el-select__wrapper) {
+  min-height: 52px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(199, 208, 222, 0.92);
+}
+
 .filter-actions {
   justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.filter-actions :deep(.el-button) {
+  min-width: 100px;
+  height: 52px;
+  border-radius: 16px;
+  font-weight: 600;
 }
 
 .filter-summary {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(122, 92, 65, 0.12);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(215, 222, 233, 0.82);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -595,18 +779,99 @@ void loadCategories()
 
 .pagination-bar {
   justify-content: space-between;
-  margin-top: 16px;
+  margin-top: 14px;
+  padding-top: 8px;
+}
+
+:deep(.el-table) {
+  background: transparent;
+  color: #2d3950;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: transparent;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(221, 227, 236, 0.96);
+}
+
+:deep(.el-table tr) {
+  background: transparent;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+}
+
+:deep(.el-table .cell) {
+  color: inherit;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  color: #44556d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+:deep(.el-table .el-table__inner-wrapper::before) {
+  display: none;
+}
+
+:deep(.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell) {
+  background: rgba(247, 250, 255, 0.9);
+}
+
+:deep(.el-tag) {
+  border-radius: 9px;
+  font-weight: 600;
+}
+
+:deep(.el-tag--success) {
+  background: rgba(223, 247, 229, 0.98);
+  border-color: transparent;
+  color: #169b5f;
+}
+
+:deep(.tag-list-compact .el-tag--info),
+:deep(.tag-list-compact .el-tag--primary),
+:deep(.tag-list-compact .el-tag) {
+  background: rgba(241, 246, 255, 0.98);
+  border-color: rgba(181, 203, 255, 0.96);
+  color: #2d72f4;
+}
+
+:deep(.el-pagination.is-background .btn-next),
+:deep(.el-pagination.is-background .btn-prev),
+:deep(.el-pagination.is-background .el-pager li) {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(245, 248, 252, 0.98);
+  color: #6f8199;
+}
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background: linear-gradient(180deg, #3e8cff, #2f73f6);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(48, 115, 246, 0.2);
+}
+
+:deep(.el-pagination .el-select .el-select__wrapper) {
+  min-height: 42px;
+  border-radius: 14px;
+  background: rgba(248, 250, 253, 0.98);
+  box-shadow: inset 0 0 0 1px rgba(199, 208, 222, 0.92);
 }
 
 .muted {
-  color: #907e6a;
+  color: #64758e;
   font-size: 13px;
 }
 
 .product-main-cell {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
   cursor: grab;
 }
@@ -623,24 +888,40 @@ void loadCategories()
 }
 
 .product-main-title {
-  color: #3a291d;
-  font-size: 15px;
+  color: #1f2f46;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .product-main-subtitle {
-  color: #8a755d;
-  font-size: 13px;
+  color: #6d7d96;
+  font-size: 14px;
   line-height: 1.5;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .category-text {
   display: inline-block;
   line-height: 1.5;
+  color: #44556d;
+}
+
+.refresh-circle-button {
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  border: 0;
+  background: rgba(250, 252, 255, 0.98);
+  color: #556781;
+  box-shadow: none;
+}
+
+.control-panel-middle.is-selection-mode .control-panel-middle-actions {
+  justify-content: flex-start;
 }
 
 .editor-grid {
@@ -965,27 +1246,21 @@ void loadCategories()
   background: rgba(172, 86, 76, 0.88);
 }
 
-.image-summary-meta strong,
-.image-summary-meta span {
-  display: block;
-}
-
 .image-summary-meta strong {
-  color: #3a291d;
-}
-
-.image-summary-meta span {
-  margin-top: 4px;
-  color: #8a755d;
-  font-size: 12px;
+  display: block;
+  color: #4d5e77;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .cover-thumb {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(122, 92, 65, 0.12);
+  border: 1px solid rgba(217, 222, 229, 0.92);
+  background: #f5f7fa;
 }
 
 .cover-fallback {
@@ -993,17 +1268,15 @@ void loadCategories()
   height: 100%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(164, 124, 89, 0.18), rgba(107, 73, 45, 0.24));
-  color: #5c3d25;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  background:
+    linear-gradient(135deg, rgba(229, 233, 240, 0.92), rgba(244, 246, 249, 0.98)),
+    #f5f7fa;
 }
 
 .image-summary {
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .image-summary :deep(.el-image) {
@@ -1020,35 +1293,55 @@ void loadCategories()
 
 .row-actions {
   justify-content: flex-end;
-  gap: 14px;
+  gap: 8px;
   flex-wrap: nowrap;
 }
 
-.action-link {
+.action-icon-button,
+.action-status-button {
   margin: 0;
   min-width: 0;
-  padding: 6px;
-  border-radius: 8px;
+  padding: 0;
+}
+
+.action-icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: #2f73f6;
+}
+
+.action-icon-button-danger {
+  color: #ff4d4f;
+}
+
+.action-status-button {
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 14px;
+  background: rgba(244, 246, 249, 0.98);
+  color: #2d3950;
   font-weight: 500;
+}
+
+:deep(.action-status-button.is-loading) {
+  background: rgba(236, 242, 250, 0.98);
 }
 
 :deep(.el-table__body tr.is-row-dragging) .product-main-cell {
   cursor: grabbing;
 }
 
-.action-link :deep(span) {
+.action-icon-button :deep(span),
+.action-status-button :deep(span) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
 }
 
-.action-link :deep(.el-icon) {
+.action-icon-button :deep(.el-icon) {
   font-size: 16px;
-}
-
-.danger-link {
-  color: var(--el-color-danger);
 }
 
 .editor-footer,
@@ -1123,6 +1416,15 @@ void loadCategories()
 }
 
 @media (max-width: 1100px) {
+  .control-panel-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-product-button {
+    width: 100%;
+  }
+
   .filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1133,19 +1435,26 @@ void loadCategories()
 }
 
 @media (max-width: 900px) {
-  .page-header {
+  .control-panel-middle {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .header-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .header-batch-actions,
-  .header-main-actions {
+  .control-panel-middle-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .selection-toolbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .create-product-button,
+  .control-panel-top,
+  .control-panel-middle,
+  .control-panel-bottom {
+    padding: 16px;
   }
 
   .inline-grid,
