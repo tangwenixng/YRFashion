@@ -80,6 +80,36 @@ const pageSubtitle = computed(() =>
     ? '调整基础信息与图片顺序，保存后会同步更新列表展示。'
     : '先填写基础信息，再补充图片与封面，完成后保存到商品列表。',
 )
+const statusLabelMap: Record<ProductFormState['status'], string> = {
+  draft: '草稿',
+  published: '已发布',
+  archived: '已归档',
+}
+const selectedCategoryName = computed(
+  () => categories.value.find((category) => category.id === form.category_id)?.name ?? '未选择分类',
+)
+const currentStatusLabel = computed(() => statusLabelMap[form.status])
+const remainingTagCount = computed(() => Math.max(TAG_MAX_COUNT - form.tags.length, 0))
+const editorProgress = computed(() => [
+  {
+    key: 'name',
+    label: '商品名称',
+    value: form.name.trim() ? '已填写' : '待填写',
+    done: Boolean(form.name.trim()),
+  },
+  {
+    key: 'category',
+    label: '分类归属',
+    value: form.category_id ? selectedCategoryName.value : '待选择',
+    done: Boolean(form.category_id),
+  },
+  {
+    key: 'images',
+    label: '图片素材',
+    value: editorImages.value.length ? `${editorImages.value.length} 张` : '暂未添加',
+    done: Boolean(editorImages.value.length),
+  },
+])
 
 const resetEditorImages = () => {
   editorImages.value.forEach((image) => {
@@ -455,239 +485,307 @@ watch(
           <el-icon><ArrowLeft /></el-icon>
           返回列表
         </button>
-        <span class="editor-kicker">{{ isEditing ? 'CONTENT ATELIER' : 'NEW ENTRY' }}</span>
+        <span class="editor-kicker">{{ isEditing ? 'PRODUCT EDITOR' : 'PRODUCT CREATE' }}</span>
         <h1>{{ pageTitle }}</h1>
         <p>{{ pageSubtitle }}</p>
       </div>
 
       <div class="editor-page-actions">
-        <span v-if="hasPendingChanges" class="unsaved-indicator">未保存修改</span>
-        <el-button @click="goBack">取消</el-button>
+        <div class="header-chip-row">
+          <span class="header-chip">{{ currentStatusLabel }}</span>
+          <span class="header-chip subtle">{{ editorImages.length ? `${editorImages.length} 张图片` : '未添加图片' }}</span>
+          <span v-if="hasPendingChanges" class="unsaved-indicator">未保存修改</span>
+        </div>
+
+        <div class="header-action-row">
+          <el-button @click="goBack">取消</el-button>
+          <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
+        </div>
       </div>
     </div>
 
-    <div class="editor-grid">
-      <div class="editor-canvas">
-        <el-form label-position="top">
-          <el-tabs v-model="editorActiveTab" class="editor-tabs">
-            <el-tab-pane name="basic" label="基本信息">
-              <section class="editor-section editor-section-basic">
-                <div class="section-shell">
-                  <div class="section-kicker">BASIC</div>
-                </div>
-                <div class="editor-section-header">
-                  <div>
-                    <h3>基础信息</h3>
-                    <p>先确认标题、描述和分类信息，再继续处理图片与展示顺序。</p>
+    <div class="editor-workspace">
+      <div class="editor-main">
+        <div class="editor-canvas">
+          <el-form label-position="top">
+            <el-tabs v-model="editorActiveTab" class="editor-tabs">
+              <el-tab-pane name="basic" label="基本信息">
+                <section class="editor-section">
+                  <div class="editor-section-header">
+                    <div>
+                      <span class="section-kicker">基础信息</span>
+                      <h3>先完成商品内容，再决定展示方式</h3>
+                      <p>标题和描述负责表达商品本身，分类、状态和排序在右侧统一管理，减少填写时的视觉干扰。</p>
+                    </div>
                   </div>
-              </div>
 
-              <div class="basic-form-layout">
-                <div class="basic-form-main">
-                  <el-form-item required>
-                    <template #label>
-                      商品名称
-                      <span class="required-mark">*</span>
-                    </template>
-                    <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
-                  </el-form-item>
-
-                  <el-form-item label="描述">
-                    <el-input
-                      v-model="form.description"
-                      type="textarea"
-                      :rows="8"
-                      :maxlength="DESCRIPTION_MAX_LENGTH"
-                      placeholder="用于详情页展示穿搭亮点、面料与场景。"
-                    />
-                    <div class="field-counter">{{ form.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}</div>
-                  </el-form-item>
-                </div>
-
-                <div class="basic-form-side">
-                  <el-form-item required>
-                    <template #label>
-                      分类
-                      <span class="required-mark">*</span>
-                    </template>
-                    <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                      <el-option
-                        v-for="category in categories"
-                        :key="category.id"
-                        :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                        :value="category.id"
-                      />
-                    </el-select>
-                  </el-form-item>
-
-                  <el-form-item label="标签">
-                    <div class="tag-editor">
-                      <div v-if="form.tags.length" class="tag-chip-list">
-                        <el-tag
-                          v-for="tag in form.tags"
-                          :key="tag"
-                          closable
-                          size="small"
-                          effect="plain"
-                          @close="removeTag(tag)"
-                        >
-                          {{ tag }}
-                        </el-tag>
-                      </div>
-                      <el-input
-                        v-model="tagInput"
-                        placeholder="输入标签后回车，如：通勤"
-                        @keyup.enter.prevent="appendTagFromInput"
-                        @blur="appendTagFromInput"
-                      />
-                      <div class="tag-suggestions">
-                        <span class="tag-suggestions-label">推荐</span>
-                        <button
-                          v-for="tag in SUGGESTED_TAGS"
-                          :key="tag"
-                          type="button"
-                          class="suggestion-chip"
-                          @click="addSuggestedTag(tag)"
-                        >
-                          {{ tag }}
-                        </button>
-                      </div>
-                    </div>
-                  </el-form-item>
-
-                  <el-form-item label="状态">
-                    <el-select v-model="form.status">
-                      <el-option label="草稿" value="draft" />
-                      <el-option label="已发布" value="published" />
-                      <el-option label="已归档" value="archived" />
-                    </el-select>
-                  </el-form-item>
-
-                  <el-form-item>
-                    <template #label>
-                      排序值
-                      <el-tooltip content="值越小越靠前，支持直接输入或点击步进" placement="top">
-                        <el-icon class="hint-icon"><InfoFilled /></el-icon>
-                      </el-tooltip>
-                    </template>
-                    <div class="sort-field">
-                      <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
-                      <span class="field-tip">值越小越靠前显示</span>
-                    </div>
-                  </el-form-item>
-                </div>
-              </div>
-              </section>
-            </el-tab-pane>
-
-            <el-tab-pane name="media" label="图片维护">
-              <section class="editor-section editor-media-panel">
-                <div class="section-shell">
-                  <div class="section-kicker">MEDIA</div>
-                </div>
-                <div class="editor-section-header">
-                  <div>
-                    <h3>图片管理</h3>
-                    <p>上传图片后可直接拖拽排序，单击缩略图查看大图，第一张或封面图会优先用于列表展示。</p>
-                  </div>
-              </div>
-
-              <div class="media-subsection image-manager">
-                <div class="image-manager-header">
-                  <div>
-                    <h4>图片维护</h4>
-                    <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
-                  </div>
-                  <span class="muted">{{ editorImages.length ? `当前 ${editorImages.length} 张` : '还没有图片' }}</span>
-                </div>
-
-                <div class="image-grid image-grid-editor">
-                  <el-upload
-                    ref="editorUploadRef"
-                    :key="imageUploadKey"
-                    class="image-upload-tile"
-                    multiple
-                    :auto-upload="false"
-                    :show-file-list="false"
-                    accept=".jpg,.jpeg,.png,.webp"
-                    :on-change="handleEditorFileChange"
-                  >
-                    <div class="image-upload-tile-inner">
-                      <el-icon class="upload-icon"><Picture /></el-icon>
-                      <strong>添加图片</strong>
-                      <span>点击选择多张图片</span>
-                    </div>
-                  </el-upload>
-
-                  <article
-                    v-for="image in editorImages"
-                    :key="image.key"
-                    class="image-thumb-card"
-                    :class="{
-                      cover: image.is_cover,
-                      dragging: dragImageKey === image.key,
-                      'drag-over': dragOverImageKey === image.key,
-                    }"
-                    draggable="true"
-                    @dragstart="handleImageDragStart(image.key)"
-                    @dragenter.prevent="handleImageDragEnter(image.key)"
-                    @dragover.prevent
-                    @dragend="handleImageDragEnd"
-                    @drop.prevent="handleImageDrop(image.key)"
-                  >
-                    <div class="image-card-handle">
-                      <el-icon><Sort /></el-icon>
-                      <span>#{{ image.sort_order + 1 }}</span>
-                    </div>
-
-                    <el-image
-                      :src="image.image_url"
-                      fit="cover"
-                      class="managed-image managed-image-thumb"
-                      :preview-src-list="editorImages.map((item) => item.image_url)"
-                      preview-teleported
-                    >
-                      <template #error>
-                        <div class="cover-fallback">IMG</div>
+                  <div class="basic-form-stack">
+                    <el-form-item required class="field-block field-block-hero">
+                      <template #label>
+                        商品名称
+                        <span class="required-mark">*</span>
                       </template>
-                    </el-image>
+                      <el-input v-model="form.name" placeholder="例如：羊毛大衣" />
+                    </el-form-item>
 
-                    <div class="image-thumb-badges">
-                      <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
-                      <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
-                    </div>
+                    <el-form-item label="描述" class="field-block">
+                      <el-input
+                        v-model="form.description"
+                        type="textarea"
+                        :rows="5"
+                        :maxlength="DESCRIPTION_MAX_LENGTH"
+                        placeholder="用于详情页展示穿搭亮点、面料与场景。"
+                      />
+                      <div class="field-counter">{{ form.description.length }} / {{ DESCRIPTION_MAX_LENGTH }}</div>
+                    </el-form-item>
 
-                    <div class="image-thumb-toolbar">
-                      <button
-                        type="button"
-                        class="thumb-icon-button"
-                        :class="{ active: image.is_cover }"
-                        :title="image.is_cover ? '当前封面' : '设为封面'"
-                        @click.stop="setEditorCover(image.key)"
-                      >
-                        <el-icon><Star /></el-icon>
-                      </button>
-                      <button
-                        type="button"
-                        class="thumb-icon-button danger"
-                        title="删除图片"
-                        @click.stop="removeEditorImage(image.key)"
-                      >
-                        <el-icon><Delete /></el-icon>
-                      </button>
+                    <div class="basic-tips-grid">
+                      <article class="info-tile">
+                        <span class="info-tile-label">详情展示</span>
+                        <strong>描述建议控制在 2 到 4 句</strong>
+                        <p>优先写版型、面料、季节和适用场景，避免把标签内容重复写进描述。</p>
+                      </article>
+                      <article class="info-tile">
+                        <span class="info-tile-label">封面逻辑</span>
+                        <strong>首张或手动设置的封面优先用于列表</strong>
+                        <p>图片维护区支持拖拽排序，保存后会同步更新封面预览与后台列表顺序。</p>
+                      </article>
                     </div>
-                  </article>
-                </div>
-              </div>
-              </section>
-            </el-tab-pane>
-          </el-tabs>
-        </el-form>
+                  </div>
+                </section>
+              </el-tab-pane>
+
+              <el-tab-pane name="media" label="图片维护">
+                <section class="editor-section editor-media-panel">
+                  <div class="editor-section-header editor-section-header-split">
+                    <div>
+                      <span class="section-kicker">图片管理</span>
+                      <h3>把上传入口和整理动作分开</h3>
+                      <p>先补充素材，再拖拽调整顺序；封面图会优先用于列表和首页等关键位置展示。</p>
+                    </div>
+                    <span class="section-meta">{{ editorImages.length ? `共 ${editorImages.length} 张图片` : '还没有图片' }}</span>
+                  </div>
+
+                  <div class="media-layout">
+                    <section class="media-panel media-upload-panel">
+                      <div class="media-panel-heading">
+                        <h4>上传图片</h4>
+                        <p>支持 JPG / PNG / WEBP，单张不超过 5MB。</p>
+                      </div>
+
+                      <el-upload
+                        ref="editorUploadRef"
+                        :key="imageUploadKey"
+                        class="image-upload-tile"
+                        multiple
+                        :auto-upload="false"
+                        :show-file-list="false"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        :on-change="handleEditorFileChange"
+                      >
+                        <div class="image-upload-tile-inner">
+                          <el-icon class="upload-icon"><Picture /></el-icon>
+                          <strong>添加图片</strong>
+                          <span>点击后可连续选择多张图片</span>
+                        </div>
+                      </el-upload>
+                    </section>
+
+                    <section class="media-panel media-library-panel">
+                      <div class="image-manager-header">
+                        <div>
+                          <h4>图片顺序与封面</h4>
+                          <p>
+                            {{
+                              editorImages.length
+                                ? '拖动卡片调整顺序，单击星标设置封面。'
+                                : '上传图片后可在这里完成顺序整理和封面设置。'
+                            }}
+                          </p>
+                        </div>
+                        <span class="muted">{{ editorImages.length ? `当前 ${editorImages.length} 张` : '等待上传' }}</span>
+                      </div>
+
+                      <div v-if="editorImages.length" class="image-grid image-grid-editor">
+                        <article
+                          v-for="image in editorImages"
+                          :key="image.key"
+                          class="image-thumb-card"
+                          :class="{
+                            cover: image.is_cover,
+                            dragging: dragImageKey === image.key,
+                            'drag-over': dragOverImageKey === image.key,
+                          }"
+                          draggable="true"
+                          @dragstart="handleImageDragStart(image.key)"
+                          @dragenter.prevent="handleImageDragEnter(image.key)"
+                          @dragover.prevent
+                          @dragend="handleImageDragEnd"
+                          @drop.prevent="handleImageDrop(image.key)"
+                        >
+                          <div class="image-card-handle">
+                            <el-icon><Sort /></el-icon>
+                            <span>#{{ image.sort_order + 1 }}</span>
+                          </div>
+
+                          <el-image
+                            :src="image.image_url"
+                            fit="cover"
+                            class="managed-image managed-image-thumb"
+                            :preview-src-list="editorImages.map((item) => item.image_url)"
+                            preview-teleported
+                          >
+                            <template #error>
+                              <div class="cover-fallback">IMG</div>
+                            </template>
+                          </el-image>
+
+                          <div class="image-thumb-badges">
+                            <span v-if="image.is_cover" class="thumb-badge thumb-badge-cover">封面</span>
+                            <span v-if="image.source === 'new'" class="thumb-badge thumb-badge-new">待上传</span>
+                          </div>
+
+                          <div class="image-thumb-toolbar">
+                            <button
+                              type="button"
+                              class="thumb-icon-button"
+                              :class="{ active: image.is_cover }"
+                              :title="image.is_cover ? '当前封面' : '设为封面'"
+                              @click.stop="setEditorCover(image.key)"
+                            >
+                              <el-icon><Star /></el-icon>
+                            </button>
+                            <button
+                              type="button"
+                              class="thumb-icon-button danger"
+                              title="删除图片"
+                              @click.stop="removeEditorImage(image.key)"
+                            >
+                              <el-icon><Delete /></el-icon>
+                            </button>
+                          </div>
+                        </article>
+                      </div>
+
+                      <div v-else class="image-empty-state">
+                        <strong>还没有图片</strong>
+                        <p>先在左侧上传素材，随后即可拖拽排序并选择封面图。</p>
+                      </div>
+                    </section>
+                  </div>
+                </section>
+              </el-tab-pane>
+            </el-tabs>
+          </el-form>
+        </div>
       </div>
+
+      <aside class="editor-sidebar">
+        <section class="sidebar-panel">
+          <div class="sidebar-panel-header">
+            <span class="sidebar-kicker">编辑进度</span>
+            <h3>保存前检查</h3>
+            <p>这三个信息会直接影响商品是否能顺利上架与展示。</p>
+          </div>
+
+          <ul class="progress-list">
+            <li v-for="item in editorProgress" :key="item.key" class="progress-item" :class="{ done: item.done }">
+              <span class="progress-dot" />
+              <div class="progress-copy">
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.value }}</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="sidebar-panel">
+          <div class="sidebar-panel-header">
+            <span class="sidebar-kicker">发布设置</span>
+            <h3>控制展示归属</h3>
+          </div>
+
+          <el-form label-position="top" class="sidebar-form">
+            <el-form-item required>
+              <template #label>
+                分类
+                <span class="required-mark">*</span>
+              </template>
+              <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                <el-option
+                  v-for="category in categories"
+                  :key="category.id"
+                  :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                  :value="category.id"
+                />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="状态">
+              <el-select v-model="form.status">
+                <el-option label="草稿" value="draft" />
+                <el-option label="已发布" value="published" />
+                <el-option label="已归档" value="archived" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item>
+              <template #label>
+                排序值
+                <el-tooltip content="值越小越靠前，支持直接输入或点击步进" placement="top">
+                  <el-icon class="hint-icon"><InfoFilled /></el-icon>
+                </el-tooltip>
+              </template>
+              <div class="sort-field">
+                <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
+                <span class="field-tip">值越小越靠前显示</span>
+              </div>
+            </el-form-item>
+          </el-form>
+        </section>
+
+        <section class="sidebar-panel">
+          <div class="sidebar-panel-header">
+            <span class="sidebar-kicker">标签维护</span>
+            <h3>补充检索关键词</h3>
+            <p>最多 {{ TAG_MAX_COUNT }} 个标签，建议保留季节、风格与场景信息。</p>
+          </div>
+
+          <div class="tag-editor">
+            <div v-if="form.tags.length" class="tag-chip-list">
+              <el-tag v-for="tag in form.tags" :key="tag" closable size="small" effect="plain" @close="removeTag(tag)">
+                {{ tag }}
+              </el-tag>
+            </div>
+            <el-input
+              v-model="tagInput"
+              placeholder="输入标签后回车，如：通勤"
+              @keyup.enter.prevent="appendTagFromInput"
+              @blur="appendTagFromInput"
+            />
+            <div class="tag-suggestions">
+              <span class="tag-suggestions-label">推荐</span>
+              <button
+                v-for="tag in SUGGESTED_TAGS"
+                :key="tag"
+                type="button"
+                class="suggestion-chip"
+                @click="addSuggestedTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            </div>
+            <span class="tag-helper">还可添加 {{ remainingTagCount }} 个标签</span>
+          </div>
+        </section>
+      </aside>
     </div>
 
     <div class="editor-footer">
-      <span class="muted editor-footer-tip">保存后将同步更新列表展示与封面预览。</span>
+      <div class="editor-footer-copy">
+        <strong>保存后会同步更新商品列表</strong>
+        <p class="editor-footer-tip">封面图、排序值和发布状态会立即影响后台和前台展示。</p>
+      </div>
       <div class="editor-footer-actions">
         <el-button @click="goBack">取消</el-button>
         <el-button type="primary" class="editor-save-button" :loading="saving" @click="saveProduct">保存商品</el-button>
@@ -700,11 +798,87 @@ watch(
 .product-editor-page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
+  padding-bottom: 18px;
 }
 
 .editor-page-header,
-.editor-page-actions,
+.editor-workspace,
+.editor-footer {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+}
+
+.editor-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 4px 0;
+}
+
+.editor-page-heading {
+  min-width: 0;
+}
+
+.editor-kicker,
+.section-kicker,
+.sidebar-kicker {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.editor-kicker {
+  margin-top: 14px;
+  padding: 6px 10px;
+  background: rgba(255, 250, 244, 0.9);
+  color: #9a7b61;
+}
+
+.editor-page-heading h1 {
+  margin: 14px 0 8px;
+  font-family: 'Fraunces', serif;
+  font-size: clamp(32px, 4vw, 40px);
+  color: #2f241a;
+  letter-spacing: -0.03em;
+}
+
+.editor-page-heading p {
+  margin: 0;
+  max-width: 700px;
+  color: #7c6855;
+  line-height: 1.75;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #7d5535;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-page-actions {
+  display: grid;
+  gap: 12px;
+  min-width: 320px;
+  padding: 16px;
+  border: 1px solid rgba(122, 92, 65, 0.1);
+  border-radius: 24px;
+  background: rgba(255, 251, 246, 0.88);
+  box-shadow: 0 20px 44px rgba(99, 74, 53, 0.08);
+}
+
+.header-chip-row,
+.header-action-row,
 .editor-footer,
 .editor-footer-actions,
 .image-manager-header {
@@ -713,73 +887,36 @@ watch(
   gap: 12px;
 }
 
-.editor-page-header,
-.editor-footer {
-  justify-content: space-between;
+.header-chip-row {
+  flex-wrap: wrap;
 }
 
-.editor-page-header,
-.editor-grid,
-.editor-footer {
-  width: min(1180px, 100%);
-  margin: 0 auto;
-}
-
-.editor-page-header {
-  align-items: flex-start;
-  padding: 8px 4px 0;
-}
-
-.editor-kicker {
+.header-chip {
   display: inline-flex;
   align-items: center;
-  margin-top: 14px;
-  padding: 6px 10px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
-  background: rgba(255, 250, 244, 0.9);
-  color: #9a7b61;
-  font-size: 11px;
+  background: rgba(139, 94, 60, 0.12);
+  color: #6b4526;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.18em;
 }
 
-.editor-page-heading h1 {
-  margin: 14px 0 8px;
-  font-family: 'Fraunces', serif;
-  font-size: 36px;
-  color: #2f241a;
-  letter-spacing: -0.02em;
+.header-chip.subtle {
+  background: rgba(108, 89, 68, 0.08);
+  color: #7a6551;
 }
 
-.editor-page-heading p {
-  margin: 0;
-  color: #8d765f;
-  line-height: 1.7;
-  max-width: 640px;
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  padding: 0 2px;
-  background: transparent;
-  color: #7d5535;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.editor-page-actions {
-  padding: 10px 12px;
-  border: 1px solid rgba(122, 92, 65, 0.1);
-  border-radius: 20px;
-  background: rgba(255, 251, 246, 0.82);
-  box-shadow: 0 12px 28px rgba(99, 74, 53, 0.08);
+.header-action-row {
+  justify-content: flex-end;
 }
 
 .unsaved-indicator {
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   background: rgba(172, 86, 76, 0.12);
   color: #9f473d;
@@ -787,18 +924,30 @@ watch(
   font-weight: 700;
 }
 
-.editor-grid {
-  padding: 4px 0;
+.editor-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.68fr) minmax(320px, 0.82fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.editor-main,
+.editor-sidebar {
+  min-width: 0;
+}
+
+.editor-canvas,
+.sidebar-panel,
+.editor-footer {
+  border: 1px solid rgba(122, 92, 65, 0.09);
+  background: rgba(255, 251, 246, 0.88);
+  box-shadow: 0 22px 52px rgba(99, 74, 53, 0.07);
+  backdrop-filter: blur(16px);
 }
 
 .editor-canvas {
-  padding: 22px;
-  border: 1px solid rgba(122, 92, 65, 0.08);
-  border-radius: 32px;
-  background:
-    radial-gradient(circle at top right, rgba(255, 246, 235, 0.95), transparent 28%),
-    linear-gradient(180deg, rgba(255, 251, 246, 0.98), rgba(250, 245, 237, 0.95));
-  box-shadow: 0 26px 60px rgba(107, 77, 50, 0.08);
+  padding: 24px;
+  border-radius: 30px;
 }
 
 .editor-tabs :deep(.el-tabs__header) {
@@ -811,19 +960,15 @@ watch(
 
 .editor-tabs :deep(.el-tabs__nav-wrap) {
   padding: 6px;
-  border-radius: 999px;
-  background: rgba(246, 237, 227, 0.92);
-}
-
-.editor-tabs :deep(.el-tabs__nav) {
-  gap: 6px;
+  border-radius: 18px;
+  background: rgba(245, 237, 228, 0.9);
 }
 
 .editor-tabs :deep(.el-tabs__item) {
   height: 42px;
-  padding: 0 20px;
-  border-radius: 999px;
-  color: #8a755d;
+  padding: 0 18px;
+  border-radius: 14px;
+  color: #876d56;
   font-weight: 600;
 }
 
@@ -832,85 +977,225 @@ watch(
 }
 
 .editor-tabs :deep(.el-tabs__item.is-active) {
-  color: #3d2b1f;
-  background: #fff;
-  box-shadow: 0 10px 20px rgba(99, 74, 53, 0.1);
+  color: #332419;
+  background: #fffdfa;
+  box-shadow: 0 10px 22px rgba(99, 74, 53, 0.08);
+}
+
+.editor-tabs :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.editor-tabs :deep(.el-form-item__label),
+.sidebar-form :deep(.el-form-item__label) {
+  margin-bottom: 8px;
+  color: #4b3625;
+  font-weight: 600;
+}
+
+.editor-tabs :deep(.el-input__wrapper),
+.editor-tabs :deep(.el-textarea__inner),
+.editor-tabs :deep(.el-select__wrapper),
+.sidebar-form :deep(.el-input__wrapper),
+.sidebar-form :deep(.el-select__wrapper),
+.sidebar-form :deep(.el-input-number) {
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(122, 92, 65, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.editor-tabs :deep(.el-input__wrapper.is-focus),
+.editor-tabs :deep(.el-textarea__inner:focus),
+.editor-tabs :deep(.el-select__wrapper.is-focused),
+.sidebar-form :deep(.el-input__wrapper.is-focus),
+.sidebar-form :deep(.el-select__wrapper.is-focused),
+.sidebar-form :deep(.el-input-number:focus-within) {
+  box-shadow:
+    inset 0 0 0 1px rgba(139, 94, 60, 0.5),
+    0 0 0 4px rgba(139, 94, 60, 0.08);
 }
 
 .editor-section {
-  position: relative;
-  padding: 24px;
-  border: 1px solid rgba(122, 92, 65, 0.1);
-  border-radius: 28px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 252, 247, 0.94));
-  box-shadow: 0 18px 42px rgba(99, 74, 53, 0.08);
-}
-
-.editor-section-header,
-.section-shell {
-  display: grid;
-}
-
-.section-shell {
-  margin-bottom: 14px;
-}
-
-.section-kicker {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(193, 137, 78, 0.12);
-  color: #9f6841;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  padding: 28px;
+  border-radius: 26px;
+  border: 1px solid rgba(122, 92, 65, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 246, 0.94));
 }
 
 .editor-section-header {
-  gap: 8px;
-  margin-bottom: 22px;
-}
-
-.editor-section-header h3 {
-  margin: 0;
-  font-size: 24px;
-  font-family: 'Fraunces', serif;
-  color: #332419;
-}
-
-.editor-section-header p {
-  margin: 0;
-  color: #8a755d;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.basic-form-layout {
   display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.editor-section-header-split {
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
 }
 
-.basic-form-main,
-.basic-form-side {
+.section-kicker,
+.sidebar-kicker {
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  background: rgba(193, 137, 78, 0.12);
+  color: #9f6841;
+}
+
+.editor-section-header h3,
+.sidebar-panel-header h3 {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  color: #332419;
+  letter-spacing: -0.02em;
+}
+
+.editor-section-header h3 {
+  font-size: 28px;
+}
+
+.editor-section-header p,
+.sidebar-panel-header p {
+  margin: 8px 0 0;
+  color: #86725f;
+  line-height: 1.7;
+}
+
+.section-meta {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(244, 233, 220, 0.86);
+  color: #6f5842;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.basic-form-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.field-block {
+  padding: 18px 18px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(122, 92, 65, 0.08);
+  background: rgba(255, 252, 248, 0.9);
+}
+
+.field-block-hero {
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 247, 237, 0.94));
+}
+
+.basic-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.info-tile {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(122, 92, 65, 0.08);
+  background: rgba(249, 241, 231, 0.7);
+}
+
+.info-tile-label {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: #9d6f47;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.info-tile strong {
+  display: block;
+  color: #38291d;
+  font-size: 15px;
+}
+
+.info-tile p {
+  margin: 8px 0 0;
+  color: #7b6651;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.editor-sidebar {
+  position: sticky;
+  top: 20px;
   display: grid;
   gap: 16px;
 }
 
-.basic-form-main {
-  padding: 22px;
+.sidebar-panel {
+  padding: 20px;
   border-radius: 24px;
-  background: linear-gradient(180deg, #fffdf9 0%, #fff8f0 100%);
+}
+
+.sidebar-panel-header {
+  margin-bottom: 16px;
+}
+
+.sidebar-panel-header h3 {
+  font-size: 24px;
+}
+
+.sidebar-form {
+  display: grid;
+  gap: 16px;
+}
+
+.progress-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(250, 243, 235, 0.84);
   border: 1px solid rgba(122, 92, 65, 0.08);
 }
 
-.basic-form-side {
-  padding: 20px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #fdf6ee 0%, #faf0e3 100%);
-  border: 1px solid rgba(193, 137, 78, 0.12);
+.progress-item.done {
+  background: rgba(240, 248, 242, 0.94);
+}
+
+.progress-dot {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(165, 109, 61, 0.28);
+}
+
+.progress-item.done .progress-dot {
+  background: #4e8a61;
+  box-shadow: 0 0 0 6px rgba(78, 138, 97, 0.12);
+}
+
+.progress-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.progress-copy strong {
+  color: #37291d;
+  font-size: 14px;
+}
+
+.progress-copy span {
+  color: #7e6a57;
+  font-size: 13px;
 }
 
 .sort-field {
@@ -920,17 +1205,22 @@ watch(
   gap: 8px;
 }
 
-.field-tip {
+.field-tip,
+.field-counter,
+.tag-helper,
+.muted {
   color: #907e6a;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .field-counter {
   margin-top: 8px;
-  color: #9a7b61;
-  font-size: 12px;
   text-align: right;
+}
+
+.tag-helper {
+  display: inline-flex;
 }
 
 .required-mark {
@@ -979,21 +1269,40 @@ watch(
   color: #7b563b;
   font-size: 12px;
   cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .suggestion-chip:hover {
-  border-color: rgba(157, 107, 74, 0.4);
+  border-color: rgba(157, 107, 74, 0.42);
+  transform: translateY(-1px);
 }
 
-.editor-media-panel {
-  margin-top: 0;
+.media-layout {
+  display: grid;
+  gap: 18px;
 }
 
-.media-subsection {
+.media-panel {
   padding: 18px;
+  border-radius: 22px;
   border: 1px solid rgba(122, 92, 65, 0.08);
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 253, 249, 0.96), rgba(255, 249, 240, 0.9));
+  background: rgba(255, 252, 248, 0.9);
+}
+
+.media-panel-heading h4,
+.image-manager-header h4 {
+  margin: 0;
+  color: #3d2b1f;
+  font-size: 16px;
+}
+
+.media-panel-heading p,
+.image-manager-header p,
+.image-empty-state p {
+  margin: 6px 0 0;
+  color: #8a755d;
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 .image-manager-header {
@@ -1003,76 +1312,75 @@ watch(
   flex-wrap: wrap;
 }
 
-.image-manager-header h4 {
-  margin: 0;
-  font-size: 15px;
-  color: #3d2b1f;
-}
-
-.image-manager-header p {
-  margin: 6px 0 0;
-  color: #8a755d;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 .image-grid {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.image-grid-editor {
-  align-items: stretch;
-}
-
-.image-upload-tile,
-.image-thumb-card {
-  position: relative;
-  min-height: 0;
+.image-upload-tile {
+  display: block;
 }
 
 .image-upload-tile :deep(.el-upload) {
   width: 100%;
-  height: 100%;
-  min-height: 148px;
+  min-height: 168px;
 }
 
 .image-upload-tile-inner,
-.image-thumb-card {
-  border-radius: 18px;
+.image-thumb-card,
+.image-empty-state {
+  border-radius: 20px;
   border: 1px solid rgba(122, 92, 65, 0.12);
   background: #fffdfa;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .image-upload-tile-inner {
-  height: 100%;
-  min-height: 148px;
+  min-height: 168px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  background: linear-gradient(180deg, rgba(255, 252, 248, 1), rgba(252, 244, 235, 0.98));
   color: #7d5535;
 }
 
-.image-upload-tile-inner strong,
-.image-upload-tile-inner span {
-  display: block;
+.upload-icon {
+  font-size: 28px;
 }
 
 .image-upload-tile-inner strong {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .image-upload-tile-inner span {
-  font-size: 12px;
   color: #8a755d;
+  font-size: 12px;
+}
+
+.image-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  text-align: center;
+  padding: 20px;
+}
+
+.image-empty-state strong {
+  color: #3d2b1f;
+  font-size: 16px;
+}
+
+.image-grid-editor {
+  align-items: stretch;
 }
 
 .image-thumb-card {
+  position: relative;
   overflow: hidden;
+  min-height: 0;
 }
 
 .image-thumb-card.cover {
@@ -1092,8 +1400,8 @@ watch(
 
 .image-card-handle {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 10px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -1119,8 +1427,8 @@ watch(
 
 .image-thumb-badges {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -1140,18 +1448,18 @@ watch(
 }
 
 .thumb-badge-cover {
-  background: rgba(193, 137, 78, 0.88);
+  background: rgba(193, 137, 78, 0.9);
 }
 
 .thumb-badge-new {
-  background: rgba(72, 118, 88, 0.84);
+  background: rgba(72, 118, 88, 0.86);
 }
 
 .image-thumb-toolbar {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1160,8 +1468,8 @@ watch(
 }
 
 .thumb-icon-button {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border: 0;
   border-radius: 999px;
   display: inline-flex;
@@ -1178,11 +1486,36 @@ watch(
 }
 
 .thumb-icon-button.active {
-  background: rgba(193, 137, 78, 0.92);
+  background: rgba(193, 137, 78, 0.94);
 }
 
 .thumb-icon-button.danger {
-  background: rgba(172, 86, 76, 0.88);
+  background: rgba(172, 86, 76, 0.9);
+}
+
+.cover-fallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #8a755d;
+  background: rgba(248, 239, 229, 0.86);
+  font-weight: 700;
+}
+
+.editor-footer {
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-radius: 24px;
+}
+
+.editor-footer-copy strong {
+  display: block;
+  color: #34261b;
+  font-size: 15px;
+}
+
+.editor-footer-tip {
+  margin: 6px 0 0;
 }
 
 .editor-save-button {
@@ -1198,100 +1531,100 @@ watch(
   background: linear-gradient(135deg, #d18f62 0%, #a76440 100%);
 }
 
-.editor-footer {
-  width: 100%;
-  justify-content: space-between;
-  padding: 12px 6px 0;
-  border-top: 1px solid rgba(122, 92, 65, 0.08);
-}
-
-.editor-footer-tip {
-  line-height: 1.5;
-}
-
-.muted {
-  color: #907e6a;
-  font-size: 13px;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
-:deep(.el-form-item__label) {
-  padding-bottom: 8px;
-  color: #5b4330;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-:deep(.el-tag) {
-  border-radius: 999px;
-}
-
-:deep(.el-input__wrapper),
-:deep(.el-textarea__inner),
-:deep(.el-select__wrapper),
-:deep(.el-input-number) {
-  border-radius: 16px;
-  box-shadow: none;
-  border: 1px solid rgba(122, 92, 65, 0.18);
-  background: rgba(255, 252, 248, 0.96);
-}
-
-:deep(.el-input__wrapper),
-:deep(.el-select__wrapper) {
-  min-height: 46px;
-}
-
-:deep(.el-textarea__inner) {
-  padding: 14px 16px;
-  line-height: 1.75;
-  min-height: 220px;
-}
-
-:deep(.el-input__wrapper.is-focus),
-:deep(.el-textarea__inner:focus),
-:deep(.el-select__wrapper.is-focused),
-:deep(.el-input-number:hover) {
-  border-color: rgba(157, 92, 56, 0.5);
-  box-shadow: 0 0 0 4px rgba(157, 92, 56, 0.1);
-}
-
 :deep(.el-button:not(.editor-save-button)) {
   border-radius: 14px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1120px) {
+  .editor-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-page-header {
+    flex-direction: column;
+  }
+
+  .editor-page-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .editor-sidebar {
+    position: static;
+  }
+
   .image-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 900px) {
-  .editor-page-header,
+@media (max-width: 820px) {
+  .product-editor-page {
+    gap: 18px;
+  }
+
+  .editor-canvas,
+  .sidebar-panel,
+  .editor-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .editor-section {
+    padding: 20px;
+  }
+
+  .editor-section-header-split {
+    grid-template-columns: 1fr;
+  }
+
+  .basic-tips-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .editor-footer {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .editor-page-actions,
-  .editor-footer-actions {
-    justify-content: flex-end;
+  .editor-footer-actions,
+  .header-action-row {
+    justify-content: stretch;
   }
 
-  .basic-form-layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .editor-footer-actions :deep(.el-button),
+  .header-action-row :deep(.el-button) {
+    flex: 1;
   }
+}
 
+@media (max-width: 560px) {
   .editor-canvas {
-    padding: 18px;
-    border-radius: 24px;
+    padding: 16px;
+  }
+
+  .editor-page-actions,
+  .sidebar-panel,
+  .editor-footer {
+    padding: 14px;
+  }
+
+  .editor-section {
+    padding: 16px;
+  }
+
+  .field-block,
+  .media-panel,
+  .info-tile {
+    padding: 14px;
   }
 
   .image-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 </style>
