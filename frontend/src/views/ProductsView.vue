@@ -59,6 +59,24 @@ const activeFilterSummary = computed(() => {
   return summary.length ? summary.join(' / ') : '全部商品'
 })
 
+const statusSnapshot = computed(() => {
+  const snapshot = {
+    published: 0,
+    draft: 0,
+    archived: 0,
+  }
+
+  products.value.forEach((product) => {
+    snapshot[product.status] += 1
+  })
+
+  return [
+    { key: 'published', label: '当前页已上架', value: snapshot.published },
+    { key: 'draft', label: '当前页待整理', value: snapshot.draft },
+    { key: 'archived', label: '当前页已归档', value: snapshot.archived },
+  ]
+})
+
 const statusLabelMap: Record<ProductItem['status'], string> = {
   draft: '草稿',
   published: '已发布',
@@ -346,8 +364,15 @@ void loadCategories()
             <el-icon><CollectionTag /></el-icon>
           </div>
           <div class="control-panel-copy">
+            <span class="control-panel-kicker">商品运营台</span>
             <strong>商品控制中心</strong>
             <p>当前共 <span class="control-panel-count">{{ total }}</span> 条商品</p>
+          </div>
+          <div class="control-panel-stats">
+            <article v-for="item in statusSnapshot" :key="item.key" class="control-stat-card">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
           </div>
         </div>
 
@@ -358,7 +383,7 @@ void loadCategories()
       </div>
 
       <div class="control-panel-middle" :class="{ 'is-selection-mode': selectedProductIds.length }">
-        <p v-if="!selectedProductIds.length" class="control-panel-helper">先筛选或选择商品，再进行批量处理或新增。</p>
+        <p v-if="!selectedProductIds.length" class="control-panel-helper">先按关键词、状态或分类收缩范围，再处理上架、归档和删除。</p>
         <div class="control-panel-middle-actions" :class="{ 'is-selection-mode': selectedProductIds.length }">
           <div v-if="selectedProductIds.length" class="selection-toolbar">
             <span class="selection-pill">已选择 {{ selectedProductIds.length }} 项</span>
@@ -387,7 +412,7 @@ void loadCategories()
           <el-input
             class="keyword-input"
             v-model="filters.keyword"
-            placeholder="搜名称、标签或描述搜索"
+            placeholder="搜索商品名称、标签或描述"
             clearable
             @keyup.enter="applyFilters"
           >
@@ -533,8 +558,8 @@ void loadCategories()
 .control-panel {
   padding: 0;
   overflow: hidden;
-  border-color: rgba(194, 204, 219, 0.76);
-  box-shadow: 0 18px 45px rgba(145, 154, 168, 0.12);
+  border-color: var(--line-soft);
+  box-shadow: var(--shadow-md);
 }
 
 .control-panel-top {
@@ -544,8 +569,9 @@ void loadCategories()
   gap: 20px;
   padding: 22px 28px 18px;
   background:
-    radial-gradient(circle at 22% 10%, rgba(74, 144, 226, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(246, 249, 255, 0.96), rgba(255, 255, 255, 0.92));
+    radial-gradient(circle at 22% 10%, rgba(192, 138, 54, 0.12), transparent 30%),
+    radial-gradient(circle at 70% 20%, rgba(47, 106, 88, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(251, 250, 246, 0.96), rgba(255, 255, 255, 0.9));
 }
 
 .control-panel-overview {
@@ -553,6 +579,7 @@ void loadCategories()
   display: flex;
   align-items: center;
   gap: 18px;
+  flex-wrap: wrap;
 }
 
 .control-panel-icon {
@@ -562,9 +589,9 @@ void loadCategories()
   align-items: center;
   justify-content: center;
   border-radius: 18px;
-  background: linear-gradient(180deg, #3e8cff, #2f73f6);
+  background: linear-gradient(145deg, var(--brand), var(--brand-deep));
   color: #fff;
-  box-shadow: 0 12px 24px rgba(48, 115, 246, 0.24);
+  box-shadow: 0 12px 24px rgba(29, 67, 56, 0.2);
 }
 
 .control-panel-icon :deep(.el-icon) {
@@ -575,9 +602,22 @@ void loadCategories()
   min-width: 0;
 }
 
+.control-panel-kicker {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-wash);
+  color: var(--brand-deep);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .control-panel-copy strong {
   display: block;
-  color: #1f2f46;
+  color: var(--ink-strong);
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
@@ -585,14 +625,46 @@ void loadCategories()
 
 .control-panel-copy p {
   margin: 4px 0 0;
-  color: #70809a;
+  color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.5;
 }
 
 .control-panel-count {
-  color: #2f73f6;
+  color: var(--brand);
   font-weight: 700;
+}
+
+.control-panel-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.control-stat-card {
+  min-width: 112px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(57, 76, 64, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.control-stat-card span,
+.control-stat-card strong {
+  display: block;
+}
+
+.control-stat-card span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.control-stat-card strong {
+  margin-top: 6px;
+  color: var(--ink-strong);
+  font-size: 20px;
+  line-height: 1;
 }
 
 .create-product-button {
@@ -601,15 +673,15 @@ void loadCategories()
   padding: 0 22px;
   border: 0;
   border-radius: 18px;
-  background: linear-gradient(180deg, #3e8cff, #2f73f6);
-  box-shadow: 0 10px 24px rgba(48, 115, 246, 0.24);
+  background: linear-gradient(145deg, var(--brand), var(--brand-deep));
+  box-shadow: 0 10px 24px rgba(29, 67, 56, 0.22);
   font-size: 15px;
   font-weight: 600;
 }
 
 .create-product-button:hover,
 .create-product-button:focus {
-  background: linear-gradient(180deg, #4b95ff, #397cf8);
+  background: linear-gradient(145deg, #377865, #244e42);
 }
 
 .control-panel-middle {
@@ -618,13 +690,13 @@ void loadCategories()
   justify-content: space-between;
   gap: 16px;
   padding: 14px 28px;
-  border-top: 1px solid rgba(207, 215, 228, 0.78);
-  background: linear-gradient(180deg, rgba(248, 250, 254, 0.98), rgba(245, 248, 252, 0.94));
+  border-top: 1px solid rgba(57, 76, 64, 0.08);
+  background: linear-gradient(180deg, rgba(245, 247, 242, 0.98), rgba(241, 244, 238, 0.94));
 }
 
 .control-panel-helper {
   margin: 0;
-  color: #6f7f98;
+  color: var(--ink-soft);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
@@ -665,8 +737,8 @@ void loadCategories()
   height: 40px;
   padding: 0 16px;
   border-radius: 12px;
-  background: rgba(47, 115, 246, 0.12);
-  color: #2f73f6;
+  background: var(--brand-wash);
+  color: var(--brand-deep);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -675,8 +747,8 @@ void loadCategories()
   height: 40px;
   padding: 0 16px;
   border-radius: 12px;
-  border-color: rgba(207, 215, 228, 0.96);
-  color: #2d3950;
+  border-color: rgba(57, 76, 64, 0.14);
+  color: var(--ink-strong);
   font-weight: 600;
 }
 
@@ -686,9 +758,9 @@ void loadCategories()
 }
 
 .selection-action-button-danger {
-  color: #f04438;
-  border-color: rgba(251, 189, 180, 0.96);
-  background: rgba(255, 246, 245, 0.98);
+  color: var(--danger);
+  border-color: rgba(184, 84, 60, 0.18);
+  background: rgba(255, 245, 242, 0.98);
 }
 
 .tag-list {
@@ -704,7 +776,7 @@ void loadCategories()
 }
 
 .tag-overflow {
-  color: #2f73f6;
+  color: var(--brand-deep);
 }
 
 .table-card,
@@ -714,16 +786,16 @@ void loadCategories()
 
 .table-card {
   overflow: hidden;
-  border-color: rgba(194, 204, 219, 0.76);
-  box-shadow: 0 18px 45px rgba(145, 154, 168, 0.1);
+  border-color: var(--line-soft);
+  box-shadow: var(--shadow-md);
   background:
-    radial-gradient(circle at 18% 0%, rgba(74, 144, 226, 0.08), transparent 28%),
-    linear-gradient(180deg, rgba(246, 249, 255, 0.95), rgba(255, 255, 255, 0.92));
+    radial-gradient(circle at 18% 0%, rgba(47, 106, 88, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(251, 250, 246, 0.95), rgba(255, 255, 255, 0.92));
 }
 
 .control-panel-bottom {
-  border-top: 1px solid rgba(207, 215, 228, 0.78);
-  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid rgba(57, 76, 64, 0.08);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .filter-grid {
@@ -740,7 +812,7 @@ void loadCategories()
 .filter-grid :deep(.el-select__wrapper) {
   min-height: 52px;
   border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgba(199, 208, 222, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(57, 76, 64, 0.12);
 }
 
 .filter-actions {
@@ -758,7 +830,7 @@ void loadCategories()
 .filter-summary {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(215, 222, 233, 0.82);
+  border-top: 1px solid rgba(57, 76, 64, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -771,8 +843,8 @@ void loadCategories()
   align-items: center;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(118, 174, 80, 0.14);
-  color: #679343;
+  background: var(--accent-gold-soft);
+  color: #8b6020;
   font-size: 12px;
   font-weight: 600;
 }
@@ -785,13 +857,13 @@ void loadCategories()
 
 :deep(.el-table) {
   background: transparent;
-  color: #2d3950;
+  color: var(--ink-strong);
 }
 
 :deep(.el-table th.el-table__cell) {
   background: transparent;
   padding: 16px 0;
-  border-bottom: 1px solid rgba(221, 227, 236, 0.96);
+  border-bottom: 1px solid rgba(57, 76, 64, 0.1);
 }
 
 :deep(.el-table tr) {
@@ -800,7 +872,7 @@ void loadCategories()
 
 :deep(.el-table td.el-table__cell) {
   padding: 18px 0;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  border-bottom: 1px solid rgba(57, 76, 64, 0.08);
 }
 
 :deep(.el-table .cell) {
@@ -808,7 +880,7 @@ void loadCategories()
 }
 
 :deep(.el-table th.el-table__cell .cell) {
-  color: #44556d;
+  color: #506158;
   font-size: 13px;
   font-weight: 700;
 }
@@ -818,7 +890,7 @@ void loadCategories()
 }
 
 :deep(.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell) {
-  background: rgba(247, 250, 255, 0.9);
+  background: rgba(244, 247, 242, 0.92);
 }
 
 :deep(.el-tag) {
@@ -827,17 +899,17 @@ void loadCategories()
 }
 
 :deep(.el-tag--success) {
-  background: rgba(223, 247, 229, 0.98);
+  background: rgba(226, 241, 231, 0.98);
   border-color: transparent;
-  color: #169b5f;
+  color: var(--success);
 }
 
 :deep(.tag-list-compact .el-tag--info),
 :deep(.tag-list-compact .el-tag--primary),
 :deep(.tag-list-compact .el-tag) {
-  background: rgba(241, 246, 255, 0.98);
-  border-color: rgba(181, 203, 255, 0.96);
-  color: #2d72f4;
+  background: rgba(239, 245, 241, 0.98);
+  border-color: rgba(57, 76, 64, 0.12);
+  color: var(--brand);
 }
 
 :deep(.el-pagination.is-background .btn-next),
@@ -846,25 +918,25 @@ void loadCategories()
   min-width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: rgba(245, 248, 252, 0.98);
-  color: #6f8199;
+  background: rgba(242, 245, 240, 0.98);
+  color: var(--ink-soft);
 }
 
 :deep(.el-pagination.is-background .el-pager li.is-active) {
-  background: linear-gradient(180deg, #3e8cff, #2f73f6);
+  background: linear-gradient(145deg, var(--brand), var(--brand-deep));
   color: #fff;
-  box-shadow: 0 8px 16px rgba(48, 115, 246, 0.2);
+  box-shadow: 0 8px 16px rgba(29, 67, 56, 0.2);
 }
 
 :deep(.el-pagination .el-select .el-select__wrapper) {
   min-height: 42px;
   border-radius: 14px;
-  background: rgba(248, 250, 253, 0.98);
-  box-shadow: inset 0 0 0 1px rgba(199, 208, 222, 0.92);
+  background: rgba(248, 249, 245, 0.98);
+  box-shadow: inset 0 0 0 1px rgba(57, 76, 64, 0.12);
 }
 
 .muted {
-  color: #64758e;
+  color: var(--ink-soft);
   font-size: 13px;
 }
 
@@ -888,14 +960,14 @@ void loadCategories()
 }
 
 .product-main-title {
-  color: #1f2f46;
+  color: var(--ink-strong);
   font-size: 17px;
   font-weight: 700;
   line-height: 1.4;
 }
 
 .product-main-subtitle {
-  color: #6d7d96;
+  color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.5;
   display: -webkit-box;
@@ -907,7 +979,7 @@ void loadCategories()
 .category-text {
   display: inline-block;
   line-height: 1.5;
-  color: #44556d;
+  color: #4f6158;
 }
 
 .refresh-circle-button {
@@ -915,8 +987,8 @@ void loadCategories()
   height: 42px;
   margin-left: auto;
   border: 0;
-  background: rgba(250, 252, 255, 0.98);
-  color: #556781;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--brand-deep);
   box-shadow: none;
 }
 
@@ -1248,7 +1320,7 @@ void loadCategories()
 
 .image-summary-meta strong {
   display: block;
-  color: #4d5e77;
+  color: #4c5f56;
   font-size: 16px;
   font-weight: 600;
   line-height: 1;
@@ -1259,8 +1331,8 @@ void loadCategories()
   height: 64px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(217, 222, 229, 0.92);
-  background: #f5f7fa;
+  border: 1px solid rgba(57, 76, 64, 0.1);
+  background: var(--bg-panel-muted);
 }
 
 .cover-fallback {
@@ -1269,8 +1341,8 @@ void loadCategories()
   display: grid;
   place-items: center;
   background:
-    linear-gradient(135deg, rgba(229, 233, 240, 0.92), rgba(244, 246, 249, 0.98)),
-    #f5f7fa;
+    linear-gradient(135deg, rgba(220, 229, 223, 0.92), rgba(243, 246, 241, 0.98)),
+    var(--bg-panel-muted);
 }
 
 .image-summary {
@@ -1308,24 +1380,24 @@ void loadCategories()
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  color: #2f73f6;
+  color: var(--brand);
 }
 
 .action-icon-button-danger {
-  color: #ff4d4f;
+  color: var(--danger);
 }
 
 .action-status-button {
   padding: 0 16px;
   height: 36px;
   border-radius: 14px;
-  background: rgba(244, 246, 249, 0.98);
-  color: #2d3950;
+  background: rgba(241, 244, 238, 0.98);
+  color: var(--ink-strong);
   font-weight: 500;
 }
 
 :deep(.action-status-button.is-loading) {
-  background: rgba(236, 242, 250, 0.98);
+  background: rgba(233, 239, 235, 0.98);
 }
 
 :deep(.el-table__body tr.is-row-dragging) .product-main-cell {
@@ -1408,17 +1480,21 @@ void loadCategories()
 }
 
 :deep(.el-table__body-wrapper tbody tr.is-row-dragging td) {
-  background: rgba(247, 239, 231, 0.92);
+  background: rgba(243, 238, 229, 0.92);
 }
 
 :deep(.el-table__body-wrapper tbody tr.is-row-drag-over td) {
-  background: rgba(242, 230, 217, 0.72);
+  background: rgba(231, 239, 234, 0.88);
 }
 
 @media (max-width: 1100px) {
   .control-panel-top {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .control-panel-stats {
+    width: 100%;
   }
 
   .create-product-button {
