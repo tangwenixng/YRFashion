@@ -59,7 +59,7 @@ const activeFilterSummary = computed(() => {
   return summary.length ? summary.join(' / ') : '全部商品'
 })
 
-const statusSnapshot = computed(() => {
+const compactStatusSummary = computed(() => {
   const snapshot = {
     published: 0,
     draft: 0,
@@ -70,11 +70,7 @@ const statusSnapshot = computed(() => {
     snapshot[product.status] += 1
   })
 
-  return [
-    { key: 'published', label: '当前页已上架', value: snapshot.published },
-    { key: 'draft', label: '当前页待整理', value: snapshot.draft },
-    { key: 'archived', label: '当前页已归档', value: snapshot.archived },
-  ]
+  return `已上架 ${snapshot.published} / 待整理 ${snapshot.draft} / 已归档 ${snapshot.archived}`
 })
 
 const statusLabelMap: Record<ProductItem['status'], string> = {
@@ -360,54 +356,45 @@ void loadCategories()
     <section class="content-card control-panel">
       <div class="control-panel-top">
         <div class="control-panel-overview">
-          <div class="control-panel-icon">
-            <el-icon><CollectionTag /></el-icon>
-          </div>
           <div class="control-panel-copy">
-            <span class="control-panel-kicker">商品运营台</span>
-            <strong>商品控制中心</strong>
-            <p>当前共 <span class="control-panel-count">{{ total }}</span> 条商品</p>
-          </div>
-          <div class="control-panel-stats">
-            <article v-for="item in statusSnapshot" :key="item.key" class="control-stat-card">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </article>
+            <strong>商品列表</strong>
+            <p>
+              当前共 <span class="control-panel-count">{{ total }}</span> 条商品
+              <span class="control-panel-divider">/</span>
+              <span class="control-panel-status">{{ compactStatusSummary }}</span>
+            </p>
           </div>
         </div>
 
-        <el-button type="primary" class="create-product-button" @click="openCreate">
-          <el-icon><Plus /></el-icon>
-          新增商品
-        </el-button>
-      </div>
-
-      <div class="control-panel-middle" :class="{ 'is-selection-mode': selectedProductIds.length }">
-        <p v-if="!selectedProductIds.length" class="control-panel-helper">先按关键词、状态或分类收缩范围，再处理上架、归档和删除。</p>
-        <div class="control-panel-middle-actions" :class="{ 'is-selection-mode': selectedProductIds.length }">
-          <div v-if="selectedProductIds.length" class="selection-toolbar">
-            <span class="selection-pill">已选择 {{ selectedProductIds.length }} 项</span>
-            <el-button plain class="selection-action-button" @click="batchSetStatus('published')">
-              <el-icon><Upload /></el-icon>
-              批量上架
-            </el-button>
-            <el-button plain class="selection-action-button" @click="batchSetStatus('archived')">
-              <el-icon><Download /></el-icon>
-              批量下架
-            </el-button>
-            <el-button plain class="selection-action-button selection-action-button-danger" @click="confirmBatchDelete">
-              <el-icon><Delete /></el-icon>
-              批量删除
-            </el-button>
-          </div>
-
+        <div class="control-panel-actions">
           <el-button plain circle class="refresh-circle-button" @click="loadProducts">
             <el-icon><RefreshRight /></el-icon>
+          </el-button>
+
+          <el-button type="primary" class="create-product-button" @click="openCreate">
+            <el-icon><Plus /></el-icon>
+            新增商品
           </el-button>
         </div>
       </div>
 
       <div class="control-panel-bottom">
+        <div v-if="selectedProductIds.length" class="selection-toolbar control-selection-toolbar">
+          <span class="selection-pill">已选择 {{ selectedProductIds.length }} 项</span>
+          <el-button plain class="selection-action-button" @click="batchSetStatus('published')">
+            <el-icon><Upload /></el-icon>
+            批量上架
+          </el-button>
+          <el-button plain class="selection-action-button" @click="batchSetStatus('archived')">
+            <el-icon><Download /></el-icon>
+            批量下架
+          </el-button>
+          <el-button plain class="selection-action-button selection-action-button-danger" @click="confirmBatchDelete">
+            <el-icon><Delete /></el-icon>
+            批量删除
+          </el-button>
+        </div>
+
         <div class="filter-grid">
           <el-input
             class="keyword-input"
@@ -566,8 +553,8 @@ void loadCategories()
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 22px 28px 18px;
+  gap: 16px;
+  padding: 18px 24px 14px;
   background:
     radial-gradient(circle at 22% 10%, rgba(192, 138, 54, 0.12), transparent 30%),
     radial-gradient(circle at 70% 20%, rgba(47, 106, 88, 0.1), transparent 34%),
@@ -577,57 +564,28 @@ void loadCategories()
 .control-panel-overview {
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 18px;
+  align-items: flex-end;
+  gap: 10px;
   flex-wrap: wrap;
-}
-
-.control-panel-icon {
-  width: 58px;
-  height: 58px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  background: linear-gradient(145deg, var(--brand), var(--brand-deep));
-  color: #fff;
-  box-shadow: 0 12px 24px rgba(29, 67, 56, 0.2);
-}
-
-.control-panel-icon :deep(.el-icon) {
-  font-size: 26px;
 }
 
 .control-panel-copy {
   min-width: 0;
 }
 
-.control-panel-kicker {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 8px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--brand-wash);
-  color: var(--brand-deep);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
 .control-panel-copy strong {
   display: block;
   color: var(--ink-strong);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .control-panel-copy p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .control-panel-count {
@@ -635,80 +593,36 @@ void loadCategories()
   font-weight: 700;
 }
 
-.control-panel-stats {
+.control-panel-divider {
+  margin: 0 8px;
+  color: rgba(102, 117, 107, 0.56);
+}
+
+.control-panel-status {
+  white-space: nowrap;
+}
+
+.control-panel-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
-}
-
-.control-stat-card {
-  min-width: 112px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(57, 76, 64, 0.08);
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.control-stat-card span,
-.control-stat-card strong {
-  display: block;
-}
-
-.control-stat-card span {
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.control-stat-card strong {
-  margin-top: 6px;
-  color: var(--ink-strong);
-  font-size: 20px;
-  line-height: 1;
 }
 
 .create-product-button {
-  min-width: 164px;
-  height: 52px;
-  padding: 0 22px;
+  min-width: 148px;
+  height: 48px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(145deg, var(--brand), var(--brand-deep));
   box-shadow: 0 10px 24px rgba(29, 67, 56, 0.22);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .create-product-button:hover,
 .create-product-button:focus {
   background: linear-gradient(145deg, #377865, #244e42);
-}
-
-.control-panel-middle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 28px;
-  border-top: 1px solid rgba(57, 76, 64, 0.08);
-  background: linear-gradient(180deg, rgba(245, 247, 242, 0.98), rgba(241, 244, 238, 0.94));
-}
-
-.control-panel-helper {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.control-panel-middle-actions {
-  display: flex;
-  flex: 1;
-  min-width: 0;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
 }
 
 .selection-toolbar,
@@ -729,6 +643,12 @@ void loadCategories()
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.control-selection-toolbar {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(57, 76, 64, 0.08);
 }
 
 .selection-pill {
@@ -781,7 +701,7 @@ void loadCategories()
 
 .table-card,
 .control-panel-bottom {
-  padding: 16px 28px;
+  padding: 14px 24px;
 }
 
 .table-card {
@@ -828,8 +748,8 @@ void loadCategories()
 }
 
 .filter-summary {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid rgba(57, 76, 64, 0.08);
   display: flex;
   align-items: center;
@@ -983,9 +903,8 @@ void loadCategories()
 }
 
 .refresh-circle-button {
-  width: 42px;
-  height: 42px;
-  margin-left: auto;
+  width: 40px;
+  height: 40px;
   border: 0;
   background: rgba(255, 255, 255, 0.78);
   color: var(--brand-deep);
@@ -1493,12 +1412,12 @@ void loadCategories()
     align-items: flex-start;
   }
 
-  .control-panel-stats {
+  .control-panel-actions {
     width: 100%;
   }
 
   .create-product-button {
-    width: 100%;
+    flex: 1;
   }
 
   .filter-grid {
@@ -1511,16 +1430,6 @@ void loadCategories()
 }
 
 @media (max-width: 900px) {
-  .control-panel-middle {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .control-panel-middle-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .selection-toolbar {
     width: 100%;
     justify-content: space-between;
@@ -1528,9 +1437,14 @@ void loadCategories()
 
   .create-product-button,
   .control-panel-top,
-  .control-panel-middle,
   .control-panel-bottom {
     padding: 16px;
+  }
+
+  .control-panel-status {
+    display: inline-block;
+    margin-top: 4px;
+    white-space: normal;
   }
 
   .inline-grid,
