@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Delete, EditPen, Plus, RefreshRight, Sort } from '@element-plus/icons-vue'
+import { Delete, EditPen, Plus, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -256,24 +256,28 @@ const bindProductRowDrag = () => {
   const rows = Array.from(tableElement.querySelectorAll('.el-table__body-wrapper tbody tr'))
   rows.forEach((row, index) => {
     const product = products.value[index]
+    const dragTrigger = row.querySelector('.product-main-cell') as HTMLElement | null
     if (!product) {
       return
     }
 
-    row.setAttribute('draggable', 'true')
-    row.ondragstart = (event) => {
-      const target = event.target as HTMLElement | null
-      if (!target?.closest('.drag-handle')) {
-        event.preventDefault()
-        return
-      }
+    row.removeAttribute('draggable')
+    if (!dragTrigger) {
+      return
+    }
 
+    dragTrigger.setAttribute('draggable', 'true')
+    dragTrigger.ondragstart = (event) => {
       dragProductId.value = product.id
       event.dataTransfer?.setData('text/plain', String(product.id))
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = 'move'
       }
       row.classList.add('is-row-dragging')
+    }
+    dragTrigger.ondragend = () => {
+      dragProductId.value = null
+      rows.forEach((item) => item.classList.remove('is-row-dragging', 'is-row-drag-over'))
     }
     row.ondragover = (event) => {
       if (!dragProductId.value || dragProductId.value === product.id) {
@@ -284,10 +288,6 @@ const bindProductRowDrag = () => {
     }
     row.ondragleave = () => {
       row.classList.remove('is-row-drag-over')
-    }
-    row.ondragend = () => {
-      dragProductId.value = null
-      rows.forEach((item) => item.classList.remove('is-row-dragging', 'is-row-drag-over'))
     }
     row.ondrop = async (event) => {
       event.preventDefault()
@@ -372,7 +372,7 @@ void loadCategories()
     </section>
 
     <section class="content-card table-card">
-      <div class="table-tip">拖住排序手柄可直接调整当前页商品顺序。</div>
+      <div class="table-tip">拖住商品信息区域可直接调整当前页商品顺序。</div>
       <el-table
         ref="productsTableRef"
         :data="products"
@@ -382,20 +382,12 @@ void loadCategories()
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column label="排序" width="72">
-          <template #default="{ row }">
-            <div class="drag-cell">
-              <span class="drag-handle" :data-product-id="row.id" title="拖动排序">
-                <el-icon><Sort /></el-icon>
-              </span>
-              <span class="drag-order">{{ row.sort_order }}</span>
-            </div>
-          </template>
-        </el-table-column>
         <el-table-column label="商品信息" min-width="300">
           <template #default="{ row }">
             <div class="product-main-cell">
-              <strong class="product-main-title">{{ row.name }}</strong>
+              <div class="product-main-heading">
+                <strong class="product-main-title">{{ row.name }}</strong>
+              </div>
               <span class="product-main-subtitle" :title="getProductSummary(row)">
                 {{ getProductSummary(row) }}
               </span>
@@ -621,6 +613,13 @@ void loadCategories()
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  cursor: grab;
+}
+
+.product-main-heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .product-main-title,
@@ -763,7 +762,6 @@ void loadCategories()
 .image-manager-header,
 .image-card-status,
 .image-card-actions,
-.drag-cell,
 .image-summary-meta {
   display: flex;
   align-items: center;
@@ -1025,30 +1023,6 @@ void loadCategories()
   min-width: 0;
 }
 
-.drag-cell {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(122, 92, 65, 0.1);
-  color: #6f5240;
-  cursor: grab;
-}
-
-.drag-order {
-  font-size: 12px;
-  color: #907e6a;
-}
-
 .row-actions {
   justify-content: flex-end;
   gap: 14px;
@@ -1061,6 +1035,10 @@ void loadCategories()
   padding: 6px;
   border-radius: 8px;
   font-weight: 500;
+}
+
+:deep(.el-table__body tr.is-row-dragging) .product-main-cell {
+  cursor: grabbing;
 }
 
 .action-link :deep(span) {
