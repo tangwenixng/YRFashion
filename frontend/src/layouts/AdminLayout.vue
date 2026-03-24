@@ -49,37 +49,6 @@ const navigationGroups = [
   },
 ] as const
 
-const pageMetaMap: Record<string, { eyebrow: string; summary: string }> = {
-  '/dashboard': {
-    eyebrow: '经营概览',
-    summary: '把商品规模、咨询趋势和用户活跃放在一个稳定的总览入口中。',
-  },
-  '/accounts': {
-    eyebrow: '后台权限',
-    summary: '集中维护运营账号、状态和密码安全，避免后台权限散落。',
-  },
-  '/categories': {
-    eyebrow: '商品结构',
-    summary: '先把分类层级整理清楚，再处理商品上新和前台展示顺序。',
-  },
-  '/products': {
-    eyebrow: '商品编排',
-    summary: '围绕上新、状态切换、拖拽排序和图文维护建立高频操作主路径。',
-  },
-  '/messages': {
-    eyebrow: '咨询处理',
-    summary: '让留言筛选、回复和商品关联保持在同一条运营链路里。',
-  },
-  '/users': {
-    eyebrow: '用户观察',
-    summary: '快速查看小程序访客和咨询用户，为选品和内容调整提供线索。',
-  },
-  '/settings': {
-    eyebrow: '店铺参数',
-    summary: '统一管理店铺展示、提醒和基础配置，保证后台运行稳定。',
-  },
-}
-
 const activeMenu = computed(() => {
   if (route.path.startsWith('/products/')) {
     return '/products'
@@ -89,7 +58,6 @@ const activeMenu = computed(() => {
 
 const menuCollapsed = computed(() => collapsed.value && !isMobile.value)
 const currentTitle = computed(() => (route.meta.title as string) || '管理后台')
-const currentPageMeta = computed(() => pageMetaMap[activeMenu.value] ?? pageMetaMap['/dashboard'])
 
 const syncViewportState = () => {
   isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
@@ -152,7 +120,6 @@ onBeforeUnmount(() => {
 
           <div class="topbar-copy">
             <strong>{{ currentTitle }}</strong>
-            <p class="topbar-subtitle">{{ currentPageMeta.eyebrow }}</p>
           </div>
         </div>
 
@@ -361,13 +328,6 @@ onBeforeUnmount(() => {
   font-size: clamp(24px, 2.6vw, 30px);
   color: var(--ink-strong);
   line-height: 1.15;
-}
-
-.topbar-subtitle {
-  margin: 4px 0 0;
-  color: var(--ink-soft);
-  font-size: 13px;
-  line-height: 1.4;
 }
 
 .user-pill {
