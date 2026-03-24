@@ -28,62 +28,55 @@ const navigationGroups = [
   {
     title: '经营总览',
     items: [
-      { index: '/dashboard', label: '概览', icon: House, badge: '看板' },
+      { index: '/dashboard', label: '概览', icon: House },
     ],
   },
   {
     title: '商品运营',
     items: [
-      { index: '/products', label: '商品管理', icon: Promotion, badge: '核心' },
-      { index: '/categories', label: '分类管理', icon: CollectionTag, badge: '结构' },
-      { index: '/messages', label: '留言管理', icon: ChatLineRound, badge: '转化' },
+      { index: '/products', label: '商品管理', icon: Promotion },
+      { index: '/categories', label: '分类管理', icon: CollectionTag },
+      { index: '/messages', label: '留言管理', icon: ChatLineRound },
     ],
   },
   {
     title: '系统支持',
     items: [
-      { index: '/accounts', label: '账号管理', icon: UserFilled, badge: '权限' },
-      { index: '/users', label: '用户列表', icon: User, badge: '访客' },
-      { index: '/settings', label: '店铺设置', icon: Setting, badge: '配置' },
+      { index: '/accounts', label: '账号管理', icon: UserFilled },
+      { index: '/users', label: '用户列表', icon: User },
+      { index: '/settings', label: '店铺设置', icon: Setting },
     ],
   },
 ] as const
 
-const pageMetaMap: Record<string, { eyebrow: string; summary: string; highlights: string[] }> = {
+const pageMetaMap: Record<string, { eyebrow: string; summary: string }> = {
   '/dashboard': {
     eyebrow: '经营概览',
     summary: '把商品规模、咨询趋势和用户活跃放在一个稳定的总览入口中。',
-    highlights: ['总览优先', '数据聚合'],
   },
   '/accounts': {
     eyebrow: '后台权限',
     summary: '集中维护运营账号、状态和密码安全，避免后台权限散落。',
-    highlights: ['权限收口', '账号安全'],
   },
   '/categories': {
     eyebrow: '商品结构',
     summary: '先把分类层级整理清楚，再处理商品上新和前台展示顺序。',
-    highlights: ['分类清晰', '结构先行'],
   },
   '/products': {
     eyebrow: '商品编排',
     summary: '围绕上新、状态切换、拖拽排序和图文维护建立高频操作主路径。',
-    highlights: ['上新主线', '筛选优先'],
   },
   '/messages': {
     eyebrow: '咨询处理',
     summary: '让留言筛选、回复和商品关联保持在同一条运营链路里。',
-    highlights: ['咨询转化', '回复闭环'],
   },
   '/users': {
     eyebrow: '用户观察',
     summary: '快速查看小程序访客和咨询用户，为选品和内容调整提供线索。',
-    highlights: ['用户画像', '行为线索'],
   },
   '/settings': {
     eyebrow: '店铺参数',
     summary: '统一管理店铺展示、提醒和基础配置，保证后台运行稳定。',
-    highlights: ['配置统一', '交付稳定'],
   },
 }
 
@@ -132,12 +125,6 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="!menuCollapsed" class="sidebar-overview">
-        <span class="sidebar-overview-label">商品型导航骨架</span>
-        <strong>让商品、分类和咨询成为后台主路径</strong>
-        <p>把高频运营动作放前面，减少在不同页面之间来回跳转的成本。</p>
-      </div>
-
       <div class="sidebar-groups">
         <section v-for="group in navigationGroups" :key="group.title" class="nav-section">
           <p v-if="!menuCollapsed" class="nav-section-title">{{ group.title }}</p>
@@ -150,19 +137,9 @@ onBeforeUnmount(() => {
             <el-menu-item v-for="item in group.items" :key="item.index" :index="item.index">
               <el-icon><component :is="item.icon" /></el-icon>
               <span>{{ item.label }}</span>
-              <em v-if="!menuCollapsed" class="menu-badge">{{ item.badge }}</em>
             </el-menu-item>
           </el-menu>
         </section>
-      </div>
-
-      <div v-if="!menuCollapsed" class="sidebar-footnote">
-        <span class="sidebar-footnote-label">{{ currentPageMeta.eyebrow }}</span>
-        <strong>{{ currentTitle }}</strong>
-        <p>{{ currentPageMeta.summary }}</p>
-        <div class="sidebar-footnote-tags">
-          <span v-for="highlight in currentPageMeta.highlights" :key="highlight">{{ highlight }}</span>
-        </div>
       </div>
     </aside>
 
@@ -174,19 +151,12 @@ onBeforeUnmount(() => {
           </button>
 
           <div class="topbar-copy">
-            <p class="topbar-label">{{ currentPageMeta.eyebrow }}</p>
             <strong>{{ currentTitle }}</strong>
-            <p class="topbar-summary">{{ currentPageMeta.summary }}</p>
+            <p class="topbar-subtitle">{{ currentPageMeta.eyebrow }}</p>
           </div>
         </div>
 
         <div class="topbar-side">
-          <div class="topbar-highlights">
-            <span v-for="highlight in currentPageMeta.highlights" :key="highlight" class="highlight-pill">
-              {{ highlight }}
-            </span>
-          </div>
-
           <div class="user-pill">
             <span class="user-avatar">{{ authStore.profile?.display_name?.slice(0, 1) ?? 'A' }}</span>
             <div class="user-meta">
@@ -224,7 +194,7 @@ onBeforeUnmount(() => {
   top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   padding: 24px 18px 18px;
   border: 1px solid var(--line-soft);
   border-radius: 32px;
@@ -274,10 +244,7 @@ onBeforeUnmount(() => {
 }
 
 .brand-copy span,
-.sidebar-overview-label,
 .nav-section-title,
-.topbar-label,
-.sidebar-footnote-label,
 .user-meta span {
   font-size: 12px;
   letter-spacing: 0.16em;
@@ -285,52 +252,28 @@ onBeforeUnmount(() => {
   color: #7a877f;
 }
 
-.sidebar-overview,
-.sidebar-footnote {
-  padding: 18px;
-  border-radius: 24px;
-  border: 1px solid rgba(57, 76, 64, 0.1);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.3)),
-    rgba(248, 250, 246, 0.76);
-}
-
-.sidebar-overview strong,
-.sidebar-footnote strong {
-  display: block;
-  margin-top: 10px;
-  color: var(--ink-strong);
-  font-size: 18px;
-  line-height: 1.4;
-}
-
-.sidebar-overview p,
-.sidebar-footnote p {
-  margin: 8px 0 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
 .sidebar-groups {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   overflow: auto;
   padding-right: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(57, 76, 64, 0.08);
 }
 
 .nav-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nav-section-title {
   margin: 0;
   padding: 0 12px;
+  font-size: 11px;
 }
 
 .sidebar-menu {
@@ -343,11 +286,11 @@ onBeforeUnmount(() => {
 }
 
 :deep(.sidebar-menu .el-menu-item) {
-  height: 56px;
-  margin-bottom: 6px;
-  border-radius: 18px;
+  height: 52px;
+  margin-bottom: 4px;
+  border-radius: 16px;
   color: #42544b;
-  padding-right: 14px;
+  padding-right: 12px;
 }
 
 :deep(.sidebar-menu .el-menu-item.is-active) {
@@ -357,42 +300,6 @@ onBeforeUnmount(() => {
 
 :deep(.sidebar-menu .el-menu-item .el-icon) {
   font-size: 18px;
-}
-
-.menu-badge {
-  margin-left: auto;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.76);
-  color: var(--brand-deep);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.sidebar-footnote-tags,
-.topbar-highlights {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.sidebar-footnote-tags {
-  margin-top: 14px;
-}
-
-.sidebar-footnote-tags span,
-.highlight-pill {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--brand-wash);
-  color: var(--brand-deep);
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .workspace {
@@ -412,8 +319,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px 28px 22px;
+  gap: 16px;
+  padding: 18px 28px;
   border-bottom: 1px solid rgba(57, 76, 64, 0.08);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
 }
@@ -422,7 +329,7 @@ onBeforeUnmount(() => {
 .topbar-side {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .topbar-main {
@@ -450,24 +357,24 @@ onBeforeUnmount(() => {
 
 .topbar-copy strong {
   display: block;
-  margin-top: 6px;
   font-family: 'Sora', sans-serif;
-  font-size: clamp(28px, 3vw, 34px);
+  font-size: clamp(24px, 2.6vw, 30px);
   color: var(--ink-strong);
+  line-height: 1.15;
 }
 
-.topbar-summary {
-  margin: 8px 0 0;
+.topbar-subtitle {
+  margin: 4px 0 0;
   color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .user-pill {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 14px 8px 10px;
+  padding: 7px 12px 7px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(57, 76, 64, 0.1);
@@ -509,6 +416,7 @@ onBeforeUnmount(() => {
     position: static;
     width: auto;
     height: auto;
+    gap: 10px;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
@@ -517,7 +425,7 @@ onBeforeUnmount(() => {
   }
 
   .topbar {
-    padding: 20px 18px 18px;
+    padding: 16px 18px;
     align-items: flex-start;
     flex-wrap: wrap;
   }
@@ -541,7 +449,7 @@ onBeforeUnmount(() => {
   }
 
   .topbar-copy strong {
-    font-size: 26px;
+    font-size: 24px;
   }
 }
 </style>
