@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from backend.core.config import settings
 from backend.db.session import SessionLocal
@@ -17,6 +18,24 @@ def get_admin_headers(client: TestClient) -> dict[str, str]:
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+def build_test_image_bytes(
+    image_format: str = "PNG",
+    size: tuple[int, int] = (64, 64),
+    quality: int = 95,
+) -> bytes:
+    if image_format == "JPEG":
+        image = Image.effect_noise(size, 96).convert("RGB")
+    else:
+        image = Image.new("RGB", size, color=(196, 164, 140))
+
+    buffer = BytesIO()
+    save_kwargs: dict[str, int] = {}
+    if image_format == "JPEG":
+        save_kwargs["quality"] = quality
+    image.save(buffer, format=image_format, **save_kwargs)
+    return buffer.getvalue()
 
 
 def test_product_crud_and_sort() -> None:
@@ -88,7 +107,9 @@ def test_product_image_upload() -> None:
         upload_response = client.post(
             f"/api/admin/products/{product_id}/images",
             headers=headers,
-            files={"file": ("look.png", BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+            files={
+                "file": ("look.png", BytesIO(build_test_image_bytes("PNG")), "image/png")
+            },
             data={"sort_order": "0", "is_cover": "true"},
         )
 
@@ -119,13 +140,17 @@ def test_product_image_management() -> None:
         first_upload_response = client.post(
             f"/api/admin/products/{product_id}/images",
             headers=headers,
-            files={"file": ("cover.png", BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+            files={
+                "file": ("cover.png", BytesIO(build_test_image_bytes("PNG")), "image/png")
+            },
             data={"sort_order": "0", "is_cover": "true"},
         )
         second_upload_response = client.post(
             f"/api/admin/products/{product_id}/images",
             headers=headers,
-            files={"file": ("detail.png", BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+            files={
+                "file": ("detail.png", BytesIO(build_test_image_bytes("PNG")), "image/png")
+            },
             data={"sort_order": "3", "is_cover": "false"},
         )
 
@@ -198,7 +223,9 @@ def test_product_delete_removes_product_and_local_images() -> None:
         upload_response = client.post(
             f"/api/admin/products/{product_id}/images",
             headers=headers,
-            files={"file": ("cover.png", BytesIO(b"\x89PNG\r\n\x1a\n"), "image/png")},
+            files={
+                "file": ("cover.png", BytesIO(build_test_image_bytes("PNG")), "image/png")
+            },
             data={"sort_order": "0", "is_cover": "true"},
         )
         image_path = settings.resolved_upload_dir / Path(
@@ -212,6 +239,43 @@ def test_product_delete_removes_product_and_local_images() -> None:
     assert delete_response.status_code == 204
     assert all(item["id"] != product_id for item in list_response.json()["items"])
     assert not image_path.exists()
+
+
+def test_product_image_upload_auto_compresses_large_jpeg() -> None:
+    product_name = f"Large-{uuid4().hex[:8]}"
+    original_content = build_test_image_bytes("JPEG", size=(2400, 1800), quality=95)
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        create_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": product_name,
+                "description": "large image",
+                "tags": [],
+                "status": "draft",
+                "sort_order": 0,
+            },
+        )
+        product_id = create_response.json()["id"]
+
+        upload_response = client.post(
+            f"/api/admin/products/{product_id}/images",
+            headers=headers,
+            files={"file": ("large.jpg", BytesIO(original_content), "image/jpeg")},
+            data={"sort_order": "0", "is_cover": "true"},
+        )
+
+    assert upload_response.status_code == 200
+    image_path = settings.resolved_upload_dir / Path(
+        upload_response.json()["image_url"].removeprefix("/uploads/")
+    )
+    assert image_path.exists()
+    assert image_path.stat().st_size < len(original_content)
+
+    with Image.open(image_path) as saved_image:
+        assert max(saved_image.size) <= 1600
 
 
 def test_product_list_supports_filters_and_pagination() -> None:

@@ -1,20 +1,23 @@
 from functools import lru_cache
+from io import BytesIO
 from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from backend.core.config import settings
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+MAX_IMAGE_DIMENSION = 1600
+JPEG_SAVE_QUALITY = 82
+WEBP_SAVE_QUALITY = 82
 
 
 def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
-    content = _read_and_validate_upload(upload)
-    extension = Path(upload.filename or "upload.bin").suffix.lower() or ".bin"
+    content, extension, content_type = _read_and_prepare_upload(upload)
     relative_path = _build_product_image_key(product_id, extension)
-    content_type = upload.content_type or "application/octet-stream"
 
     if settings.uses_cloud_storage:
         image_url = _save_cloud_file(relative_path, content, content_type)
@@ -25,10 +28,8 @@ def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
 
 
 def save_miniapp_avatar(user_id: int, upload: UploadFile) -> tuple[str, str]:
-    content = _read_and_validate_upload(upload)
-    extension = Path(upload.filename or "avatar.bin").suffix.lower() or ".bin"
+    content, extension, content_type = _read_and_prepare_upload(upload)
     relative_path = _build_miniapp_avatar_key(user_id, extension)
-    content_type = upload.content_type or "application/octet-stream"
 
     if settings.uses_cloud_storage:
         image_url = _save_cloud_file(relative_path, content, content_type)
@@ -70,7 +71,7 @@ def resolve_public_file_url(
     return (fallback_url or "").strip()
 
 
-def _read_and_validate_upload(upload: UploadFile) -> bytes:
+def _read_and_prepare_upload(upload: UploadFile) -> tuple[bytes, str, str]:
     if upload.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -84,7 +85,91 @@ def _read_and_validate_upload(upload: UploadFile) -> bytes:
             detail="Image exceeds 5MB limit",
         )
 
-    return content
+    try:
+        optimized_content, extension, content_type = _optimize_image_content(
+            content,
+            upload.content_type,
+            Path(upload.filename or "").suffix.lower(),
+        )
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image content",
+        ) from exc
+
+    return optimized_content, extension, content_type
+
+
+def _optimize_image_content(
+    content: bytes,
+    content_type: str,
+    original_extension: str,
+) -> tuple[bytes, str, str]:
+    output_format, default_extension = _resolve_output_format(content_type)
+
+    with Image.open(BytesIO(content)) as source_image:
+        image = ImageOps.exif_transpose(source_image)
+
+        image = _normalize_image_mode(image, output_format)
+        resized = False
+        if max(image.size) > MAX_IMAGE_DIMENSION:
+            image.thumbnail((MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION), Image.Resampling.LANCZOS)
+            resized = True
+
+        output = BytesIO()
+        image.save(output, format=output_format, **_build_save_kwargs(output_format))
+        optimized_content = output.getvalue()
+
+    if not resized and len(optimized_content) >= len(content):
+        return content, original_extension or default_extension, content_type
+
+    return optimized_content, original_extension or default_extension, content_type
+
+
+def _resolve_output_format(content_type: str) -> tuple[str, str]:
+    if content_type == "image/png":
+        return "PNG", ".png"
+    if content_type == "image/webp":
+        return "WEBP", ".webp"
+    return "JPEG", ".jpg"
+
+
+def _normalize_image_mode(image: Image.Image, output_format: str) -> Image.Image:
+    if output_format == "JPEG":
+        if image.mode not in {"RGB", "L"}:
+            return image.convert("RGB")
+        return image
+
+    if output_format == "PNG":
+        if image.mode in {"RGBA", "LA", "L", "RGB"}:
+            return image
+        if "transparency" in image.info:
+            return image.convert("RGBA")
+        return image.convert("RGB")
+
+    if image.mode in {"RGB", "RGBA", "L", "LA"}:
+        return image
+    if "transparency" in image.info:
+        return image.convert("RGBA")
+    return image.convert("RGB")
+
+
+def _build_save_kwargs(output_format: str) -> dict[str, int | bool]:
+    if output_format == "PNG":
+        return {
+            "optimize": True,
+            "compress_level": 9,
+        }
+    if output_format == "WEBP":
+        return {
+            "quality": WEBP_SAVE_QUALITY,
+            "method": 6,
+        }
+    return {
+        "quality": JPEG_SAVE_QUALITY,
+        "optimize": True,
+        "progressive": True,
+    }
 
 
 def _build_product_image_key(product_id: int, extension: str) -> str:

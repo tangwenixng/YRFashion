@@ -2,10 +2,18 @@ import time
 from io import BytesIO
 
 from fastapi.testclient import TestClient
+from PIL import Image
 
 from backend.db.session import SessionLocal
 from backend.main import app
 from backend.models import MiniappUser
+
+
+def build_avatar_bytes() -> bytes:
+    image = Image.new("RGB", (64, 64), color=(164, 188, 196))
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def test_miniapp_login_creates_user_and_returns_token() -> None:
@@ -89,7 +97,7 @@ def test_miniapp_avatar_upload_marks_avatar_as_pending() -> None:
         upload_response = client.post(
             "/api/miniapp/auth/avatar",
             headers=headers,
-            files={"file": ("avatar.png", BytesIO(b"\x89PNG\r\n\x1a\navatar"), "image/png")},
+            files={"file": ("avatar.png", BytesIO(build_avatar_bytes()), "image/png")},
         )
 
     assert upload_response.status_code == 200
