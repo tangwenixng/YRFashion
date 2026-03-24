@@ -78,11 +78,7 @@ const productId = computed(() => {
 
 const isEditing = computed(() => Boolean(productId.value))
 const pageTitle = computed(() => (isEditing.value ? '编辑商品' : '新增商品'))
-const pageSubtitle = computed(() =>
-  isEditing.value
-    ? '调整基础信息与图片顺序，保存后会同步更新列表展示。'
-    : '先填写基础信息，再补充图片与封面，完成后保存到商品列表。',
-)
+
 const statusLabelMap: Record<ProductFormState['status'], string> = {
   draft: '草稿',
   published: '已发布',
@@ -523,9 +519,7 @@ watch(
           <el-icon><ArrowLeft /></el-icon>
           返回列表
         </button>
-        <span class="editor-kicker">{{ isEditing ? 'PRODUCT EDITOR' : 'PRODUCT CREATE' }}</span>
         <h1>{{ pageTitle }}</h1>
-        <p>{{ pageSubtitle }}</p>
       </div>
 
       <div class="editor-page-actions">
@@ -549,14 +543,6 @@ watch(
             <el-tabs v-model="editorActiveTab" class="editor-tabs">
               <el-tab-pane name="basic" label="基本信息">
                 <section class="editor-section">
-                  <div class="editor-section-header">
-                    <div>
-                      <span class="section-kicker">基础信息</span>
-                      <h3>先完成商品内容，再决定展示方式</h3>
-                      <p>标题和描述负责表达商品本身，分类、状态和排序在右侧统一管理，减少填写时的视觉干扰。</p>
-                    </div>
-                  </div>
-
                   <div class="basic-form-stack">
                     <el-form-item required class="field-block field-block-hero">
                       <template #label>
@@ -595,15 +581,6 @@ watch(
 
               <el-tab-pane name="media" label="图片维护">
                 <section class="editor-section editor-media-panel">
-                  <div class="editor-section-header editor-section-header-split">
-                    <div>
-                      <span class="section-kicker">图片管理</span>
-                      <h3>把上传入口和整理动作分开</h3>
-                      <p>先补充素材，再拖拽调整顺序；封面图会优先用于列表和首页等关键位置展示。</p>
-                    </div>
-                    <span class="section-meta">{{ editorImages.length ? `共 ${editorImages.length} 张图片` : '还没有图片' }}</span>
-                  </div>
-
                   <div class="media-layout">
                     <section class="media-panel media-upload-panel">
                       <div class="media-panel-heading">
@@ -723,7 +700,6 @@ watch(
           <div class="sidebar-panel-header">
             <span class="sidebar-kicker">编辑进度</span>
             <h3>保存前检查</h3>
-            <p>这三个信息会直接影响商品是否能顺利上架与展示。</p>
           </div>
 
           <ul class="progress-list">

@@ -310,11 +310,6 @@ void loadCategories()
 <template>
   <section class="products-page">
     <div class="page-header">
-      <div class="page-heading">
-        <h1 class="page-title">商品管理</h1>
-        <p class="page-subtitle">商品文案、图片、发布状态和展示顺序都在这里一次性完成。</p>
-      </div>
-
       <div class="header-actions">
         <div class="header-batch-actions">
           <span class="header-selection muted">
