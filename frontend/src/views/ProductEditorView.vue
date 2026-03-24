@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ArrowLeft, Delete, InfoFilled, Picture, Sort, Star } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, InfoFilled, Picture, Plus, Sort, Star } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 
-import { fetchCategories, type CategoryItem } from '../api/modules/categories'
+import { createCategory, fetchCategories, type CategoryItem } from '../api/modules/categories'
 import {
   createProduct,
   deleteProductImage,
@@ -47,6 +47,7 @@ const SUGGESTED_TAGS = ['通勤', '春季', '夏季', '秋冬', '日常', '约�
 
 const saving = ref(false)
 const loading = ref(false)
+const creatingCategory = ref(false)
 const categories = ref<CategoryItem[]>([])
 const editorUploadRef = ref<{ clearFiles: () => void } | null>(null)
 const editorActiveTab = ref<'basic' | 'media'>('basic')
@@ -56,8 +57,10 @@ const imageUploadKey = ref(0)
 const dragImageKey = ref('')
 const dragOverImageKey = ref('')
 const tagInput = ref('')
+const newCategoryName = ref('')
 const initialSnapshot = ref('')
 const allowLeave = ref(false)
+const categoryCreatorVisible = ref(false)
 
 const form = reactive<ProductFormState>({
   name: '',
@@ -135,6 +138,8 @@ const resetForm = () => {
   form.status = 'draft'
   form.sort_order = 0
   tagInput.value = ''
+  newCategoryName.value = ''
+  categoryCreatorVisible.value = false
   resetEditorImages()
 }
 
@@ -241,6 +246,39 @@ const removeTag = (tag: string) => {
 
 const addSuggestedTag = (tag: string) => {
   addTag(tag)
+}
+
+const toggleCategoryCreator = () => {
+  categoryCreatorVisible.value = !categoryCreatorVisible.value
+  if (!categoryCreatorVisible.value) {
+    newCategoryName.value = ''
+  }
+}
+
+const createCategoryFromEditor = async () => {
+  const name = newCategoryName.value.trim()
+  if (!name) {
+    ElMessage.warning('请输入分类名称')
+    return
+  }
+  if (creatingCategory.value) {
+    return
+  }
+
+  creatingCategory.value = true
+  try {
+    const createdCategory = await createCategory({
+      name,
+      status: 'active',
+    })
+    categories.value = await fetchCategories()
+    form.category_id = createdCategory.id
+    newCategoryName.value = ''
+    categoryCreatorVisible.value = false
+    ElMessage.success('分类已创建并选中')
+  } finally {
+    creatingCategory.value = false
+  }
 }
 
 const editorSnapshot = () =>
@@ -711,14 +749,49 @@ watch(
                 分类
                 <span class="required-mark">*</span>
               </template>
-              <el-select v-model="form.category_id" clearable placeholder="请选择分类">
-                <el-option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
-                  :value="category.id"
-                />
-              </el-select>
+              <div class="category-field">
+                <div class="category-select-row">
+                  <el-select v-model="form.category_id" clearable placeholder="请选择分类">
+                    <el-option
+                      v-for="category in categories"
+                      :key="category.id"
+                      :label="category.status === 'active' ? category.name : `${category.name}（已停用）`"
+                      :value="category.id"
+                    />
+                  </el-select>
+                  <el-popover
+                    v-model:visible="categoryCreatorVisible"
+                    placement="bottom-end"
+                    :width="320"
+                    trigger="manual"
+                  >
+                    <div class="category-popover">
+                      <div class="category-popover-header">
+                        <strong>新建分类</strong>
+                        <span>创建后会自动选中到当前商品</span>
+                      </div>
+                      <el-input
+                        v-model="newCategoryName"
+                        placeholder="输入新分类名称，例如：针织衫"
+                        @keyup.enter.prevent="createCategoryFromEditor"
+                      />
+                      <div class="category-popover-actions">
+                        <el-button @click="toggleCategoryCreator">取消</el-button>
+                        <el-button type="primary" :loading="creatingCategory" @click="createCategoryFromEditor">
+                          新建并选中
+                        </el-button>
+                      </div>
+                    </div>
+                    <template #reference>
+                      <el-button plain class="category-add-button" @click="toggleCategoryCreator">
+                        <el-icon><Plus /></el-icon>
+                        新建
+                      </el-button>
+                    </template>
+                  </el-popover>
+                </div>
+                <span class="field-tip">没有合适的分类时，可直接在这里快速创建。</span>
+              </div>
             </el-form-item>
 
             <el-form-item label="状态">
@@ -1196,6 +1269,50 @@ watch(
 .progress-copy span {
   color: #7e6a57;
   font-size: 13px;
+}
+
+.category-field,
+.category-popover {
+  display: grid;
+  gap: 10px;
+}
+
+.category-select-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.category-select-row :deep(.el-select) {
+  width: 100%;
+}
+
+.category-add-button {
+  height: 40px;
+  padding: 0 14px;
+}
+
+.category-popover-header {
+  display: grid;
+  gap: 4px;
+}
+
+.category-popover-header strong {
+  color: #34261b;
+  font-size: 14px;
+}
+
+.category-popover-header span {
+  color: #8a755d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.category-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .sort-field {
