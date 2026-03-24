@@ -76,7 +76,6 @@ const productId = computed(() => {
 })
 
 const isEditing = computed(() => Boolean(productId.value))
-const pageTitle = computed(() => (isEditing.value ? '编辑商品' : '新增商品'))
 
 const statusLabelMap: Record<ProductFormState['status'], string> = {
   draft: '草稿',
@@ -549,12 +548,9 @@ watch(
           <el-icon><ArrowLeft /></el-icon>
           返回列表
         </button>
-        <div class="editor-title-group">
-          <h1>{{ pageTitle }}</h1>
-          <div class="editor-title-meta">
-            <span class="status-chip">{{ currentStatusLabel }}</span>
-            <span class="editor-title-note">{{ hasPendingChanges ? '当前有未保存修改' : '表单已同步最新内容' }}</span>
-          </div>
+        <div class="editor-toolbar-meta">
+          <span class="status-chip">{{ currentStatusLabel }}</span>
+          <span class="editor-title-note">{{ hasPendingChanges ? '当前有未保存修改' : '表单已同步最新内容' }}</span>
         </div>
       </div>
 
@@ -900,32 +896,19 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 10px 0 4px;
+  gap: 16px;
+  padding: 2px 0 4px;
 }
 
 .editor-topbar-main {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   min-width: 0;
 }
 
-.editor-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.editor-title-group h1 {
-  margin: 0;
-  font-family: 'Fraunces', serif;
-  font-size: clamp(28px, 3vw, 36px);
-  color: var(--editor-text);
-  letter-spacing: -0.03em;
-}
-
-.editor-title-meta {
+.editor-toolbar-meta {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -936,7 +919,7 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0;
+  padding: 0 2px 0 0;
   border: 0;
   background: transparent;
   color: #6f6253;
@@ -1625,6 +1608,10 @@ watch(
     align-items: stretch;
   }
 
+  .editor-topbar-main {
+    justify-content: space-between;
+  }
+
   .editor-sidebar {
     position: static;
   }
@@ -1637,6 +1624,10 @@ watch(
 @media (max-width: 820px) {
   .product-editor-page {
     gap: 18px;
+  }
+
+  .editor-topbar-main {
+    align-items: flex-start;
   }
 
   .image-upload-row {
