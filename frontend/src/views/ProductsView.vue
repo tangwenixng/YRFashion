@@ -321,10 +321,10 @@ void loadCategories()
             {{ selectedProductIds.length ? `已选 ${selectedProductIds.length} 项` : '未选择商品' }}
           </span>
           <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('published')">
-            批量发布
+            批量上架
           </el-button>
           <el-button plain :disabled="!selectedProductIds.length" @click="batchSetStatus('archived')">
-            批量归档
+            批量下架
           </el-button>
         </div>
 
@@ -454,7 +454,7 @@ void loadCategories()
                 :loading="actionLoadingProductId === row.id"
                 @click="toggleProductPublish(row)"
               >
-                {{ row.status === 'published' ? '撤回' : '发布' }}
+                {{ row.status === 'published' ? '下架' : '上架' }}
               </el-button>
               <el-button text class="action-link danger-link" @click="confirmDeleteProduct(row)">
                 <el-icon><Delete /></el-icon>
