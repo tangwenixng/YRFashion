@@ -5,6 +5,7 @@ from sqlalchemy import String, cast, or_
 from sqlalchemy.orm import Session, selectinload
 
 from backend.api.deps import get_current_admin
+from backend.api.multipart import UploadSizeRoute
 from backend.core.config import settings
 from backend.db.session import get_db
 from backend.models import AdminUser, Category, Product, ProductImage
@@ -25,7 +26,7 @@ from backend.services.storage import (
     save_product_image,
 )
 
-router = APIRouter(prefix="/admin/products")
+router = APIRouter(prefix="/admin/products", route_class=UploadSizeRoute)
 
 
 def serialize_product_image(image: ProductImage) -> ProductImageResponse:

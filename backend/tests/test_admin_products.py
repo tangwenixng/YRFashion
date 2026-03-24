@@ -1,5 +1,9 @@
 ﻿from io import BytesIO
+# ruff: noqa: I001
 from pathlib import Path
+import struct
+import zlib
+from binascii import crc32
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -36,6 +40,43 @@ def build_test_image_bytes(
         save_kwargs["quality"] = quality
     image.save(buffer, format=image_format, **save_kwargs)
     return buffer.getvalue()
+
+
+def build_png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+    chunk_payload = chunk_type + data
+    return b"".join(
+        (
+            struct.pack("!I", len(data)),
+            chunk_payload,
+            struct.pack("!I", crc32(chunk_payload) & 0xFFFFFFFF),
+        )
+    )
+
+
+def build_large_png_bytes(size: tuple[int, int] = (600, 600)) -> bytes:
+    width, height = size
+    rows = bytearray()
+    for y in range(height):
+        rows.append(0)
+        for x in range(width):
+            rows.extend(
+                (
+                    (x * 13 + y * 7) % 256,
+                    (x * 5 + y * 11) % 256,
+                    (x * 17 + y * 3) % 256,
+                )
+            )
+
+    compressed = zlib.compress(bytes(rows), level=0)
+    ihdr = struct.pack("!IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return b"".join(
+        (
+            b"\x89PNG\r\n\x1a\n",
+            build_png_chunk(b"IHDR", ihdr),
+            build_png_chunk(b"IDAT", compressed),
+            build_png_chunk(b"IEND", b""),
+        )
+    )
 
 
 def test_product_crud_and_sort() -> None:
@@ -276,6 +317,39 @@ def test_product_image_upload_auto_compresses_large_jpeg() -> None:
 
     with Image.open(image_path) as saved_image:
         assert max(saved_image.size) <= 1600
+
+
+def test_product_image_upload_accepts_file_larger_than_default_multipart_part_limit() -> None:
+    product_name = f"PartLimit-{uuid4().hex[:8]}"
+    large_content = build_large_png_bytes()
+    assert len(large_content) > 1024 * 1024
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        create_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": product_name,
+                "description": "multipart limit regression",
+                "tags": [],
+                "status": "draft",
+                "sort_order": 0,
+            },
+        )
+        product_id = create_response.json()["id"]
+
+        upload_response = client.post(
+            f"/api/admin/products/{product_id}/images",
+            headers=headers,
+            files={"file": ("part-limit.png", BytesIO(large_content), "image/png")},
+            data={"sort_order": "0", "is_cover": "true"},
+        )
+
+    assert upload_response.status_code == 200
+    payload = upload_response.json()
+    assert payload["is_cover"] is True
+    assert payload["image_url"].startswith("/uploads/products/")
 
 
 def test_product_list_supports_filters_and_pagination() -> None:

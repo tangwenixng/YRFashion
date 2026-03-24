@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.api.deps import get_current_miniapp_user
+from backend.api.multipart import UploadSizeRoute
 from backend.core.security import create_access_token
 from backend.db.session import get_db
 from backend.models import MiniappUser
@@ -22,7 +23,7 @@ from backend.services.miniapp_auth import (
 )
 from backend.services.storage import save_miniapp_avatar
 
-router = APIRouter(prefix="/miniapp/auth")
+router = APIRouter(prefix="/miniapp/auth", route_class=UploadSizeRoute)
 
 
 def serialize_miniapp_profile(user: MiniappUser) -> MiniappProfileResponse:
