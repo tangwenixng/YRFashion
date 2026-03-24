@@ -207,6 +207,12 @@ void loadCategories()
 
 .table-card {
   padding: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.el-table) {
+  min-width: 760px;
 }
 
 .inline-grid {
@@ -215,7 +221,7 @@ void loadCategories()
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .page-header {
     flex-direction: column;
   }

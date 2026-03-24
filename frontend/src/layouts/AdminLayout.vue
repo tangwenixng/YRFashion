@@ -20,9 +20,13 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const collapsed = ref(false)
-const isMobile = ref(false)
+const isPhone = ref(false)
+const isTablet = ref(false)
+const isTabletCompact = ref(false)
 
-const MOBILE_BREAKPOINT = 900
+const PHONE_BREAKPOINT = 767
+const TABLET_BREAKPOINT = 1180
+const TABLET_COMPACT_BREAKPOINT = 1080
 
 const navigationGroups = [
   {
@@ -56,11 +60,14 @@ const activeMenu = computed(() => {
   return route.path
 })
 
-const menuCollapsed = computed(() => collapsed.value && !isMobile.value)
+const menuCollapsed = computed(() => isTabletCompact.value || (collapsed.value && !isPhone.value))
 const currentTitle = computed(() => (route.meta.title as string) || '管理后台')
 
 const syncViewportState = () => {
-  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
+  const width = window.innerWidth
+  isPhone.value = width <= PHONE_BREAKPOINT
+  isTablet.value = width > PHONE_BREAKPOINT && width <= TABLET_BREAKPOINT
+  isTabletCompact.value = width > PHONE_BREAKPOINT && width <= TABLET_COMPACT_BREAKPOINT
 }
 
 const handleSelect = (path: string) => {
@@ -83,7 +90,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="admin-layout">
+  <div class="admin-layout" :class="{ phone: isPhone, tablet: isTablet, 'tablet-compact': isTabletCompact }">
     <aside class="sidebar" :class="{ collapsed: menuCollapsed }">
       <div class="brand">
         <p class="brand-mark">YR</p>
@@ -157,6 +164,7 @@ onBeforeUnmount(() => {
 .sidebar {
   width: 308px;
   height: calc(100vh - 32px);
+  height: calc(100dvh - 32px);
   position: sticky;
   top: 16px;
   display: flex;
@@ -272,6 +280,7 @@ onBeforeUnmount(() => {
 .workspace {
   min-width: 0;
   min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line-soft);
@@ -365,14 +374,66 @@ onBeforeUnmount(() => {
   padding: 16px 28px 28px;
 }
 
-@media (max-width: 900px) {
-  .admin-layout {
+.admin-layout.tablet {
+  gap: 12px;
+  padding: 12px;
+}
+
+.admin-layout.tablet .sidebar {
+  height: calc(100vh - 24px);
+  height: calc(100dvh - 24px);
+}
+
+.admin-layout.tablet .workspace {
+  min-height: calc(100vh - 24px);
+  min-height: calc(100dvh - 24px);
+}
+
+.admin-layout.tablet .topbar {
+  padding: 16px 20px;
+}
+
+.admin-layout.tablet .page-shell {
+  padding: 14px 20px 20px;
+}
+
+.admin-layout.tablet.tablet-compact {
+  grid-template-columns: 104px minmax(0, 1fr);
+}
+
+.admin-layout.tablet.tablet-compact .sidebar {
+  width: 104px;
+  padding: 18px 12px;
+}
+
+.admin-layout.tablet.tablet-compact .brand {
+  justify-content: center;
+  padding: 0;
+}
+
+.admin-layout.tablet.tablet-compact .sidebar-groups {
+  gap: 8px;
+  padding-top: 8px;
+  padding-right: 0;
+}
+
+.admin-layout.tablet.tablet-compact :deep(.sidebar-menu .el-menu-item) {
+  justify-content: center;
+  padding: 0;
+}
+
+.admin-layout.tablet.tablet-compact .topbar-copy strong {
+  font-size: 30px;
+}
+
+@media (max-width: 767px) {
+  .admin-layout.phone {
     grid-template-columns: 1fr;
     gap: 0;
     padding: 0;
   }
 
-  .sidebar {
+  .admin-layout.phone .sidebar {
     position: static;
     width: auto;
     height: auto;
@@ -384,31 +445,31 @@ onBeforeUnmount(() => {
     box-shadow: none;
   }
 
-  .topbar {
+  .admin-layout.phone .topbar {
     padding: 16px 18px;
     align-items: flex-start;
     flex-wrap: wrap;
   }
 
-  .workspace {
+  .admin-layout.phone .workspace {
     min-height: auto;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .page-shell {
+  .admin-layout.phone .page-shell {
     padding: 18px;
   }
 
-  .topbar-main,
-  .topbar-side {
+  .admin-layout.phone .topbar-main,
+  .admin-layout.phone .topbar-side {
     width: 100%;
     align-items: flex-start;
     flex-wrap: wrap;
   }
 
-  .topbar-copy strong {
+  .admin-layout.phone .topbar-copy strong {
     font-size: 24px;
   }
 }

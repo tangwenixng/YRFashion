@@ -251,6 +251,12 @@ void loadUsers()
 
 .table-card {
   padding: 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.el-table) {
+  min-width: 1360px;
 }
 
 .avatar-cell,
@@ -298,7 +304,7 @@ void loadUsers()
   font-size: 13px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .page-header,
   .header-actions,
   .pagination-bar {

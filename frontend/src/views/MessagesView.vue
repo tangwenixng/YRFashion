@@ -272,6 +272,12 @@ void loadMessages()
 
 .messages-card {
   padding: 22px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.el-table) {
+  min-width: 980px;
 }
 
 .messages-meta {
@@ -377,7 +383,7 @@ void loadMessages()
   align-items: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .page-header,
   .header-actions,
   .pagination-bar {

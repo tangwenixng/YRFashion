@@ -1429,7 +1429,18 @@ void loadCategories()
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :deep(.el-table) {
+    min-width: 1120px;
+  }
+}
+
+@media (max-width: 1024px) {
   .selection-toolbar {
     width: 100%;
     justify-content: space-between;

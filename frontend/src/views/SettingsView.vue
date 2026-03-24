@@ -689,7 +689,7 @@ void loadSettings()
   font-size: 13px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .grid-two {
     grid-template-columns: 1fr;
   }

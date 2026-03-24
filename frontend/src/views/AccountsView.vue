@@ -205,6 +205,15 @@ void loadAccounts()
   padding: 14px;
 }
 
+.table-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.el-table) {
+  min-width: 860px;
+}
+
 .section-title {
   margin: 0 0 14px;
   color: #35281d;
@@ -217,7 +226,7 @@ void loadAccounts()
   grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .page-header,
   .header-actions {
     flex-direction: column;
