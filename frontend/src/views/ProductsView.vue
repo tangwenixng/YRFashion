@@ -478,18 +478,15 @@ void loadCategories()
         <el-table-column label="图片" width="136">
           <template #default="{ row }">
             <div class="image-summary">
-              <el-image
+              <img
                 v-if="row.images[0]"
-                :src="row.images[0].image_url"
-                fit="cover"
+                :src="row.images[0].thumbnail_url || row.images[0].image_url"
+                :alt="row.images[0].original_name || row.name"
                 class="cover-thumb"
-                :preview-src-list="row.images.map((item: ProductItem['images'][number]) => item.image_url)"
-                preview-teleported
-              >
-                <template #error>
-                  <div class="cover-fallback" />
-                </template>
-              </el-image>
+                loading="lazy"
+                decoding="async"
+              />
+              <div v-else class="cover-fallback" />
               <div class="image-summary-meta" :title="row.images[0]?.original_name || ''">
                 <strong>{{ row.images.length ? `${row.images.length} 张` : '暂无图片' }}</strong>
               </div>
@@ -1248,6 +1245,9 @@ void loadCategories()
 .cover-thumb {
   width: 64px;
   height: 64px;
+  display: block;
+  object-fit: cover;
+  flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(57, 76, 64, 0.1);
@@ -1268,10 +1268,6 @@ void loadCategories()
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-}
-
-.image-summary :deep(.el-image) {
-  flex-shrink: 0;
 }
 
 .image-summary-meta {

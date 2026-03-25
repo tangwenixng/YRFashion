@@ -54,6 +54,7 @@ class ProductImageResponse(BaseModel):
 
     id: int
     image_url: str
+    thumbnail_url: str | None = None
     original_name: str
     sort_order: int
     is_cover: bool

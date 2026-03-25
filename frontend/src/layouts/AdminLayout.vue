@@ -174,10 +174,9 @@ onBeforeUnmount(() => {
   border: 1px solid var(--line-soft);
   border-radius: 32px;
   background:
-    radial-gradient(circle at top left, rgba(192, 138, 54, 0.16), transparent 26%),
-    linear-gradient(180deg, rgba(252, 251, 248, 0.96), rgba(241, 245, 239, 0.96));
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(18px);
+    radial-gradient(circle at top left, rgba(192, 138, 54, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(252, 251, 248, 0.98), rgba(244, 247, 242, 0.98));
+  box-shadow: var(--shadow-md);
   transition: width 0.25s ease;
 }
 
@@ -285,9 +284,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   border: 1px solid var(--line-soft);
   border-radius: 32px;
-  background: rgba(248, 250, 246, 0.68);
+  background: rgba(248, 250, 246, 0.96);
   box-shadow: var(--shadow-md);
-  backdrop-filter: blur(20px);
   overflow: hidden;
 }
 

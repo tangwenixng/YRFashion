@@ -11,6 +11,7 @@ from backend.core.config import settings
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 MAX_IMAGE_DIMENSION = 1600
+THUMBNAIL_MAX_DIMENSION = 160
 JPEG_SAVE_QUALITY = 82
 WEBP_SAVE_QUALITY = 82
 
@@ -48,7 +49,12 @@ def delete_product_image_file(storage_path: str) -> None:
         return
 
     absolute_path = settings.resolved_upload_dir / storage_path
+    thumbnail_path = settings.resolved_upload_dir / _build_thumbnail_relative_path(
+        storage_path,
+        THUMBNAIL_MAX_DIMENSION,
+    )
     absolute_path.unlink(missing_ok=True)
+    thumbnail_path.unlink(missing_ok=True)
 
 
 def resolve_public_file_url(
@@ -69,6 +75,25 @@ def resolve_public_file_url(
         return normalized_storage_path
 
     return (fallback_url or "").strip()
+
+
+def build_product_image_thumbnail_url(
+    storage_type: str | None,
+    storage_path: str | None,
+    fallback_url: str | None = None,
+) -> str:
+    normalized_storage_type = (storage_type or "").strip().lower()
+    normalized_storage_path = (storage_path or "").strip()
+
+    if normalized_storage_type != "local" or not normalized_storage_path:
+        return resolve_public_file_url(storage_type, storage_path, fallback_url)
+
+    try:
+        thumbnail_path = _ensure_local_thumbnail(normalized_storage_path, THUMBNAIL_MAX_DIMENSION)
+    except (OSError, ValueError):
+        return resolve_public_file_url(storage_type, storage_path, fallback_url)
+
+    return _build_local_public_url(thumbnail_path)
 
 
 def _read_and_prepare_upload(upload: UploadFile) -> tuple[bytes, str, str]:
@@ -132,6 +157,15 @@ def _resolve_output_format(content_type: str) -> tuple[str, str]:
     if content_type == "image/webp":
         return "WEBP", ".webp"
     return "JPEG", ".jpg"
+
+
+def _resolve_output_format_by_extension(extension: str) -> str:
+    normalized_extension = extension.lower()
+    if normalized_extension == ".png":
+        return "PNG"
+    if normalized_extension == ".webp":
+        return "WEBP"
+    return "JPEG"
 
 
 def _normalize_image_mode(image: Image.Image, output_format: str) -> Image.Image:
@@ -213,6 +247,49 @@ def _build_local_public_url(relative_path: str) -> str:
     if normalized_path.startswith("uploads/"):
         return f"/{normalized_path}"
     return f"/uploads/{normalized_path.lstrip('/')}"
+
+
+def _ensure_local_thumbnail(relative_path: str, max_dimension: int) -> str:
+    normalized_path = relative_path.strip().lstrip("/")
+    if not normalized_path:
+        raise ValueError("Thumbnail path is empty")
+
+    source_relative_path = PurePosixPath(normalized_path)
+    source_absolute_path = settings.resolved_upload_dir / source_relative_path
+    if not source_absolute_path.exists():
+        raise ValueError("Source image does not exist")
+
+    thumbnail_relative_path = _build_thumbnail_relative_path(normalized_path, max_dimension)
+    thumbnail_absolute_path = settings.resolved_upload_dir / thumbnail_relative_path
+
+    if (
+        thumbnail_absolute_path.exists()
+        and thumbnail_absolute_path.stat().st_mtime >= source_absolute_path.stat().st_mtime
+    ):
+        return thumbnail_relative_path
+
+    thumbnail_absolute_path.parent.mkdir(parents=True, exist_ok=True)
+
+    output_format = _resolve_output_format_by_extension(source_relative_path.suffix)
+    with Image.open(source_absolute_path) as source_image:
+        image = ImageOps.exif_transpose(source_image)
+        image = _normalize_image_mode(image, output_format)
+        image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+        image.save(
+            thumbnail_absolute_path,
+            format=output_format,
+            **_build_save_kwargs(output_format),
+        )
+
+    return thumbnail_relative_path
+
+
+def _build_thumbnail_relative_path(relative_path: str, max_dimension: int) -> str:
+    source_relative_path = PurePosixPath(relative_path.strip().lstrip("/"))
+    thumbnail_filename = (
+        f"{source_relative_path.stem}.thumb-{max_dimension}{source_relative_path.suffix.lower()}"
+    )
+    return (source_relative_path.parent / ".thumbs" / thumbnail_filename).as_posix()
 
 
 def _save_cloud_file(relative_path: str, content: bytes, content_type: str) -> str:

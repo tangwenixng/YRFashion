@@ -3,6 +3,7 @@ import { http } from '../http'
 export interface ProductImage {
   id: number
   image_url: string
+  thumbnail_url?: string | null
   original_name: string
   sort_order: number
   is_cover: boolean

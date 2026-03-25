@@ -21,6 +21,7 @@ from backend.schemas.product import (
     ProductUpdateRequest,
 )
 from backend.services.storage import (
+    build_product_image_thumbnail_url,
     delete_product_image_file,
     resolve_public_file_url,
     save_product_image,
@@ -30,9 +31,15 @@ router = APIRouter(prefix="/admin/products", route_class=UploadSizeRoute)
 
 
 def serialize_product_image(image: ProductImage) -> ProductImageResponse:
+    resolved_image_url = resolve_public_file_url(image.storage_type, image.storage_path, image.image_url)
     return ProductImageResponse(
         id=image.id,
-        image_url=resolve_public_file_url(image.storage_type, image.storage_path, image.image_url),
+        image_url=resolved_image_url,
+        thumbnail_url=build_product_image_thumbnail_url(
+            image.storage_type,
+            image.storage_path,
+            resolved_image_url,
+        ),
         original_name=image.original_name,
         sort_order=image.sort_order,
         is_cover=image.is_cover,
