@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CollectionTag, Delete, Download, EditPen, Plus, RefreshRight, Search, Upload } from '@element-plus/icons-vue'
+import { Delete, Download, EditPen, Plus, RefreshRight, Search, Sort, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -180,6 +180,10 @@ const openEdit = (product: ProductItem) => {
   void router.push(`/products/${product.id}/edit`)
 }
 
+const openProduct = (product: ProductItem) => {
+  openEdit(product)
+}
+
 const toggleProductPublish = async (product: ProductItem) => {
   const nextStatus = product.status === 'published' ? 'draft' : 'published'
   actionLoadingProductId.value = product.id
@@ -300,7 +304,7 @@ const bindProductRowDrag = () => {
   const rows = Array.from(tableElement.querySelectorAll('.el-table__body-wrapper tbody tr'))
   rows.forEach((row, index) => {
     const product = products.value[index]
-    const dragTrigger = row.querySelector('.product-main-cell') as HTMLElement | null
+    const dragTrigger = row.querySelector('.product-drag-handle') as HTMLElement | null
     if (!product) {
       return
     }
@@ -441,12 +445,22 @@ void loadCategories()
         <el-table-column label="商品信息" min-width="360">
           <template #default="{ row }">
             <div class="product-main-cell">
-              <div class="product-main-heading">
-                <strong class="product-main-title">{{ row.name }}</strong>
-              </div>
-              <span class="product-main-subtitle" :title="getProductSummary(row)">
-                {{ getProductSummary(row) }}
-              </span>
+              <button
+                type="button"
+                class="product-main-button"
+                :title="`查看商品：${row.name}`"
+                @click="openProduct(row)"
+              >
+                <div class="product-main-heading">
+                  <strong class="product-main-title">{{ row.name }}</strong>
+                </div>
+                <span class="product-main-subtitle" :title="getProductSummary(row)">
+                  {{ getProductSummary(row) }}
+                </span>
+              </button>
+              <button type="button" class="product-drag-handle" title="拖拽调整排序">
+                <el-icon><Sort /></el-icon>
+              </button>
             </div>
           </template>
         </el-table-column>
@@ -858,11 +872,34 @@ void loadCategories()
 }
 
 .product-main-cell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.product-main-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   display: flex;
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-  cursor: grab;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-main-button:hover .product-main-title,
+.product-main-button:focus-visible .product-main-title {
+  color: var(--brand-deep);
+}
+
+.product-main-button:focus-visible {
+  outline: 2px solid rgba(47, 106, 88, 0.22);
+  outline-offset: 6px;
+  border-radius: 12px;
 }
 
 .product-main-heading {
@@ -891,6 +928,30 @@ void loadCategories()
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.product-drag-handle {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(244, 247, 242, 0.96);
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.product-drag-handle:hover,
+.product-drag-handle:focus-visible {
+  color: var(--brand-deep);
+  background: rgba(233, 240, 236, 0.98);
+}
+
+.product-drag-handle:active {
+  cursor: grabbing;
 }
 
 .category-text {
