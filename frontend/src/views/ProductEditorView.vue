@@ -37,6 +37,12 @@ type EditorImageItem = {
   object_url: string | null
 }
 
+type DetectedTopicTag = {
+  key: string
+  label: string
+  added: boolean
+}
+
 const route = useRoute()
 const router = useRouter()
 
@@ -44,6 +50,7 @@ const DESCRIPTION_MAX_LENGTH = 500
 const TAG_MAX_COUNT = 8
 const TAG_MAX_LENGTH = 16
 const SUGGESTED_TAGS = ['春季', 'OODT', '简约', '休闲', '夏季', '穿搭', '日常']
+const HASHTAG_PATTERN = /#([^#\s,，。.!！?？；;：:\n\r\t、/\\()[\]{}<>《》【】"'“”‘’]+)/g
 
 const saving = ref(false)
 const loading = ref(false)
@@ -104,6 +111,29 @@ const selectedCategoryName = computed(
 )
 const currentStatusLabel = computed(() => statusLabelMap[form.status])
 const remainingTagCount = computed(() => Math.max(TAG_MAX_COUNT - form.tags.length, 0))
+const tagKeySet = computed(() => new Set(form.tags.map((tag) => normalizeTagKey(tag))))
+const detectedTopicTags = computed<DetectedTopicTag[]>(() => {
+  const matches = form.description.matchAll(HASHTAG_PATTERN)
+  const seen = new Set<string>()
+  const items: DetectedTopicTag[] = []
+
+  for (const match of matches) {
+    const label = normalizeTag(match[1] ?? '')
+    const key = normalizeTagKey(label)
+    if (!label || !key || seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    items.push({
+      key,
+      label,
+      added: tagKeySet.value.has(key),
+    })
+  }
+
+  return items
+})
+const pendingDetectedTopicTags = computed(() => detectedTopicTags.value.filter((item) => !item.added))
 const footerStatusHint = computed(() => {
   if (form.status === 'published') {
     return '商品将以已发布状态保存。'
@@ -230,7 +260,8 @@ const buildPayload = () => ({
   sort_order: form.sort_order,
 })
 
-const normalizeTag = (value: string) => value.trim().replace(/\s+/g, ' ')
+const normalizeTag = (value: string) => value.trim().replace(/^#+/, '').replace(/\s+/g, ' ')
+const normalizeTagKey = (value: string) => normalizeTag(value).toLocaleLowerCase()
 
 const addTag = (rawTag: string) => {
   const tag = normalizeTag(rawTag)
@@ -241,7 +272,7 @@ const addTag = (rawTag: string) => {
     ElMessage.warning(`单个标签不超过 ${TAG_MAX_LENGTH} 个字`)
     return
   }
-  if (form.tags.includes(tag)) {
+  if (tagKeySet.value.has(normalizeTagKey(tag))) {
     return
   }
   if (form.tags.length >= TAG_MAX_COUNT) {
@@ -265,6 +296,20 @@ const removeTag = (tag: string) => {
 
 const addSuggestedTag = (tag: string) => {
   addTag(tag)
+}
+
+const addDetectedTag = (tag: string) => {
+  addTag(tag)
+}
+
+const addAllDetectedTags = () => {
+  for (const item of pendingDetectedTopicTags.value) {
+    if (form.tags.length >= TAG_MAX_COUNT) {
+      ElMessage.warning(`最多添加 ${TAG_MAX_COUNT} 个标签`)
+      break
+    }
+    addTag(item.label)
+  }
 }
 
 const toggleCategoryCreator = () => {
@@ -718,6 +763,39 @@ watch(
                 @blur="appendTagFromInput"
               />
               <el-button type="primary" class="tag-add-button" @click="appendTagFromInput">添加</el-button>
+            </div>
+
+            <div class="topic-detection-panel">
+              <div class="topic-detection-header">
+                <div class="topic-detection-copy">
+                  <strong>自动识别到的标签</strong>
+                  <span>描述中的 #标签 不会自动入库，手动点击加入正式标签。</span>
+                </div>
+                <el-button
+                  v-if="pendingDetectedTopicTags.length"
+                  type="primary"
+                  link
+                  class="topic-detection-action"
+                  @click="addAllDetectedTags"
+                >
+                  全部加入
+                </el-button>
+              </div>
+
+              <div v-if="detectedTopicTags.length" class="topic-chip-list">
+                <button
+                  v-for="topic in detectedTopicTags"
+                  :key="topic.key"
+                  type="button"
+                  class="detected-topic-chip"
+                  :class="{ added: topic.added }"
+                  :disabled="topic.added"
+                  @click="addDetectedTag(topic.label)"
+                >
+                  <span>#{{ topic.label }}</span>
+                </button>
+              </div>
+              <p v-else class="topic-empty-hint">还未识别到 #话题，可在描述中输入如 #春款 #ootd。</p>
             </div>
 
             <div v-if="form.tags.length" class="tag-chip-list">
@@ -1270,6 +1348,98 @@ watch(
   flex-wrap: wrap;
 }
 
+.topic-detection-panel,
+.topic-detection-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.topic-detection-panel {
+  padding: 14px 16px;
+  border: 1px solid rgba(115, 95, 67, 0.1);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(249, 246, 240, 0.92), rgba(255, 255, 255, 0.96));
+}
+
+.topic-detection-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.topic-detection-copy strong {
+  color: var(--editor-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.topic-detection-copy span,
+.topic-empty-hint {
+  margin: 0;
+  color: var(--editor-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.topic-detection-action {
+  padding: 0;
+  align-self: center;
+}
+
+.topic-chip-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detected-topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid rgba(141, 125, 104, 0.16);
+  border-radius: 999px;
+  background: #fff;
+  color: #6f6253;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.detected-topic-chip:hover:not(:disabled) {
+  border-color: rgba(164, 138, 93, 0.36);
+  background: rgba(255, 250, 242, 0.98);
+  transform: translateY(-1px);
+}
+
+.detected-topic-chip span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.detected-topic-chip strong {
+  color: var(--editor-primary-deep);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.detected-topic-chip.added {
+  border-color: rgba(164, 138, 93, 0.22);
+  background: rgba(164, 138, 93, 0.12);
+  color: var(--editor-primary-deep);
+  cursor: default;
+}
+
+.detected-topic-chip:disabled {
+  opacity: 1;
+}
+
+.detected-topic-chip.added strong {
+  color: #7e6a47;
+}
+
 .tag-suggestions {
   display: flex;
   align-items: center;
@@ -1660,7 +1830,8 @@ watch(
 
   .card-header-split,
   .field-meta-row,
-  .category-actions {
+  .category-actions,
+  .topic-detection-header {
     grid-template-columns: 1fr;
     display: grid;
     justify-items: start;
