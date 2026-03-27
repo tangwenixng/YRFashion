@@ -31,7 +31,11 @@ router = APIRouter(prefix="/admin/products", route_class=UploadSizeRoute)
 
 
 def serialize_product_image(image: ProductImage) -> ProductImageResponse:
-    resolved_image_url = resolve_public_file_url(image.storage_type, image.storage_path, image.image_url)
+    resolved_image_url = resolve_public_file_url(
+        image.storage_type,
+        image.storage_path,
+        image.image_url,
+    )
     return ProductImageResponse(
         id=image.id,
         image_url=resolved_image_url,
