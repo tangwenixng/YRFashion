@@ -39,20 +39,19 @@ const submit = async () => {
         <span class="hero-brand-mark">YR</span>
         <div>
           <p class="hero-kicker">YRFashion Admin</p>
-          <strong>商品管理后台</strong>
+          <strong>OOTD管理后台</strong>
         </div>
       </div>
-      <h1>伊人时尚</h1>
+      <h1>SzYR OOTD</h1>
       <p class="hero-copy">
-        苏州市高新区何山路176号。
+        <a href="https://beian.miit.gov.cn/#/Integrated/index">苏ICP备19033375号-2</a>
       </p>
     </section>
 
     <section class="login-card content-card">
       <div class="card-head">
         <p class="card-kicker">YRFashion</p>
-        <h2>后台登录</h2>
-        <p>使用店铺后台账号进入商品运营台。</p>
+        <h2>登录</h2>
       </div>
 
       <el-form label-position="top" @submit.prevent="submit">
