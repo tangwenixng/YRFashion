@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
+import { adminBasePath } from './base'
 import { routes } from './routes'
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(adminBasePath),
   routes,
 })
 

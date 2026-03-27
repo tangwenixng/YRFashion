@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# 读取后台入口路径；未配置时默认仍挂在根路径。
+entry_path="${ADMIN_ENTRY_PATH:-/}"
+
+# 兼容空值、缺少前导斜杠等输入，统一整理为绝对路径形式。
+case "$entry_path" in
+  '')
+    entry_path="/"
+    ;;
+  /*)
+    ;;
+  *)
+    entry_path="/$entry_path"
+    ;;
+esac
+
+# 非根路径统一补上尾斜杠，便于 Nginx 以前缀目录方式稳定匹配。
+if [ "$entry_path" != "/" ]; then
+  entry_path="${entry_path%/}/"
+fi
+
+# 导出给 Nginx 模板使用的标准化后台入口。
+export ADMIN_ENTRY_PATH="$entry_path"
+
+# 额外导出一个“不带尾斜杠”的路径，用于将 /foo 重定向到 /foo/。
+# 当入口本身就是 / 时，使用一个不会命中的占位路径，避免错误覆盖根路径规则。
+if [ "$entry_path" = "/" ]; then
+  export ADMIN_ENTRY_PATH_REDIRECT_SOURCE="/__admin-entry-disabled__"
+else
+  export ADMIN_ENTRY_PATH_REDIRECT_SOURCE="${entry_path%/}"
+fi
