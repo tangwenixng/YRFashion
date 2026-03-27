@@ -1,5 +1,16 @@
 #!/bin/sh
 
+# 这个脚本不会自己启动 nginx。
+# 在官方 nginx 镜像里，容器启动时会先进入 /docker-entrypoint.sh：
+# 1. 按文件名顺序扫描 /docker-entrypoint.d/
+# 2. 对 *.envsh 使用 source，在当前 shell 中执行
+# 3. 对 *.sh 作为独立子进程执行
+# 4. 后续再运行官方的 20-envsubst-on-templates.sh 渲染 Nginx 模板
+# 5. 最后由官方入口脚本 exec nginx 前台进程
+#
+# 因此这里必须使用 .envsh，而不是 .sh：
+# 这样导出的环境变量才能保留到当前 entrypoint shell 中，供后续模板渲染脚本继续使用。
+
 # 读取后台入口路径；未配置时默认仍挂在根路径。
 entry_path="${ADMIN_ENTRY_PATH:-/}"
 
