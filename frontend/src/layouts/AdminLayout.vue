@@ -22,11 +22,10 @@ const authStore = useAuthStore()
 const collapsed = ref(false)
 const isPhone = ref(false)
 const isTablet = ref(false)
-const isTabletCompact = ref(false)
+const lastViewportMode = ref<'phone' | 'tablet' | 'desktop'>('desktop')
 
 const PHONE_BREAKPOINT = 767
 const TABLET_BREAKPOINT = 1180
-const TABLET_COMPACT_BREAKPOINT = 1080
 
 const navigationGroups = [
   {
@@ -60,14 +59,27 @@ const activeMenu = computed(() => {
   return route.path
 })
 
-const menuCollapsed = computed(() => isTabletCompact.value || (collapsed.value && !isPhone.value))
+const menuCollapsed = computed(() => collapsed.value && !isPhone.value)
 const currentTitle = computed(() => (route.meta.title as string) || '管理后台')
 
 const syncViewportState = () => {
   const width = window.innerWidth
-  isPhone.value = width <= PHONE_BREAKPOINT
-  isTablet.value = width > PHONE_BREAKPOINT && width <= TABLET_BREAKPOINT
-  isTabletCompact.value = width > PHONE_BREAKPOINT && width <= TABLET_COMPACT_BREAKPOINT
+  const nextIsPhone = width <= PHONE_BREAKPOINT
+  const nextIsTablet = width > PHONE_BREAKPOINT && width <= TABLET_BREAKPOINT
+  const nextViewportMode = nextIsPhone ? 'phone' : nextIsTablet ? 'tablet' : 'desktop'
+
+  isPhone.value = nextIsPhone
+  isTablet.value = nextIsTablet
+
+  if (nextViewportMode !== lastViewportMode.value) {
+    if (nextViewportMode === 'tablet') {
+      collapsed.value = true
+    } else if (lastViewportMode.value === 'tablet' && nextViewportMode === 'desktop') {
+      collapsed.value = false
+    }
+
+    lastViewportMode.value = nextViewportMode
+  }
 }
 
 const handleSelect = (path: string) => {
@@ -90,7 +102,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="admin-layout" :class="{ phone: isPhone, tablet: isTablet, 'tablet-compact': isTabletCompact }">
+  <div class="admin-layout" :class="{ phone: isPhone, tablet: isTablet, 'tablet-collapsed': isTablet && menuCollapsed }">
     <aside class="sidebar" :class="{ collapsed: menuCollapsed }">
       <div class="brand">
         <p class="brand-mark">YR</p>
@@ -395,32 +407,32 @@ onBeforeUnmount(() => {
   padding: 14px 20px 20px;
 }
 
-.admin-layout.tablet.tablet-compact {
+.admin-layout.tablet.tablet-collapsed {
   grid-template-columns: 104px minmax(0, 1fr);
 }
 
-.admin-layout.tablet.tablet-compact .sidebar {
+.admin-layout.tablet.tablet-collapsed .sidebar {
   width: 104px;
   padding: 18px 12px;
 }
 
-.admin-layout.tablet.tablet-compact .brand {
+.admin-layout.tablet.tablet-collapsed .brand {
   justify-content: center;
   padding: 0;
 }
 
-.admin-layout.tablet.tablet-compact .sidebar-groups {
+.admin-layout.tablet.tablet-collapsed .sidebar-groups {
   gap: 8px;
   padding-top: 8px;
   padding-right: 0;
 }
 
-.admin-layout.tablet.tablet-compact :deep(.sidebar-menu .el-menu-item) {
+.admin-layout.tablet.tablet-collapsed :deep(.sidebar-menu .el-menu-item) {
   justify-content: center;
   padding: 0;
 }
 
-.admin-layout.tablet.tablet-compact .topbar-copy strong {
+.admin-layout.tablet.tablet-collapsed .topbar-copy strong {
   font-size: 30px;
 }
 
