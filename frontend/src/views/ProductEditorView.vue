@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, Delete, Picture, Plus, Sort, Star } from '@element-plus/icons-vue'
+import type { AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
@@ -49,6 +50,8 @@ const router = useRouter()
 const DESCRIPTION_MAX_LENGTH = 500
 const TAG_MAX_COUNT = 8
 const TAG_MAX_LENGTH = 16
+const MAX_IMAGE_SIZE_MB = 20
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
 const SUGGESTED_TAGS = ['春季', 'OODT', '简约', '休闲', '夏季', '穿搭', '日常']
 const HASHTAG_PATTERN = /#([^#\s,，。.!！?？；;：:\n\r\t、/\\()[\]{}<>《》【】"'“”‘’]+)/g
 
@@ -372,9 +375,19 @@ const hasPendingChanges = computed(() => {
   return editorSnapshot() !== initialSnapshot.value
 })
 
+const getRequestErrorMessage = (error: unknown, fallback: string) => {
+  const requestError = error as AxiosError<{ detail?: string }>
+  return requestError.response?.data?.detail || fallback
+}
+
 const handleEditorFileChange = (uploadFile: { raw?: File }) => {
   const rawFile = uploadFile.raw
   if (!rawFile) {
+    return
+  }
+  if (rawFile.size > MAX_IMAGE_SIZE_BYTES) {
+    ElMessage.error(`图片「${rawFile.name}」超过 ${MAX_IMAGE_SIZE_MB}MB，请压缩后重新上传`)
+    editorUploadRef.value?.clearFiles?.()
     return
   }
 
@@ -511,6 +524,8 @@ const saveProduct = async () => {
     ElMessage.success(productId.value ? '商品已更新' : '商品已创建')
     allowLeave.value = true
     void router.push('/products')
+  } catch (error) {
+    ElMessage.error(getRequestErrorMessage(error, '商品保存失败，请检查图片格式和大小后重试'))
   } finally {
     saving.value = false
   }
@@ -741,7 +756,7 @@ watch(
               <span class="image-tip-title">图片上传提示</span>
               <ul class="image-tip-list">
                 <li>建议上传 2-9 张高清图片，第一张将作为封面</li>
-                <li>支持 JPG、PNG、WEBP 格式，单张图片不超过 5MB</li>
+                <li>支持 JPG、PNG、WEBP 格式，单张图片不超过 20MB</li>
                 <li>建议图片尺寸为 800 x 800 像素以上</li>
               </ul>
             </div>

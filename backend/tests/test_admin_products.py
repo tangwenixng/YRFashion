@@ -352,6 +352,37 @@ def test_product_image_upload_accepts_file_larger_than_default_multipart_part_li
     assert payload["image_url"].startswith("/uploads/products/")
 
 
+def test_product_image_upload_rejects_file_larger_than_20mb() -> None:
+    product_name = f"OverLimit-{uuid4().hex[:8]}"
+    oversized_content = build_large_png_bytes(size=(2800, 2800))
+    assert len(oversized_content) > 20 * 1024 * 1024
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+        create_response = client.post(
+            "/api/admin/products",
+            headers=headers,
+            json={
+                "name": product_name,
+                "description": "oversized image",
+                "tags": [],
+                "status": "draft",
+                "sort_order": 0,
+            },
+        )
+        product_id = create_response.json()["id"]
+
+        upload_response = client.post(
+            f"/api/admin/products/{product_id}/images",
+            headers=headers,
+            files={"file": ("oversized.png", BytesIO(oversized_content), "image/png")},
+            data={"sort_order": "0", "is_cover": "true"},
+        )
+
+    assert upload_response.status_code == 400
+    assert upload_response.json()["detail"] == "Image exceeds 20MB limit"
+
+
 def test_product_list_supports_filters_and_pagination() -> None:
     unique = uuid4().hex[:8]
     category_id: int

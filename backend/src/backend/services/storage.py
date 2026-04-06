@@ -9,7 +9,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from backend.core.config import settings
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_DIMENSION = 1600
 THUMBNAIL_MAX_DIMENSION = 160
 JPEG_SAVE_QUALITY = 82
@@ -107,7 +107,7 @@ def _read_and_prepare_upload(upload: UploadFile) -> tuple[bytes, str, str]:
     if len(content) > MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image exceeds 5MB limit",
+            detail="Image exceeds 20MB limit",
         )
 
     try:

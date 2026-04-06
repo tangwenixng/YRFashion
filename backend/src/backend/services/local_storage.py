@@ -6,7 +6,7 @@ from fastapi import HTTPException, UploadFile, status
 from backend.core.config import settings
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 
 
 def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
@@ -20,7 +20,7 @@ def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
     if len(content) > MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image exceeds 5MB limit",
+            detail="Image exceeds 20MB limit",
         )
 
     extension = Path(upload.filename or "upload.bin").suffix.lower() or ".bin"
