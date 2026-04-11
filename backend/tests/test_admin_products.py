@@ -284,7 +284,7 @@ def test_product_delete_removes_product_and_local_images() -> None:
 
 def test_product_image_upload_auto_compresses_large_jpeg() -> None:
     product_name = f"Large-{uuid4().hex[:8]}"
-    original_content = build_test_image_bytes("JPEG", size=(2400, 1800), quality=95)
+    original_content = build_test_image_bytes("JPEG", size=(3600, 2700), quality=95)
 
     with TestClient(app) as client:
         headers = get_admin_headers(client)
@@ -316,7 +316,7 @@ def test_product_image_upload_auto_compresses_large_jpeg() -> None:
     assert image_path.stat().st_size < len(original_content)
 
     with Image.open(image_path) as saved_image:
-        assert max(saved_image.size) <= 1600
+        assert max(saved_image.size) <= 2560
 
 
 def test_product_image_upload_accepts_file_larger_than_default_multipart_part_limit() -> None:

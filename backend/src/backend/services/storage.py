@@ -10,10 +10,10 @@ from backend.core.config import settings
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
-MAX_IMAGE_DIMENSION = 1600
+MAX_IMAGE_DIMENSION = 2560
 THUMBNAIL_MAX_DIMENSION = 160
-JPEG_SAVE_QUALITY = 82
-WEBP_SAVE_QUALITY = 82
+JPEG_SAVE_QUALITY = 90
+WEBP_SAVE_QUALITY = 90
 
 
 def save_product_image(product_id: int, upload: UploadFile) -> tuple[str, str]:
@@ -203,6 +203,7 @@ def _build_save_kwargs(output_format: str) -> dict[str, int | bool]:
         "quality": JPEG_SAVE_QUALITY,
         "optimize": True,
         "progressive": True,
+        "subsampling": 0,
     }
 
 
