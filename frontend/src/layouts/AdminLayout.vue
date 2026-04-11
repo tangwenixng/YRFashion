@@ -15,6 +15,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
+import { resolveBuildTimeLabel } from '../utils/buildInfo'
 
 const route = useRoute()
 const router = useRouter()
@@ -61,6 +62,7 @@ const activeMenu = computed(() => {
 
 const menuCollapsed = computed(() => collapsed.value && !isPhone.value)
 const currentTitle = computed(() => (route.meta.title as string) || '管理后台')
+const buildTimeLabel = resolveBuildTimeLabel()
 
 const syncViewportState = () => {
   const width = window.innerWidth
@@ -139,6 +141,7 @@ onBeforeUnmount(() => {
 
           <div class="topbar-copy">
             <strong>{{ currentTitle }}</strong>
+            <span class="topbar-meta">版本时间 {{ buildTimeLabel }}</span>
           </div>
         </div>
 
@@ -347,6 +350,14 @@ onBeforeUnmount(() => {
   font-size: clamp(24px, 2.6vw, 30px);
   color: var(--ink-strong);
   line-height: 1.15;
+}
+
+.topbar-meta {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #7a877f;
 }
 
 .user-pill {

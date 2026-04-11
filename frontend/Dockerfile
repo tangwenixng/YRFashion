@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_APP_BUILD_TIME=unknown
+ENV VITE_APP_BUILD_TIME=$VITE_APP_BUILD_TIME
+
 COPY package.json package-lock.json ./
 RUN npm ci
 

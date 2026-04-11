@@ -181,6 +181,11 @@ jobs:
         run: |
           echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
+      - name: Derive frontend build metadata
+        id: frontend-build-meta
+        run: |
+          echo "build_time=$(git log -1 --format=%cI)" >> "$GITHUB_OUTPUT"
+
       - name: Prepare image targets
         id: targets
         shell: bash
@@ -237,6 +242,8 @@ jobs:
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
+          build-args: |
+            VITE_APP_BUILD_TIME=${{ steps.frontend-build-meta.outputs.build_time }}
           push: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
