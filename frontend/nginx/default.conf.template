@@ -24,6 +24,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    ${ADMIN_SCOPED_BACKEND_LOCATION_BLOCK}
+
     location = ${ADMIN_ENTRY_PATH_REDIRECT_SOURCE} {
         return 301 ${ADMIN_ENTRY_PATH};
     }

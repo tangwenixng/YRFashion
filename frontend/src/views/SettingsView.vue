@@ -7,6 +7,7 @@ import {
   sendTestNotification,
   updateNotificationSettings,
 } from '../api/modules/notifications'
+import { resolveMediaUrl } from '../api/base'
 import { fetchProducts } from '../api/modules/products'
 import { fetchSettings, publishSettings, updateSettings } from '../api/modules/settings'
 
@@ -14,6 +15,7 @@ type BannerLibraryItem = {
   product_id: number
   product_name: string
   image_url: string
+  preview_url: string
   original_name: string
   is_cover: boolean
 }
@@ -85,6 +87,8 @@ const setSelectedBannerUrls = (urls: string[]) => {
   selectedBannerUrls.value = normalizeBannerUrls(urls)
   syncBannerText()
 }
+
+const resolveBannerPreviewUrl = (url: string) => resolveMediaUrl(url) || url
 
 const loadSettings = async () => {
   loading.value = true
@@ -180,7 +184,8 @@ const loadBannerLibrary = async () => {
           items.push({
             product_id: product.id,
             product_name: product.name,
-            image_url: image.image_url,
+            image_url: image.raw_image_url || image.image_url,
+            preview_url: image.image_url,
             original_name: image.original_name,
             is_cover: image.is_cover,
           })
@@ -351,9 +356,9 @@ void loadSettings()
               <div v-for="(url, index) in selectedBannerUrls" :key="url" class="selected-banner-card">
                 <div class="selected-banner-preview">
                   <el-image
-                    :src="url"
+                    :src="resolveBannerPreviewUrl(url)"
                     fit="cover"
-                    :preview-src-list="selectedBannerUrls"
+                    :preview-src-list="selectedBannerUrls.map(resolveBannerPreviewUrl)"
                     preview-teleported
                   />
                   <span class="selected-banner-index">{{ index + 1 }}</span>
@@ -459,7 +464,7 @@ void loadSettings()
           @click="toggleBannerSelection(item.image_url)"
         >
           <div class="banner-library-preview">
-            <el-image :src="item.image_url" fit="cover" />
+            <el-image :src="item.preview_url" fit="cover" />
             <span v-if="selectedBannerUrls.includes(item.image_url)" class="banner-library-check">已选</span>
           </div>
           <div class="banner-library-meta">

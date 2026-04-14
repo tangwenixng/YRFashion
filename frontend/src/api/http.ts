@@ -1,16 +1,12 @@
 import axios from 'axios'
 
+import { apiBaseURL } from './base'
 import { adminLoginPath } from '../router/base'
 
 export const TOKEN_STORAGE_KEY = 'yrfasion-admin-token'
 
-const configuredBaseURL = (import.meta.env.VITE_API_BASE_URL || '/api').trim()
-const normalizedBaseURL = configuredBaseURL
-  ? configuredBaseURL.replace(/\/$/, '')
-  : '/api'
-
 export const http = axios.create({
-  baseURL: normalizedBaseURL,
+  baseURL: apiBaseURL,
   timeout: 15000,
 })
 

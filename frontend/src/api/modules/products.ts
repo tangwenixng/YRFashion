@@ -1,9 +1,12 @@
+import { resolveMediaUrl } from '../base'
 import { http } from '../http'
 
 export interface ProductImage {
   id: number
   image_url: string
   thumbnail_url?: string | null
+  raw_image_url?: string
+  raw_thumbnail_url?: string | null
   original_name: string
   sort_order: number
   is_cover: boolean
@@ -67,6 +70,19 @@ export interface ProductListResult {
   total: number
 }
 
+const normalizeProductImage = (image: ProductImage): ProductImage => ({
+  ...image,
+  raw_image_url: image.raw_image_url ?? image.image_url,
+  raw_thumbnail_url: image.raw_thumbnail_url ?? image.thumbnail_url ?? null,
+  image_url: resolveMediaUrl(image.image_url) || image.image_url,
+  thumbnail_url: resolveMediaUrl(image.thumbnail_url ?? null),
+})
+
+const normalizeProduct = (product: ProductItem): ProductItem => ({
+  ...product,
+  images: product.images.map(normalizeProductImage),
+})
+
 export const fetchProducts = async (params: ProductListParams = {}) => {
   const { data } = await http.get<ProductListResult>('/admin/products', {
     params: {
@@ -77,22 +93,25 @@ export const fetchProducts = async (params: ProductListParams = {}) => {
       category_id: params.category_id || undefined,
     },
   })
-  return data
+  return {
+    ...data,
+    items: data.items.map(normalizeProduct),
+  }
 }
 
 export const fetchProduct = async (id: number) => {
   const { data } = await http.get<ProductItem>(`/admin/products/${id}`)
-  return data
+  return normalizeProduct(data)
 }
 
 export const createProduct = async (payload: ProductPayload) => {
   const { data } = await http.post<ProductItem>('/admin/products', payload)
-  return data
+  return normalizeProduct(data)
 }
 
 export const updateProduct = async (id: number, payload: ProductPayload) => {
   const { data } = await http.put<ProductItem>(`/admin/products/${id}`, payload)
-  return data
+  return normalizeProduct(data)
 }
 
 export const deleteProduct = async (id: number) => {
@@ -101,19 +120,25 @@ export const deleteProduct = async (id: number) => {
 
 export const batchUpdateProductStatus = async (payload: ProductBatchStatusPayload) => {
   const { data } = await http.post<ProductListResult>('/admin/products/batch-status', payload)
-  return data
+  return {
+    ...data,
+    items: data.items.map(normalizeProduct),
+  }
 }
 
 export const batchUpdateProductSort = async (payload: ProductBatchSortPayload) => {
   const { data } = await http.put<ProductListResult>('/admin/products/batch-sort', payload)
-  return data
+  return {
+    ...data,
+    items: data.items.map(normalizeProduct),
+  }
 }
 
 export const updateProductSort = async (id: number, sortOrder: number) => {
   const { data } = await http.put<ProductItem>(`/admin/products/${id}/sort`, {
     sort_order: sortOrder,
   })
-  return data
+  return normalizeProduct(data)
 }
 
 export const uploadProductImage = async (
@@ -132,12 +157,12 @@ export const uploadProductImage = async (
       'Content-Type': 'multipart/form-data',
     },
   })
-  return data
+  return normalizeProductImage(data)
 }
 
 export const updateProductImageCover = async (productId: number, imageId: number) => {
   const { data } = await http.post<ProductItem>(`/admin/products/${productId}/images/${imageId}/cover`)
-  return data
+  return normalizeProduct(data)
 }
 
 export const updateProductImagesSort = async (
@@ -145,10 +170,10 @@ export const updateProductImagesSort = async (
   payload: ProductImageSortPayload,
 ) => {
   const { data } = await http.put<ProductItem>(`/admin/products/${productId}/images/sort`, payload)
-  return data
+  return normalizeProduct(data)
 }
 
 export const deleteProductImage = async (productId: number, imageId: number) => {
   const { data } = await http.delete<ProductItem>(`/admin/products/${productId}/images/${imageId}`)
-  return data
+  return normalizeProduct(data)
 }
