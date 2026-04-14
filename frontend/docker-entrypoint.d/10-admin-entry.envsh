@@ -41,3 +41,16 @@ if [ "$entry_path" = "/" ]; then
 else
   export ADMIN_ENTRY_PATH_REDIRECT_SOURCE="${entry_path%/}"
 fi
+
+# 根路径和子路径的前端入口需要不同的 Nginx location 组合：
+# 1. 当入口是 / 时，只保留一个 location /，并回退到 index.html。
+# 2. 当入口是 /foo/ 时，额外生成一个 ^~ /foo/ 前缀规则，根路径仍保持静态资源直出。
+if [ "$entry_path" = "/" ]; then
+  export ADMIN_ENTRY_LOCATION_BLOCK=""
+  export ROOT_LOCATION_TRY_FILES_ARGS='$uri $uri/ /index.html'
+else
+  export ADMIN_ENTRY_LOCATION_BLOCK="    location ^~ ${entry_path} {
+        try_files \$uri \$uri/ /index.html;
+    }"
+  export ROOT_LOCATION_TRY_FILES_ARGS='$uri =404'
+fi

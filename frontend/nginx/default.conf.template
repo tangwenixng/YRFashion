@@ -28,11 +28,9 @@ server {
         return 301 ${ADMIN_ENTRY_PATH};
     }
 
-    location ^~ ${ADMIN_ENTRY_PATH} {
-        try_files $uri $uri/ /index.html;
-    }
+    ${ADMIN_ENTRY_LOCATION_BLOCK}
 
     location / {
-        try_files $uri =404;
+        try_files ${ROOT_LOCATION_TRY_FILES_ARGS};
     }
 }
