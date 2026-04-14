@@ -49,6 +49,7 @@ if [ "$entry_path" = "/" ]; then
   export ADMIN_ENTRY_LOCATION_BLOCK=""
   export ROOT_LOCATION_TRY_FILES_ARGS='$uri $uri/ /index.html'
   export ADMIN_SCOPED_BACKEND_LOCATION_BLOCK=""
+  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK=""
 else
   export ADMIN_ENTRY_LOCATION_BLOCK="    location ^~ ${entry_path} {
         try_files \$uri \$uri/ /index.html;
@@ -70,5 +71,14 @@ else
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+    }"
+  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK="    location ^~ ${entry_path}assets/ {
+        rewrite ^${entry_path}(.*)$ /\$1 break;
+        try_files \$uri =404;
+    }
+
+    location = ${entry_path}favicon.svg {
+        rewrite ^${entry_path}(.*)$ /\$1 break;
+        try_files \$uri =404;
     }"
 fi

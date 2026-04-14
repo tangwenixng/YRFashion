@@ -2,6 +2,7 @@ server {
     listen 80;
     server_name _;
     client_max_body_size 25m;
+    absolute_redirect off;
 
     root /usr/share/nginx/html;
     index index.html;
@@ -25,6 +26,8 @@ server {
     }
 
     ${ADMIN_SCOPED_BACKEND_LOCATION_BLOCK}
+
+    ${ADMIN_SCOPED_STATIC_LOCATION_BLOCK}
 
     location = ${ADMIN_ENTRY_PATH_REDIRECT_SOURCE} {
         return 301 ${ADMIN_ENTRY_PATH};
