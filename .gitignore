@@ -11,6 +11,7 @@ backend/cloudbase-env.example.json
 miniapp/project.private.config.json
 miniapp/project.config.json
 miniapp/utils/config.private.js
+deploy/*.env
 /.idea/inspectionProfiles/profiles_settings.xml
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/.gitignore

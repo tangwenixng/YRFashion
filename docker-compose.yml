@@ -7,13 +7,18 @@ services:
       UPLOAD_DIR: /app/data/uploads
       DATABASE_URL: sqlite:////app/data/app.db
       STORAGE_BACKEND: local
-      SECRET_KEY: change-me-in-production
+      API_PREFIX: ${API_PREFIX:-/api}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-}
       MINIAPP_APP_ID: ${MINIAPP_APP_ID:-}
       MINIAPP_APP_SECRET: ${MINIAPP_APP_SECRET:-}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-admin123456}
+      BOOTSTRAP_ADMIN_DISPLAY_NAME: ${BOOTSTRAP_ADMIN_DISPLAY_NAME:-Store Admin}
     volumes:
       - backend_data:/app/data
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
 
   frontend:
     image: ${FRONTEND_IMAGE:-ghcr.io/tangwenixng/yrfashion-frontend:latest}
@@ -24,7 +29,7 @@ services:
       BACKEND_UPSTREAM: backend:8000
       ADMIN_ENTRY_PATH: ${ADMIN_ENTRY_PATH:-/}
     ports:
-      - "8080:80"
+      - "${FRONTEND_PORT:-8080}:80"
 
 volumes:
   backend_data:
