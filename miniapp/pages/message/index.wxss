@@ -3,25 +3,25 @@
 .page {
   min-height: 100vh;
   padding: 0 32rpx 32rpx;
-  background: linear-gradient(180deg, #f9f2ea 0%, #efe4d8 100%);
+  background: linear-gradient(180deg, #f4f3f1 0%, #eceae7 100%);
 }
 
 .card {
   padding: 30rpx;
   border-radius: 30rpx;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+  background: #ffffff;
+  box-shadow: 0 18rpx 28rpx rgba(31, 28, 26, 0.08);
   margin-top: 16rpx;
 }
 
 .intro-card {
-  background: linear-gradient(135deg, #4a3022 0%, #7a5640 100%);
+  background: linear-gradient(135deg, #23201d 0%, #3a3532 100%);
   padding: 26rpx 32rpx 28rpx;
 }
 
 .label {
   display: block;
-  color: rgba(255, 248, 242, 0.76);
+  color: rgba(250, 247, 244, 0.76);
   font-size: 22rpx;
 }
 
@@ -30,14 +30,14 @@
   margin-top: 14rpx;
   font-size: 40rpx;
   font-weight: 700;
-  color: #fff8f2;
+  color: #ffffff;
 }
 
 .hint {
   display: block;
   margin-top: 16rpx;
   line-height: 1.8;
-  color: rgba(255, 248, 242, 0.82);
+  color: rgba(250, 247, 244, 0.84);
 }
 
 .profile-header {
@@ -50,14 +50,14 @@
   display: block;
   font-size: 30rpx;
   font-weight: 700;
-  color: #432d21;
+  color: #272320;
 }
 
 .profile-hint {
   display: block;
   margin-top: 8rpx;
   line-height: 1.7;
-  color: #8c7060;
+  color: #85807a;
   font-size: 22rpx;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .status-pending {
-  color: #9a6a1f;
+  color: #7f766f;
 }
 
 .status-rejected {
@@ -81,8 +81,8 @@
   height: fit-content;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(122, 86, 64, 0.12);
-  color: #7a5640;
+  background: rgba(106, 98, 92, 0.12);
+  color: #3a3532;
   font-size: 22rpx;
 }
 
@@ -127,22 +127,22 @@
   height: 104rpx;
   border-radius: 999rpx;
   box-sizing: border-box;
-  border: 2rpx solid rgba(111, 82, 64, 0.1);
+  border: 2rpx solid rgba(98, 89, 83, 0.10);
 }
 
 .avatar-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #efe2d5 0%, #dfc7b2 100%);
-  color: #6e4d3a;
+  background: linear-gradient(135deg, #f1efec 0%, #dfdbd5 100%);
+  color: #69645f;
   font-size: 24rpx;
   font-weight: 700;
 }
 
 .avatar-tip {
   margin-top: 10rpx;
-  color: #9a7f6f;
+  color: #9d9892;
   font-size: 20rpx;
   line-height: 1.5;
 }
@@ -163,8 +163,8 @@
   line-height: 84rpx;
   padding: 0 22rpx;
   border-radius: 14rpx;
-  background: #f8f2ec;
-  color: #432d21;
+  background: #f5f4f1;
+  color: #272320;
   box-sizing: border-box;
   font-size: 26rpx;
   font-weight: 500;
@@ -172,8 +172,8 @@
 }
 
 .nickname-block-active .nickname-input {
-  border-color: rgba(122, 86, 64, 0.2);
-  background: #f6eee6;
+  border-color: rgba(98, 89, 83, 0.18);
+  background: #f2f0ed;
 }
 
 .nickname-hint-row {
@@ -185,7 +185,7 @@
 
 .nickname-hint {
   display: block;
-  color: #9a7f6f;
+  color: #9d9892;
   font-size: 22rpx;
   line-height: 1.5;
 }
@@ -195,9 +195,9 @@
   min-height: 320rpx;
   padding: 20rpx 24rpx;
   border-radius: 22rpx;
-  background: #f8f2ec;
+  background: #f5f4f1;
   line-height: 1.8;
-  color: #432d21;
+  color: #272320;
   box-sizing: border-box;
 }
 
@@ -206,15 +206,15 @@
   display: flex;
   justify-content: space-between;
   gap: 16rpx;
-  color: #8c7060;
+  color: #85807a;
   font-size: 22rpx;
 }
 
 .submit-button {
   margin-top: 28rpx;
   width: 100%;
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .submit-button::after {

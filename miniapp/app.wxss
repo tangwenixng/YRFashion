@@ -1,6 +1,6 @@
 page {
-  background: #f7f2eb;
-  color: #2c1b12;
+  background: #f4f3f1;
+  color: #231f1c;
   font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
 }
 

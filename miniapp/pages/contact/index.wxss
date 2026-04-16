@@ -4,22 +4,22 @@
   min-height: 100vh;
   padding: 0 32rpx 32rpx;
   background:
-    radial-gradient(circle at top right, rgba(255, 243, 232, 0.92) 0%, rgba(255, 243, 232, 0) 34%),
-    linear-gradient(180deg, #faf4ee 0%, #eee2d6 100%);
+    radial-gradient(circle at top right, rgba(246, 244, 241, 0.88) 0%, rgba(243, 239, 234, 0) 34%),
+    linear-gradient(180deg, #f6f5f3 0%, #ebe9e6 100%);
 }
 
 .card {
   margin-bottom: 24rpx;
   padding: 28rpx;
   border-radius: 32rpx;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16rpx 34rpx rgba(98, 68, 52, 0.08);
+  background: #ffffff;
+  box-shadow: 0 16rpx 34rpx rgba(31, 28, 26, 0.08);
 }
 
 .intro-card {
   background:
-    linear-gradient(135deg, rgba(74, 48, 34, 0.96) 0%, rgba(122, 86, 64, 0.92) 100%);
-  color: #fff8f2;
+    linear-gradient(135deg, rgba(36, 31, 28, 0.96) 0%, rgba(63, 56, 51, 0.92) 100%);
+  color: #ffffff;
 }
 
 .intro-head {
@@ -32,26 +32,26 @@
 .label,
 .field-label {
   display: block;
-  color: #9a7f6f;
+  color: #9d9892;
   font-size: 22rpx;
 }
 
 .label-light {
-  color: rgba(255, 248, 242, 0.62);
+  color: rgba(250, 247, 244, 0.64);
   letter-spacing: 4rpx;
 }
 
 .intro-badge {
   padding: 10rpx 16rpx;
   border-radius: 999rpx;
-  background: rgba(255, 248, 242, 0.14);
-  color: rgba(255, 248, 242, 0.88);
+  background: rgba(250, 247, 244, 0.14);
+  color: rgba(250, 247, 244, 0.88);
   font-size: 22rpx;
 }
 
 .intro-card .label,
 .intro-card .field-value {
-  color: rgba(255, 248, 242, 0.82);
+  color: rgba(250, 247, 244, 0.84);
 }
 
 .shop-name {
@@ -65,7 +65,7 @@
   display: block;
   margin-top: 8rpx;
   line-height: 1.7;
-  color: #3f2a1f;
+  color: #1f1c1a;
   font-size: 29rpx;
 }
 
@@ -84,20 +84,20 @@
 .feedback-pill {
   padding: 8rpx 16rpx;
   border-radius: 999rpx;
-  background: #f2e4d7;
-  color: #7a5947;
+  background: #f3f1ee;
+  color: #69645f;
   font-size: 22rpx;
 }
 
 .action-button {
   margin-top: 22rpx;
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .action-button.secondary {
-  background: #ebd7c4;
-  color: #4a3022;
+  background: #ece9e4;
+  color: #23201d;
 }
 
 .mini-action {
@@ -107,8 +107,8 @@
   line-height: 64rpx;
   padding: 0 24rpx;
   border-radius: 999rpx;
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
   font-size: 24rpx;
   font-weight: 600;
   flex-shrink: 0;
@@ -128,7 +128,7 @@
 }
 
 .feedback-link {
-  color: #8f7362;
+  color: #85807a;
   font-size: 24rpx;
 }
 
@@ -150,7 +150,7 @@
 }
 
 .footer-text {
-  color: rgba(74, 48, 34, 0.28);
+  color: rgba(63, 56, 51, 0.26);
   font-size: 20rpx;
   letter-spacing: 4rpx;
 }

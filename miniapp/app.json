@@ -9,9 +9,9 @@
   ],
   "window": {
     "navigationBarTitleText": "伊人Fashion 穿搭馆",
-    "navigationBarBackgroundColor": "#fffaf6",
+    "navigationBarBackgroundColor": "#f8f7f5",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f7f2eb",
+    "backgroundColor": "#f4f3f1",
     "backgroundTextStyle": "light"
   },
   "subpackages": [

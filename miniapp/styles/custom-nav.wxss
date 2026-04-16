@@ -6,7 +6,7 @@
   z-index: 40;
   box-sizing: border-box;
   padding: 0 24rpx;
-  background: rgba(250, 244, 238, 0.96);
+  background: rgba(248, 247, 245, 0.96);
 }
 
 .nav-content {
@@ -27,8 +27,8 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 999rpx;
-  background: rgba(255, 250, 245, 0.94);
-  box-shadow: 0 12rpx 24rpx rgba(90, 60, 47, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12rpx 24rpx rgba(31, 28, 26, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,8 +37,8 @@
 .nav-back-icon {
   width: 18rpx;
   height: 18rpx;
-  border-left: 4rpx solid #2f2017;
-  border-bottom: 4rpx solid #2f2017;
+  border-left: 4rpx solid #1f1c1a;
+  border-bottom: 4rpx solid #1f1c1a;
   transform: rotate(45deg);
   margin-left: 8rpx;
 }
@@ -55,8 +55,8 @@
   left: 50%;
   width: 20rpx;
   height: 20rpx;
-  border-top: 4rpx solid #5d4333;
-  border-left: 4rpx solid #5d4333;
+  border-top: 4rpx solid #4a4540;
+  border-left: 4rpx solid #4a4540;
   transform: translateX(-50%) rotate(45deg);
 }
 
@@ -66,7 +66,7 @@
   bottom: 2rpx;
   width: 20rpx;
   height: 14rpx;
-  border: 4rpx solid #5d4333;
+  border: 4rpx solid #4a4540;
   border-top: 0;
   border-radius: 3rpx;
   background: transparent;
@@ -80,7 +80,7 @@
   width: 6rpx;
   height: 10rpx;
   border-radius: 2rpx 2rpx 0 0;
-  background: #5d4333;
+  background: #4a4540;
   transform: translateX(-50%);
 }
 
@@ -91,7 +91,7 @@
   max-width: calc(100% - 340rpx);
   font-size: 32rpx;
   font-weight: 700;
-  color: #2f2017;
+  color: #1f1c1a;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;

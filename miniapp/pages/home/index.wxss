@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 24rpx 24rpx 32rpx;
-  background: linear-gradient(180deg, #f9f3ec 0%, #efe6dc 100%);
+  background: linear-gradient(180deg, #f4f3f1 0%, #eceae7 100%);
 }
 
 .hero-stage {
@@ -11,9 +11,9 @@
 .hero-error {
   padding: 40rpx 36rpx;
   border-radius: 36rpx;
-  background: linear-gradient(135deg, #34231a 0%, #5a3c2f 100%);
-  color: #fff7f0;
-  box-shadow: 0 26rpx 46rpx rgba(52, 35, 26, 0.18);
+  background: linear-gradient(135deg, #1f1c1a 0%, #34302d 100%);
+  color: #ffffff;
+  box-shadow: 0 26rpx 46rpx rgba(35, 31, 28, 0.18);
 }
 
 .hero-error-title {
@@ -30,8 +30,8 @@
 }
 
 .primary-button {
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -45,8 +45,8 @@
   min-height: 320rpx;
   border-radius: 36rpx;
   overflow: hidden;
-  background: linear-gradient(180deg, #fbf5ef 0%, #f3e7db 100%);
-  box-shadow: 0 22rpx 40rpx rgba(90, 60, 47, 0.12);
+  background: linear-gradient(180deg, #f8f7f5 0%, #f1efec 100%);
+  box-shadow: 0 22rpx 40rpx rgba(31, 28, 26, 0.12);
 }
 
 .hero-card-skeleton {
@@ -63,11 +63,11 @@
 .hero-backdrop {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 251, 247, 0.9) 0%, rgba(255, 248, 243, 0.98) 60%, rgba(255, 248, 243, 1) 100%);
+  background: linear-gradient(180deg, rgba(252, 251, 249, 0.94) 0%, rgba(252, 251, 249, 0.98) 60%, rgba(252, 251, 249, 1) 100%);
 }
 
 .hero-backdrop-with-image {
-  background: linear-gradient(180deg, rgba(255, 251, 247, 0.34) 0%, rgba(255, 248, 243, 0.72) 45%, rgba(255, 248, 243, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(252, 251, 249, 0.40) 0%, rgba(248, 246, 243, 0.78) 45%, rgba(251, 249, 247, 0.95) 100%);
 }
 
 .hero-summary {
@@ -97,7 +97,7 @@
   display: block;
   font-size: 20rpx;
   letter-spacing: 5rpx;
-  color: #a38a78;
+  color: #a7a29b;
 }
 
 .hero-preview-link {
@@ -105,8 +105,8 @@
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
   font-size: 20rpx;
-  color: #6d5546;
-  background: rgba(255, 248, 243, 0.82);
+  color: #74706b;
+  background: rgba(255, 255, 255, 0.92);
   border: 1rpx solid rgba(109, 85, 70, 0.1);
 }
 
@@ -115,14 +115,14 @@
   margin-top: 12rpx;
   font-size: 34rpx;
   font-weight: 700;
-  color: #382015;
+  color: #1f1c1a;
 }
 
 .hero-subtitle {
   display: block;
   margin-top: 12rpx;
   line-height: 1.7;
-  color: #735b4d;
+  color: #7a7671;
   font-size: 24rpx;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -151,8 +151,8 @@
 }
 
 .hero-chip-primary {
-  background: #3e2a1f;
-  color: #fff7f0;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .hero-link-action {
@@ -163,7 +163,7 @@
   padding: 0 8rpx;
   font-size: 22rpx;
   font-weight: 500;
-  color: #7a5e4e;
+  color: #7a7671;
   text-align: right;
 }
 
@@ -175,8 +175,8 @@
   height: 68rpx;
   padding: 0 24rpx;
   border-radius: 999rpx;
-  background: rgba(255, 248, 243, 0.9);
-  color: #3c271d;
+  background: #ffffff;
+  color: #1f1c1a;
   font-size: 24rpx;
 }
 
@@ -189,8 +189,8 @@
   margin-top: 20rpx;
   padding: 28rpx;
   border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 18rpx 32rpx rgba(90, 60, 47, 0.08);
+  background: #ffffff;
+  box-shadow: 0 18rpx 32rpx rgba(31, 28, 26, 0.08);
 }
 
 .feed-section {
@@ -207,7 +207,7 @@
 .feed-meta-text {
   flex: 1;
   min-width: 0;
-  color: #947969;
+  color: #99948e;
   font-size: 22rpx;
   line-height: 1.5;
 }
@@ -216,7 +216,7 @@
   margin-top: 16rpx;
   padding: 16rpx 18rpx;
   border-radius: 22rpx;
-  background: rgba(244, 235, 226, 0.92);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -226,14 +226,14 @@
 .search-state-label {
   flex: 1;
   min-width: 0;
-  color: #6d5546;
+  color: #74706b;
   font-size: 22rpx;
   font-weight: 500;
 }
 
 .search-state-clear {
   flex-shrink: 0;
-  color: #7a5e4e;
+  color: #7a7671;
   font-size: 22rpx;
 }
 
@@ -251,16 +251,16 @@
   margin-right: 14rpx;
   padding: 12rpx 22rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.76);
-  color: #7a5e4e;
-  box-shadow: 0 8rpx 14rpx rgba(90, 60, 47, 0.04);
+  background: rgba(255, 255, 255, 0.96);
+  color: #7a7671;
+  box-shadow: 0 8rpx 14rpx rgba(31, 28, 26, 0.05);
   font-size: 22rpx;
   font-weight: 500;
 }
 
 .category-chip-active {
-  background: #3f2a1f;
-  color: #fff4ea;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .list {
@@ -281,9 +281,9 @@
 
 .card {
   border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.88);
+  background: #ffffff;
   overflow: hidden;
-  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+  box-shadow: 0 18rpx 28rpx rgba(31, 28, 26, 0.08);
 }
 
 .product-card {
@@ -301,8 +301,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a68b7a;
-  background: #f3e8de;
+  color: #96918b;
+  background: #f2f0ed;
 }
 
 .product-body {
@@ -313,7 +313,7 @@
   display: block;
   font-size: 30rpx;
   font-weight: 600;
-  color: #352219;
+  color: #272320;
 }
 
 .tag-row {
@@ -326,8 +326,8 @@
 .tag {
   padding: 8rpx 16rpx;
   border-radius: 999px;
-  background: #f1dfd1;
-  color: #7a5947;
+  background: #f1efec;
+  color: #69645f;
   font-size: 22rpx;
 }
 
@@ -341,20 +341,20 @@
   display: block;
   font-size: 30rpx;
   font-weight: 600;
-  color: #3d2a20;
+  color: #272320;
 }
 
 .empty-subtitle,
 .footer-text {
   display: block;
   margin-top: 14rpx;
-  color: #8e7463;
+  color: #85807a;
   text-align: center;
 }
 
 .skeleton {
   animation: pulse 1.2s ease-in-out infinite;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.74);
 }
 
 .card.skeleton {

@@ -3,7 +3,7 @@
 .page {
   min-height: 100vh;
   padding: 0 32rpx 32rpx;
-  background: linear-gradient(180deg, #fcf7f1 0%, #efe6dc 100%);
+  background: linear-gradient(180deg, #f4f3f1 0%, #eceae7 100%);
 }
 
 .page-header {
@@ -14,13 +14,13 @@
   display: block;
   font-size: 44rpx;
   font-weight: 700;
-  color: #352219;
+  color: #1f1c1a;
 }
 
 .subtitle {
   display: block;
   margin-top: 10rpx;
-  color: #8c6d5c;
+  color: #85807a;
   line-height: 1.7;
 }
 
@@ -32,8 +32,8 @@
 
 .card {
   border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+  background: #ffffff;
+  box-shadow: 0 18rpx 28rpx rgba(31, 28, 26, 0.08);
 }
 
 .history-item,
@@ -55,7 +55,7 @@
   display: block;
   font-size: 30rpx;
   font-weight: 700;
-  color: #3d2a20;
+  color: #272320;
 }
 
 .time-text,
@@ -63,7 +63,7 @@
 .empty-subtitle {
   display: block;
   margin-top: 8rpx;
-  color: #8e7463;
+  color: #85807a;
   line-height: 1.7;
 }
 
@@ -75,25 +75,25 @@
 }
 
 .history-status-pending {
-  background: #f3e1d2;
-  color: #80593f;
+  background: #f3f1ee;
+  color: #7a7671;
 }
 
 .history-status-read {
-  background: #eee8df;
-  color: #6f655d;
+  background: #f3f2ef;
+  color: #76716c;
 }
 
 .history-status-replied {
-  background: #3f2a1f;
-  color: #fff7f0;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .history-content,
 .reply-content {
   display: block;
   margin-top: 18rpx;
-  color: #493327;
+  color: #37312d;
   line-height: 1.9;
 }
 
@@ -101,15 +101,15 @@
   margin-top: 18rpx;
   padding: 22rpx;
   border-radius: 22rpx;
-  background: #f8f1ea;
-  border-left: 8rpx solid #3f2a1f;
+  background: #f5f4f1;
+  border-left: 8rpx solid #1f1c1a;
 }
 
 .link-button,
 .primary-button {
   margin-top: 22rpx;
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .skeleton {

@@ -3,18 +3,18 @@
 .page {
   min-height: 100vh;
   padding-bottom: 40rpx;
-  background: linear-gradient(180deg, #fcf7f1 0%, #eee3d6 100%);
+  background: linear-gradient(180deg, #f4f3f1 0%, #ebe9e6 100%);
 }
 
 .hero-wrap {
   position: relative;
-  background: #f6efe7;
+  background: #f4f2ef;
 }
 
 .hero {
   width: 100%;
   min-height: 720rpx;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .hero-image,
@@ -24,14 +24,14 @@
 }
 
 .hero-image {
-  background: #f6efe7;
+  background: #f4f2ef;
 }
 
 .hero-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8f7463;
+  color: #85807a;
 }
 
 .hero-dots {
@@ -51,7 +51,7 @@
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.62);
   transition: all 0.2s ease;
 }
 
@@ -65,15 +65,15 @@
   margin: 24rpx 32rpx 0;
   padding: 30rpx;
   border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18rpx 28rpx rgba(90, 60, 47, 0.08);
+  background: #ffffff;
+  box-shadow: 0 18rpx 28rpx rgba(31, 28, 26, 0.08);
 }
 
 .title {
   display: block;
   font-size: 40rpx;
   font-weight: 700;
-  color: #34231a;
+  color: #1f1c1a;
 }
 
 .tag-row {
@@ -86,8 +86,8 @@
 .tag {
   padding: 8rpx 16rpx;
   border-radius: 999px;
-  background: #f0dfd1;
-  color: #7b5d4c;
+  background: #f1efec;
+  color: #69645f;
   font-size: 22rpx;
 }
 
@@ -95,7 +95,7 @@
   display: block;
   margin-top: 24rpx;
   line-height: 1.9;
-  color: #493327;
+  color: #37312d;
 }
 
 .message-sync {
@@ -106,7 +106,7 @@
 
 .message-sync-text {
   font-size: 22rpx;
-  color: #9f8575;
+  color: #9d9892;
 }
 
 .message-entry {
@@ -122,14 +122,14 @@
   height: 84rpx;
   padding: 0 28rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12rpx 20rpx rgba(90, 60, 47, 0.06);
+  background: #ffffff;
+  box-shadow: 0 12rpx 20rpx rgba(31, 28, 26, 0.06);
   display: flex;
   align-items: center;
 }
 
 .message-entry-placeholder {
-  color: #ab907f;
+  color: #a7a29b;
   font-size: 26rpx;
 }
 
@@ -137,8 +137,8 @@
   height: 84rpx;
   padding: 0 30rpx;
   border-radius: 999rpx;
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,11 +157,11 @@
 .message-entry-link,
 .message-entry-divider {
   font-size: 24rpx;
-  color: #8f7362;
+  color: #85807a;
 }
 
 .message-entry-link-muted {
-  color: #ae9382;
+  color: #a7a29b;
 }
 
 .history-panel {
@@ -179,14 +179,14 @@
   display: block;
   font-size: 28rpx;
   font-weight: 600;
-  color: #34231a;
+  color: #1f1c1a;
 }
 
 .section-subtitle {
   display: block;
   margin-top: 10rpx;
   font-size: 20rpx;
-  color: #9a7d6b;
+  color: #8f857e;
   line-height: 1.6;
 }
 
@@ -194,8 +194,8 @@
   margin-top: 28rpx;
   padding: 22rpx 24rpx;
   border-radius: 18rpx;
-  background: #f8f1ea;
-  color: #8e7362;
+  background: #f5f4f1;
+  color: #85807a;
   line-height: 1.8;
 }
 
@@ -222,7 +222,7 @@
   gap: 18rpx;
   padding: 18rpx;
   border-radius: 24rpx;
-  background: #f8f1ea;
+  background: #f5f4f1;
 }
 
 .related-cover,
@@ -237,8 +237,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eadccc;
-  color: #8d7262;
+  background: #e5dfd9;
+  color: #867c76;
   font-size: 22rpx;
 }
 
@@ -251,7 +251,7 @@
   display: block;
   font-size: 28rpx;
   font-weight: 700;
-  color: #34231a;
+  color: #1f1c1a;
 }
 
 .related-tag-row {
@@ -265,12 +265,12 @@
   padding: 24rpx;
   border-radius: 22rpx;
   background: rgba(248, 241, 234, 0.72);
-  border: 1rpx solid rgba(123, 93, 76, 0.08);
+  border: 1rpx solid rgba(98, 89, 83, 0.08);
 }
 
 .history-item-replied {
   background: rgba(252, 247, 242, 0.96);
-  border-color: rgba(91, 58, 41, 0.12);
+  border-color: rgba(98, 89, 83, 0.12);
 }
 
 .history-meta {
@@ -282,7 +282,7 @@
 .history-time,
 .reply-time {
   font-size: 20rpx;
-  color: #8d7262;
+  color: #867c76;
 }
 
 .history-status {
@@ -291,15 +291,15 @@
 }
 
 .history-status-pending {
-  color: #80593f;
+  color: #7a7671;
 }
 
 .history-status-read {
-  color: #6f655d;
+  color: #76716c;
 }
 
 .history-status-replied {
-  color: #6c4a38;
+  color: #5f5751;
 }
 
 .history-content,
@@ -307,31 +307,31 @@
   display: block;
   margin-top: 14rpx;
   line-height: 1.9;
-  color: #493327;
+  color: #37312d;
 }
 
 .reply-card {
   margin-top: 22rpx;
   padding: 20rpx 22rpx;
   border-radius: 18rpx;
-  background: #f6eee6;
-  box-shadow: 0 8rpx 18rpx rgba(90, 60, 47, 0.04);
+  background: #f2f0ed;
+  box-shadow: 0 8rpx 18rpx rgba(31, 28, 26, 0.05);
 }
 
 .reply-prefix {
   font-size: 24rpx;
   font-weight: 700;
-  color: #6c4a38;
+  color: #5f5751;
 }
 
 .primary-button {
-  background: #3f2a1f;
-  color: #fff8f2;
+  background: #1f1c1a;
+  color: #ffffff;
 }
 
 .secondary-button {
   background: #ead7c5;
-  color: #4a3022;
+  color: #23201d;
 }
 
 .error-card {
