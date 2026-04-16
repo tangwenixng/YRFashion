@@ -7,14 +7,26 @@
 }
 
 .hero-wrap {
+  padding: 0 32rpx;
+}
+
+.hero-shell {
   position: relative;
+  overflow: hidden;
+  border-radius: 28rpx;
   background: #f4f2ef;
+  box-shadow: 0 18rpx 28rpx rgba(31, 28, 26, 0.06);
 }
 
 .hero {
   width: 100%;
   min-height: 720rpx;
   background: rgba(255, 255, 255, 0.82);
+}
+
+.hero-loading {
+  border-radius: 28rpx;
+  overflow: hidden;
 }
 
 .hero-image,

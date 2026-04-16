@@ -20,7 +20,9 @@
   <view class="nav-placeholder" style="height: {{navBarTotalHeight}}px;"></view>
 
   <block wx:if="{{loading}}">
-    <view class="hero skeleton"></view>
+    <view class="hero-wrap">
+      <view class="hero hero-loading skeleton"></view>
+    </view>
     <view class="panel skeleton"></view>
   </block>
 
@@ -34,37 +36,39 @@
 
   <block wx:elif="{{product}}">
     <view class="hero-wrap">
-      <swiper
-        class="hero"
-        style="height: {{heroHeight}}rpx;"
-        current="{{heroCurrent}}"
-        indicator-dots="{{false}}"
-        autoplay="{{product.images.length > 1}}"
-        circular="true"
-        bindchange="handleHeroChange"
-      >
-        <block wx:for="{{product.images}}" wx:key="id">
-          <swiper-item>
-            <image
-              class="hero-image"
-              src="{{item.image_url}}"
-              mode="aspectFit"
-              data-image-url="{{item.image_url}}"
-              bindtap="previewImage"
-            ></image>
+      <view class="hero-shell">
+        <swiper
+          class="hero"
+          style="height: {{heroHeight}}rpx;"
+          current="{{heroCurrent}}"
+          indicator-dots="{{false}}"
+          autoplay="{{product.images.length > 1}}"
+          circular="true"
+          bindchange="handleHeroChange"
+        >
+          <block wx:for="{{product.images}}" wx:key="id">
+            <swiper-item>
+              <image
+                class="hero-image"
+                src="{{item.image_url}}"
+                mode="aspectFit"
+                data-image-url="{{item.image_url}}"
+                bindtap="previewImage"
+              ></image>
+            </swiper-item>
+          </block>
+          <swiper-item wx:if="{{!product.images.length}}">
+            <view class="hero-placeholder">暂无展示图片</view>
           </swiper-item>
-        </block>
-        <swiper-item wx:if="{{!product.images.length}}">
-          <view class="hero-placeholder">暂无展示图片</view>
-        </swiper-item>
-      </swiper>
+        </swiper>
 
-      <view wx:if="{{product.images.length > 1}}" class="hero-dots">
-        <view
-          wx:for="{{product.images}}"
-          wx:key="id"
-          class="hero-dot {{index === heroCurrent ? 'hero-dot-active' : ''}}"
-        ></view>
+        <view wx:if="{{product.images.length > 1}}" class="hero-dots">
+          <view
+            wx:for="{{product.images}}"
+            wx:key="id"
+            class="hero-dot {{index === heroCurrent ? 'hero-dot-active' : ''}}"
+          ></view>
+        </view>
       </view>
     </view>
 
