@@ -49,7 +49,7 @@
       </view>
       <text class="field-value">建议在感兴趣的穿搭详情中留言反馈，我会在留言记录里继续回复你。</text>
       <view class="feedback-actions">
-        <button class="mini-action" bindtap="goToProducts">去看穿搭</button>
+        <button class="mini-action" bindtap="goToFeed">去看穿搭</button>
         <text class="feedback-link" bindtap="goToMessageHistory">我的留言记录</text>
       </view>
     </view>

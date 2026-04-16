@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "伊人Fashion 穿搭馆"
+  "navigationBarTitleText": "伊人Fashion 穿搭馆",
+  "enablePullDownRefresh": true
 }

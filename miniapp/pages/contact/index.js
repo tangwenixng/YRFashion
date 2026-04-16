@@ -56,8 +56,8 @@ Page({
     }
   },
 
-  goToProducts() {
-    wx.navigateTo({ url: "/pages/products/index" })
+  goToFeed() {
+    wx.reLaunch({ url: "/pages/home/index" })
   },
 
   goHome() {

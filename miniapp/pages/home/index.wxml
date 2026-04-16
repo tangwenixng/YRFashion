@@ -1,76 +1,123 @@
 <view class="page">
-  <block wx:if="{{loading}}">
-    <view class="banner-swiper skeleton"></view>
-    <view class="hero-summary skeleton hero-summary-skeleton"></view>
-    <view class="panel skeleton"></view>
+  <block wx:if="{{loadingHome && !home}}">
+    <view class="hero-card hero-card-skeleton skeleton"></view>
   </block>
 
-  <block wx:elif="{{error}}">
+  <block wx:elif="{{homeError && !home}}">
     <view class="hero-error">
       <text class="hero-error-title">伊人Fashion 穿搭馆</text>
-      <text class="hero-error-subtitle">{{error}}</text>
+      <text class="hero-error-subtitle">{{homeError}}</text>
       <button class="primary-button" bindtap="loadHome">重新加载</button>
     </view>
   </block>
 
   <block wx:elif="{{home}}">
     <view class="hero-stage">
-      <swiper class="banner-swiper" indicator-dots="{{home.homepage_banner_urls.length > 1}}" autoplay="{{home.homepage_banner_urls.length > 1}}" circular="true">
-        <block wx:for="{{home.homepage_banner_urls}}" wx:key="*this">
-          <swiper-item>
-            <view class="banner-image-frame">
-              <image
-                class="banner-image"
-                src="{{item}}"
-                mode="widthFix"
-                data-image-url="{{item}}"
-                bindtap="previewBanner"
-              ></image>
-            </view>
-          </swiper-item>
-        </block>
-        <swiper-item wx:if="{{!home.homepage_banner_urls.length}}">
-          <view class="banner-empty">封面图片将在这里显示</view>
-        </swiper-item>
-      </swiper>
+      <view class="hero-card">
+        <image
+          wx:if="{{heroBannerUrl}}"
+          class="hero-background"
+          src="{{heroBannerUrl}}"
+          mode="aspectFill"
+        ></image>
+        <view class="hero-backdrop {{heroBannerUrl ? 'hero-backdrop-with-image' : ''}}"></view>
 
-      <view class="hero-summary">
-        <text class="eyebrow">STYLE SHOWROOM</text>
-        <text class="hero-title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
-        <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎浏览近期搭配记录，也可以直接联系我。'}}</text>
-        <view class="hero-actions">
-          <button class="hero-chip hero-chip-primary" bindtap="goToProducts">查看穿搭</button>
-          <button class="hero-chip hero-chip-secondary" bindtap="goToContact">留言反馈</button>
+        <view class="hero-summary hero-summary-compact">
+          <view class="hero-meta-row">
+            <text class="eyebrow">STYLE SHOWROOM</text>
+            <text
+              wx:if="{{heroBannerUrl}}"
+              class="hero-preview-link"
+              data-image-url="{{heroBannerUrl}}"
+              bindtap="previewBanner"
+            >查看封面</text>
+          </view>
+          <text class="hero-title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
+          <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎直接下滑浏览穿搭，也可以给我留言。'}}</text>
+          <view class="hero-actions">
+            <button class="hero-chip hero-chip-primary" bindtap="scrollToFeed">浏览穿搭</button>
+            <view class="hero-link-action" bindtap="goToContact">留言反馈</view>
+          </view>
         </view>
       </view>
-    </view>
-
-    <view class="panel">
-      <view class="panel-header">
-        <text class="panel-title">近期分享</text>
-        <text class="panel-caption">看看最近整理的穿搭内容</text>
-      </view>
-      <block wx:if="{{home.featured_products.length}}">
-        <view class="product-list">
-          <block wx:for="{{featuredColumns}}" wx:key="index" wx:for-item="column">
-            <view class="product-column">
-              <block wx:for="{{column}}" wx:key="id" wx:for-item="product">
-                <view class="product-card" bindtap="goToProductDetail" data-product-id="{{product.id}}">
-                  <image wx:if="{{product.cover_image_url}}" class="product-image" src="{{product.cover_image_url}}" mode="widthFix"></image>
-                  <view wx:else class="product-image product-placeholder">暂无封面</view>
-                  <view class="product-body">
-                    <text class="product-name">{{product.name}}</text>
-                    <view class="tag-row">
-                      <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
-                    </view>
-                  </view>
-                </view>
-              </block>
-            </view>
-          </block>
-        </view>
-      </block>
-      <view wx:else class="empty-text">近期穿搭内容整理后会显示在这里</view>
     </view>
   </block>
+
+  <view id="feed-section" class="panel feed-section">
+    <view class="search-bar search-bar-top">
+      <view class="search-shell">
+        <input
+          class="search-input"
+          placeholder="搜索风格 / 单品 / 关键词"
+          confirm-type="search"
+          value="{{draftKeyword}}"
+          bindinput="onKeywordInput"
+          bindconfirm="submitSearch"
+        />
+        <view class="search-button" bindtap="submitSearch">
+          <view class="search-button-icon">
+            <view class="search-icon-circle"></view>
+            <view class="search-icon-handle"></view>
+          </view>
+        </view>
+      </view>
+      <view class="search-helper-row">
+        <text class="search-helper-text">{{total ? ('已收录 ' + total + ' 套穿搭，可继续下滑浏览') : '可按风格、单品或关键词快速查找'}}</text>
+        <text wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</text>
+      </view>
+    </view>
+
+    <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-chip {{item.id === activeCategoryId ? 'category-chip-active' : ''}}"
+        data-category-id="{{item.id}}"
+        bindtap="selectCategory"
+      >
+        {{item.name}}
+      </view>
+    </scroll-view>
+
+    <block wx:if="{{loadingProducts && !items.length}}">
+      <view class="card skeleton"></view>
+      <view class="card skeleton"></view>
+    </block>
+
+    <block wx:elif="{{productsError && !items.length}}">
+      <view class="card empty-card">
+        <text class="empty-title">{{productsError}}</text>
+        <button class="primary-button" bindtap="reloadProducts">重新加载</button>
+      </view>
+    </block>
+
+    <block wx:elif="{{items.length}}">
+      <view class="list">
+        <block wx:for="{{productColumns}}" wx:key="index" wx:for-item="column">
+          <view class="product-column">
+            <block wx:for="{{column}}" wx:key="id" wx:for-item="product">
+              <view class="card product-card" bindtap="goToProductDetail" data-product-id="{{product.id}}">
+                <image wx:if="{{product.cover_image_url}}" class="product-image" src="{{product.cover_image_url}}" mode="widthFix"></image>
+                <view wx:else class="product-image product-placeholder">暂无封面</view>
+                <view class="product-body">
+                  <text class="product-name">{{product.name}}</text>
+                  <view class="tag-row">
+                    <text wx:for="{{product.tags}}" wx:key="*this" class="tag">{{item}}</text>
+                  </view>
+                </view>
+              </view>
+            </block>
+          </view>
+        </block>
+      </view>
+      <view class="footer-text">{{hasMore ? (loadingMore ? '加载更多中...' : '上滑继续查看') : '已经到底了'}}</view>
+    </block>
+
+    <block wx:else>
+      <view class="card empty-card">
+        <text class="empty-title">{{keyword ? '没有找到匹配的穿搭' : (activeCategoryId ? '当前分类下还没有相关穿搭' : '当前还没有可浏览的穿搭')}}</text>
+        <text class="empty-subtitle">{{keyword ? '换个关键词，或者切换分类再试试' : (activeCategoryId ? '试试切换其他分类看看' : '整理完成后会在这里更新')}}</text>
+      </view>
+    </block>
+  </view>
 </view>
