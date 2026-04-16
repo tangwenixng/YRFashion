@@ -162,6 +162,24 @@
   color: #7a5e4e;
 }
 
+.hero-search-inline {
+  margin-top: 20rpx;
+}
+
+.hero-search-input {
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 248, 243, 0.9);
+  color: #3c271d;
+  font-size: 24rpx;
+}
+
+.hero-search-input-full {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .panel {
   margin-top: 20rpx;
   padding: 28rpx;
@@ -174,91 +192,41 @@
   margin-top: 22rpx;
 }
 
-.search-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12rpx;
-}
-
-.search-bar-top {
-  margin-top: 0;
-}
-
-.search-shell {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  padding: 10rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12rpx 20rpx rgba(90, 60, 47, 0.06);
-}
-
-.search-input {
-  flex: 1;
-  height: 68rpx;
-  padding: 0 24rpx;
-  border-radius: 999rpx;
-  background: rgba(248, 242, 234, 0.86);
-  color: #3c271d;
-  font-size: 26rpx;
-}
-
-.search-button {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 999rpx;
-  background: #efe1d3;
-  border: 2rpx solid rgba(111, 82, 64, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.search-button-icon {
-  position: relative;
-  width: 28rpx;
-  height: 28rpx;
-}
-
-.search-icon-circle {
-  width: 18rpx;
-  height: 18rpx;
-  border: 4rpx solid #6f5240;
-  border-radius: 50%;
-}
-
-.search-icon-handle {
-  position: absolute;
-  right: 0;
-  bottom: 2rpx;
-  width: 10rpx;
-  height: 4rpx;
-  border-radius: 999rpx;
-  background: #6f5240;
-  transform: rotate(45deg);
-  transform-origin: center;
-}
-
-.search-helper-row {
+.feed-meta-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  padding: 0 8rpx;
 }
 
-.search-helper-text {
+.feed-meta-text {
   flex: 1;
   min-width: 0;
   color: #947969;
-  font-size: 21rpx;
+  font-size: 22rpx;
   line-height: 1.5;
 }
 
-.search-reset {
+.search-state-bar {
+  margin-top: 16rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 22rpx;
+  background: rgba(244, 235, 226, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.search-state-label {
+  flex: 1;
+  min-width: 0;
+  color: #6d5546;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.search-state-clear {
   flex-shrink: 0;
   color: #7a5e4e;
   font-size: 22rpx;

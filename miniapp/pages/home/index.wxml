@@ -34,8 +34,21 @@
           </view>
           <text class="hero-title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
           <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎直接下滑浏览穿搭，也可以给我留言。'}}</text>
-          <view class="hero-actions">
-            <button class="hero-chip hero-chip-primary" bindtap="scrollToFeed">浏览穿搭</button>
+
+          <view wx:if="{{showInlineSearch}}" class="hero-search-inline">
+            <input
+              class="hero-search-input hero-search-input-full"
+              placeholder="搜索风格 / 单品 / 关键词"
+              confirm-type="search"
+              focus="{{showInlineSearch}}"
+              value="{{draftKeyword}}"
+              bindinput="onKeywordInput"
+              bindconfirm="submitSearch"
+              bindblur="onInlineSearchBlur"
+            />
+          </view>
+          <view wx:else class="hero-actions">
+            <button class="hero-chip hero-chip-primary" bindtap="openInlineSearch">搜索穿搭</button>
             <view class="hero-link-action" bindtap="goToContact">留言反馈</view>
           </view>
         </view>
@@ -44,27 +57,13 @@
   </block>
 
   <view id="feed-section" class="panel feed-section">
-    <view class="search-bar search-bar-top">
-      <view class="search-shell">
-        <input
-          class="search-input"
-          placeholder="搜索风格 / 单品 / 关键词"
-          confirm-type="search"
-          value="{{draftKeyword}}"
-          bindinput="onKeywordInput"
-          bindconfirm="submitSearch"
-        />
-        <view class="search-button" bindtap="submitSearch">
-          <view class="search-button-icon">
-            <view class="search-icon-circle"></view>
-            <view class="search-icon-handle"></view>
-          </view>
-        </view>
-      </view>
-      <view class="search-helper-row">
-        <text class="search-helper-text">{{total ? ('已收录 ' + total + ' 套穿搭，可继续下滑浏览') : '可按风格、单品或关键词快速查找'}}</text>
-        <text wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</text>
-      </view>
+    <view class="feed-meta-row">
+      <text class="feed-meta-text">{{total ? ('已收录 ' + total + ' 套穿搭，可继续下滑浏览') : '下滑浏览更多穿搭内容'}}</text>
+    </view>
+
+    <view wx:if="{{keyword}}" class="search-state-bar">
+      <text class="search-state-label">搜索结果：{{keyword}}</text>
+      <text class="search-state-clear" bindtap="clearSearch">清除</text>
     </view>
 
     <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">

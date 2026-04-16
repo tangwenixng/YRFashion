@@ -5,6 +5,7 @@ const DEFAULT_IMAGE_RATIO = 1.28
 const MIN_IMAGE_RATIO = 0.8
 const MAX_IMAGE_RATIO = 1.6
 const imageRatioCache = {}
+const AUTO_SEARCH_DELAY = 360
 
 Page({
   data: {
@@ -14,6 +15,7 @@ Page({
     activeCategoryId: 0,
     keyword: "",
     draftKeyword: "",
+    showInlineSearch: false,
     items: [],
     productColumns: [],
     page: 1,
@@ -28,7 +30,13 @@ Page({
   },
 
   onLoad() {
+    this.autoSearchTimer = null
+    this.productRequestToken = 0
     this.loadInitialData()
+  },
+
+  onUnload() {
+    this.clearAutoSearchTimer()
   },
 
   onPullDownRefresh() {
@@ -107,26 +115,109 @@ Page({
     }
   },
 
-  onKeywordInput(event) {
-    this.setData({ draftKeyword: event.detail.value })
+  openInlineSearch() {
+    this.clearAutoSearchTimer()
+    this.setData({
+      showInlineSearch: true,
+      draftKeyword: this.data.keyword,
+    })
   },
 
-  submitSearch() {
-    const keyword = (this.data.draftKeyword || "").trim()
+  closeInlineSearch() {
+    this.clearAutoSearchTimer()
+    this.setData({
+      showInlineSearch: false,
+      draftKeyword: this.data.keyword,
+    })
+  },
+
+  clearAutoSearchTimer() {
+    if (this.autoSearchTimer) {
+      clearTimeout(this.autoSearchTimer)
+      this.autoSearchTimer = null
+    }
+  },
+
+  onInlineSearchBlur(event) {
+    const value = (event.detail.value || "").trim()
+    if (!value && !this.data.keyword) {
+      this.closeInlineSearch()
+    }
+  },
+
+  onKeywordInput(event) {
+    const draftKeyword = event.detail.value || ""
+    this.setData({ draftKeyword })
+    this.scheduleAutoSearch(draftKeyword)
+  },
+
+  scheduleAutoSearch(rawKeyword) {
+    this.clearAutoSearchTimer()
+    const keyword = (rawKeyword || "").trim()
+
     if (keyword === this.data.keyword) {
       return
     }
 
-    this.setData({
-      keyword,
-      items: [],
-      productColumns: [],
-      page: 1,
-      total: 0,
-      hasMore: true,
-      productsError: "",
+    if (keyword.length < 2) {
+      return
+    }
+
+    this.autoSearchTimer = setTimeout(() => {
+      this.commitSearchKeyword(keyword, {
+        preserveItems: true,
+        scroll: true,
+        showLoading: false,
+      })
+    }, AUTO_SEARCH_DELAY)
+  },
+
+  submitSearch() {
+    this.clearAutoSearchTimer()
+    const keyword = (this.data.draftKeyword || "").trim()
+    this.commitSearchKeyword(keyword, {
+      preserveItems: false,
+      scroll: Boolean(keyword || this.data.keyword),
+      showLoading: true,
     })
-    this.loadProducts({ reset: true, showLoading: true })
+  },
+
+  commitSearchKeyword(keyword, options = {}) {
+    const sameKeyword = keyword === this.data.keyword
+
+    if (sameKeyword) {
+      if (options.scroll && keyword) {
+        this.scrollToFeed()
+      }
+      return
+    }
+
+    const nextState = {
+      keyword,
+      draftKeyword: keyword,
+      productsError: "",
+      page: 1,
+      hasMore: true,
+    }
+
+    if (!options.preserveItems) {
+      Object.assign(nextState, {
+        items: [],
+        productColumns: [],
+        total: 0,
+      })
+    }
+
+    this.setData(nextState)
+
+    if (options.scroll && (keyword || this.data.keyword)) {
+      this.scrollToFeed()
+    }
+
+    this.loadProducts({
+      reset: true,
+      showLoading: options.showLoading !== false,
+    })
   },
 
   clearSearch() {
@@ -134,9 +225,11 @@ Page({
       return
     }
 
+    this.clearAutoSearchTimer()
     this.setData({
       keyword: "",
       draftKeyword: "",
+      showInlineSearch: false,
       items: [],
       productColumns: [],
       page: 1,
@@ -175,6 +268,7 @@ Page({
     const nextPage = reset ? 1 : this.data.page
     const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
     const hasItems = this.data.items.length > 0
+    const requestToken = ++this.productRequestToken
 
     if (this.data.activeCategoryId > 0) {
       query.push(`category_id=${this.data.activeCategoryId}`)
@@ -198,6 +292,10 @@ Page({
         : this.data.items.concat((response.items || []).map(normalizeProduct))
       const productColumns = await this.buildProductColumns(nextItems)
 
+      if (requestToken !== this.productRequestToken) {
+        return
+      }
+
       this.setData({
         items: nextItems,
         productColumns,
@@ -209,6 +307,10 @@ Page({
         productsError: "",
       })
     } catch (error) {
+      if (requestToken !== this.productRequestToken) {
+        return
+      }
+
       this.setData({
         loadingProducts: false,
         loadingMore: false,
