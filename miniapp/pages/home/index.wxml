@@ -25,19 +25,20 @@
         <view class="hero-summary hero-summary-compact">
           <view class="hero-meta-row">
             <text class="eyebrow">STYLE SHOWROOM</text>
-            <text
-              wx:if="{{heroBannerUrl}}"
-              class="hero-preview-link"
-              data-image-url="{{heroBannerUrl}}"
-              bindtap="previewBanner"
-            >查看封面</text>
+            <view class="hero-side-actions">
+              <text
+                wx:if="{{heroBannerUrl}}"
+                class="hero-preview-link"
+                data-image-url="{{heroBannerUrl}}"
+                bindtap="previewBanner"
+              >查看封面</text>
+              <text class="hero-feedback-link" bindtap="goToContact">留言反馈</text>
+            </view>
           </view>
           <text class="hero-title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
           <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎直接下滑浏览穿搭，也可以给我留言。'}}</text>
 
-          <view class="hero-actions hero-actions-right">
-            <view class="hero-link-action" bindtap="goToContact">留言反馈</view>
-          </view>
+          <view class="hero-actions hero-actions-right"></view>
         </view>
       </view>
     </view>
