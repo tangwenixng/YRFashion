@@ -35,20 +35,7 @@
           <text class="hero-title">{{home.shop_name || '伊人Fashion 穿搭馆'}}</text>
           <text class="hero-subtitle">{{home.shop_intro || '分享轻时尚穿搭与日常灵感，欢迎直接下滑浏览穿搭，也可以给我留言。'}}</text>
 
-          <view wx:if="{{showInlineSearch}}" class="hero-search-inline">
-            <input
-              class="hero-search-input hero-search-input-full"
-              placeholder="搜索风格 / 单品 / 关键词"
-              confirm-type="search"
-              focus="{{showInlineSearch}}"
-              value="{{draftKeyword}}"
-              bindinput="onKeywordInput"
-              bindconfirm="submitSearch"
-              bindblur="onInlineSearchBlur"
-            />
-          </view>
-          <view wx:else class="hero-actions">
-            <button class="hero-chip hero-chip-primary" bindtap="openInlineSearch">搜索穿搭</button>
+          <view class="hero-actions hero-actions-right">
             <view class="hero-link-action" bindtap="goToContact">留言反馈</view>
           </view>
         </view>
@@ -59,6 +46,23 @@
   <view id="feed-section" class="panel feed-section">
     <view class="feed-meta-row">
       <text class="feed-meta-text">{{total ? ('已收录 ' + total + ' 套穿搭，可继续下滑浏览') : '下滑浏览更多穿搭内容'}}</text>
+      <view wx:if="{{!showInlineSearch}}" class="feed-search-trigger" bindtap="openInlineSearch">
+        <view class="feed-search-icon-circle"></view>
+        <view class="feed-search-icon-handle"></view>
+      </view>
+    </view>
+
+    <view wx:if="{{showInlineSearch}}" class="feed-search-inline">
+      <input
+        class="feed-search-input"
+        placeholder="搜索风格 / 单品 / 关键词"
+        confirm-type="search"
+        focus="{{showInlineSearch}}"
+        value="{{draftKeyword}}"
+        bindinput="onKeywordInput"
+        bindconfirm="submitSearch"
+        bindblur="onInlineSearchBlur"
+      />
     </view>
 
     <view wx:if="{{keyword}}" class="search-state-bar">
