@@ -67,7 +67,6 @@
     </view>
 
     <view wx:if="{{keyword}}" class="search-state-bar">
-      <text class="search-state-label">搜索结果：{{keyword}}</text>
       <text class="search-state-clear" bindtap="clearSearch">清除</text>
     </view>
 

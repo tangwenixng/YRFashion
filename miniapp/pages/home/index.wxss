@@ -250,28 +250,17 @@
 }
 
 .search-state-bar {
-  margin-top: 16rpx;
-  padding: 16rpx 18rpx;
-  border-radius: 22rpx;
-  background: #ffffff;
+  margin-top: 14rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.search-state-label {
-  flex: 1;
-  min-width: 0;
-  color: #74706b;
-  font-size: 22rpx;
-  font-weight: 500;
+  justify-content: flex-end;
 }
 
 .search-state-clear {
   flex-shrink: 0;
   color: #7a7671;
   font-size: 22rpx;
+  line-height: 1.4;
 }
 
 .category-strip {
