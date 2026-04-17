@@ -101,22 +101,24 @@ onMounted(() => {
 }
 
 .metric-card {
-  padding: 12px;
-  border: 1px solid rgba(40, 55, 49, 0.08);
-  background: rgba(255, 255, 255, 0.92);
+  padding: 14px;
+  border: 1px solid rgba(40, 55, 49, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 246, 0.94));
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 8px 20px rgba(28, 40, 34, 0.05);
 }
 
 .metric-card.plain {
-  border-radius: 14px;
+  border-radius: 18px;
 }
 
 .metric-card.accent {
-  border-radius: 18px 14px 14px 14px;
+  border-radius: 22px;
   background: linear-gradient(160deg, var(--mobile-shell-dark), #27463c);
   color: #f8f4ed;
+  box-shadow: 0 10px 24px rgba(29, 64, 53, 0.16);
 }
 
 .metric-label-row {
@@ -153,25 +155,26 @@ onMounted(() => {
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
 .entry-card {
-  min-height: 92px;
-  padding: 14px;
-  border: 1px solid rgba(38, 55, 48, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.96);
+  min-height: 104px;
+  padding: 16px;
+  border: 1px solid rgba(38, 55, 48, 0.06);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 246, 0.94));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   text-align: left;
+  box-shadow: 0 8px 20px rgba(28, 40, 34, 0.05);
 }
 
 .entry-card.muted {
-  background: rgba(250, 250, 247, 0.92);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 248, 243, 0.92));
 }
 
 .entry-card strong,
@@ -200,10 +203,11 @@ onMounted(() => {
 }
 
 .section-block {
-  padding: 14px;
-  border: 1px solid rgba(40, 55, 49, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.96);
+  padding: 16px;
+  border: 1px solid rgba(40, 55, 49, 0.06);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 246, 0.94));
+  box-shadow: 0 8px 20px rgba(28, 40, 34, 0.05);
 }
 
 .section-head {
@@ -222,9 +226,9 @@ onMounted(() => {
 .ghost-action {
   min-height: 34px;
   padding: 0 12px;
-  border: 1px solid rgba(47, 106, 88, 0.14);
-  border-radius: 10px;
-  background: rgba(47, 106, 88, 0.04);
+  border: 1px solid rgba(47, 106, 88, 0.1);
+  border-radius: 12px;
+  background: rgba(247, 248, 244, 0.9);
   color: var(--brand-deep);
   font-weight: 600;
 }

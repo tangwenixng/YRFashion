@@ -90,17 +90,18 @@ onMounted(() => {
 
 <template>
   <section class="mobile-page products-page">
-    <article class="filter-shell">
+    <section class="products-toolbar">
       <div class="filter-head">
-        <p>{{ filters.status ? statusTabs.find((tab) => tab.value === filters.status)?.label : '全部' }} · {{ total }} 条结果</p>
-        <button class="mobile-action-button" type="button" @click="router.push('/m/products/create')">新增</button>
+        <p class="toolbar-summary">{{ filters.status ? statusTabs.find((tab) => tab.value === filters.status)?.label : '全部' }} · {{ total }} 条结果</p>
+        <button class="mobile-action-button toolbar-add" type="button" @click="router.push('/m/products/create')">新增</button>
       </div>
 
-      <div class="search-row">
+      <div class="search-row search-strip">
         <el-input v-model="filters.keyword" clearable placeholder="搜索名称或标签" @keyup.enter="applyFilters" />
       </div>
 
-      <div class="status-chips">
+      <div class="segment-wrap">
+        <div class="status-chips">
         <button
           v-for="tab in statusTabs"
           :key="tab.value || 'all'"
@@ -112,7 +113,8 @@ onMounted(() => {
           {{ tab.label }}
         </button>
       </div>
-    </article>
+      </div>
+    </section>
 
     <section class="product-list" v-loading="loading">
       <article v-for="product in products" :key="product.id" class="product-card">
@@ -125,12 +127,14 @@ onMounted(() => {
               alt=""
             />
             <div v-else class="product-cover product-cover-fallback">暂无封面</div>
-            <span class="cover-status-badge">{{ formatStatusLabel(product.status) }}</span>
           </div>
 
           <div class="product-copy">
             <strong>{{ product.name }}</strong>
-            <p>{{ product.category_name || '未分类' }}</p>
+            <div class="product-meta-row">
+              <span class="product-category">{{ product.category_name || '未分类' }}</span>
+              <span class="product-status-pill">{{ formatStatusLabel(product.status) }}</span>
+            </div>
             <p class="product-desc">{{ product.description || '暂无描述' }}</p>
           </div>
         </div>
@@ -160,63 +164,90 @@ onMounted(() => {
   gap: 12px;
 }
 
-.filter-shell,
 .product-card,
 .pager-shell {
   border: 1px solid rgba(40, 55, 49, 0.08);
   background: rgba(255, 255, 255, 0.96);
 }
 
-.filter-shell {
-  padding: 14px;
-  border-radius: 16px;
+.products-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .filter-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  padding: 0 2px;
 }
 
-.filter-head p {
+.toolbar-summary {
   margin: 0;
-  margin-top: 4px;
   color: #727973;
   font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.toolbar-add {
+  min-width: 58px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  box-shadow: 0 8px 14px rgba(35, 86, 71, 0.12);
 }
 
 .search-row {
-  margin-top: 12px;
+  margin: 0;
+}
+
+.search-strip {
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(40, 55, 49, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .search-row :deep(.el-input__wrapper) {
-  min-height: 46px;
+  min-height: 38px;
   border-radius: 12px;
-  background: rgba(248, 248, 245, 0.96);
+  background: rgba(247, 248, 244, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(57, 76, 64, 0.06);
+}
+
+.segment-wrap {
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(40, 55, 49, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .status-chips {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
 }
 
 .status-chip {
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid rgba(57, 76, 64, 0.12);
-  border-radius: 999px;
-  background: rgba(249, 249, 247, 0.96);
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
   color: #66706a;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .status-chip.active {
-  border-color: rgba(47, 106, 88, 0.16);
-  background: rgba(47, 106, 88, 0.08);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--brand-deep);
+  box-shadow: 0 4px 10px rgba(34, 52, 45, 0.08);
 }
 
 .product-list {
@@ -226,13 +257,16 @@ onMounted(() => {
 }
 
 .product-card {
-  padding: 12px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 247, 0.94));
+  box-shadow: 0 10px 24px rgba(28, 40, 34, 0.06);
 }
 
 .product-main {
   display: flex;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .cover-wrap {
@@ -241,11 +275,12 @@ onMounted(() => {
 }
 
 .product-cover {
-  width: 86px;
-  height: 110px;
-  border-radius: 12px;
+  width: 92px;
+  height: 118px;
+  border-radius: 18px;
   object-fit: cover;
   background: rgba(57, 76, 64, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
 .product-cover-fallback {
@@ -253,22 +288,6 @@ onMounted(() => {
   place-items: center;
   color: #727b75;
   font-size: 12px;
-}
-
-.cover-status-badge {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  min-height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: rgba(21, 43, 37, 0.78);
-  color: #f9f4ec;
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .product-copy {
@@ -286,6 +305,34 @@ onMounted(() => {
   line-height: 1.35;
 }
 
+.product-meta-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.product-category {
+  min-width: 0;
+  color: #6f7771;
+  font-size: 13px;
+}
+
+.product-status-pill {
+  flex-shrink: 0;
+  min-height: 24px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(43, 83, 69, 0.1);
+  color: #315347;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .product-copy p {
   margin: 6px 0 0;
   color: #68716b;
@@ -293,15 +340,16 @@ onMounted(() => {
 }
 
 .product-desc {
-  line-height: 1.5;
+  line-height: 1.55;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  color: #7a827c;
 }
 
 .product-actions {
-  margin-top: 12px;
+  margin-top: 14px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
@@ -309,17 +357,17 @@ onMounted(() => {
 
 .action-chip,
 .ghost-action {
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 10px;
-  border: 1px solid rgba(57, 76, 64, 0.12);
-  border-radius: 10px;
-  background: rgba(249, 249, 247, 0.96);
+  border: 1px solid rgba(57, 76, 64, 0.08);
+  border-radius: 14px;
+  background: rgba(247, 248, 244, 0.94);
   color: #334039;
   font-weight: 600;
 }
 
 .action-chip.primary {
-  background: rgba(47, 106, 88, 0.08);
+  background: rgba(47, 106, 88, 0.1);
   color: var(--brand-deep);
 }
 
