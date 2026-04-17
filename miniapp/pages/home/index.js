@@ -6,6 +6,7 @@ const MIN_IMAGE_RATIO = 0.8
 const MAX_IMAGE_RATIO = 1.6
 const imageRatioCache = {}
 const AUTO_SEARCH_DELAY = 360
+const HOME_RETURN_REFRESH_INTERVAL = 30 * 1000
 
 Page({
   data: {
@@ -33,12 +34,17 @@ Page({
     this.autoSearchTimer = null
     this.productRequestToken = 0
     this.hasShownOnce = false
+    this.lastHomeReloadAt = 0
     this.loadInitialData()
   },
 
   onShow() {
     if (!this.hasShownOnce) {
       this.hasShownOnce = true
+      return
+    }
+
+    if (Date.now() - this.lastHomeReloadAt < HOME_RETURN_REFRESH_INTERVAL) {
       return
     }
 
@@ -60,6 +66,7 @@ Page({
   },
 
   async loadInitialData(options = {}) {
+    this.lastHomeReloadAt = Date.now()
     const refresh = Boolean(options.refresh)
 
     await Promise.all([
