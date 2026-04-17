@@ -16,6 +16,7 @@ import {
 const PAGE_SORT_STEP = 10
 const PAGE_SORT_GROUP = 1000
 const PRODUCT_TAG_PREVIEW_LIMIT = 2
+const DEFAULT_STATUS_FILTER: '' | 'draft' | 'published' | 'archived' = 'published'
 
 const router = useRouter()
 const loading = ref(false)
@@ -31,12 +32,12 @@ const pageSize = ref(10)
 const total = ref(0)
 const filters = reactive({
   keyword: '',
-  status: '' as '' | 'draft' | 'published' | 'archived',
+  status: DEFAULT_STATUS_FILTER,
   category_id: null as number | null,
 })
 
 const hasActiveFilters = computed(() =>
-  Boolean(filters.keyword.trim() || filters.status || filters.category_id),
+  Boolean(filters.keyword.trim() || filters.category_id || filters.status !== DEFAULT_STATUS_FILTER),
 )
 
 const activeFilterSummary = computed(() => {
@@ -57,7 +58,7 @@ const activeFilterSummary = computed(() => {
     }
   }
 
-  return summary.length ? summary.join(' / ') : '全部商品'
+  return summary.length ? summary.join(' / ') : '已发布商品'
 })
 
 const compactStatusSummary = computed(() => {
@@ -152,7 +153,7 @@ const applyFilters = async () => {
 
 const resetFilters = async () => {
   filters.keyword = ''
-  filters.status = ''
+  filters.status = DEFAULT_STATUS_FILTER
   filters.category_id = null
   page.value = 1
   await loadProducts()
