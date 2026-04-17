@@ -20,6 +20,7 @@ const PRODUCT_TAG_PREVIEW_LIMIT = 2
 const router = useRouter()
 const loading = ref(false)
 const actionLoadingProductId = ref<number | null>(null)
+const movingProductId = ref<number | null>(null)
 const products = ref<ProductItem[]>([])
 const categories = ref<CategoryItem[]>([])
 const productsTableRef = ref<{ $el: HTMLElement } | null>(null)
@@ -263,11 +264,12 @@ const confirmDeleteProduct = async (product: ProductItem) => {
   await loadProducts()
 }
 
-const persistDraggedSort = async (sourceId: number, targetId: number) => {
+const reorderProducts = async (sourceId: number, targetId: number, successMessage: string) => {
   if (sourceId === targetId || loading.value) {
     return
   }
 
+  const previousProducts = products.value
   const nextProducts = [...products.value]
   const sourceIndex = nextProducts.findIndex((item) => item.id === sourceId)
   const targetIndex = nextProducts.findIndex((item) => item.id === targetId)
@@ -290,9 +292,42 @@ const persistDraggedSort = async (sourceId: number, targetId: number) => {
     sort_order: sortPayload.items[index].sort_order,
   }))
 
-  await batchUpdateProductSort(sortPayload)
-  ElMessage.success('商品排序已更新')
-  await loadProducts()
+  try {
+    await batchUpdateProductSort(sortPayload)
+    ElMessage.success(successMessage)
+    await loadProducts()
+  } catch (error) {
+    products.value = previousProducts
+    throw error
+  }
+}
+
+const moveProduct = async (product: ProductItem, direction: 'up' | 'down') => {
+  const currentIndex = products.value.findIndex((item) => item.id === product.id)
+  if (currentIndex < 0) {
+    return
+  }
+
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+  const targetProduct = products.value[targetIndex]
+  if (!targetProduct) {
+    return
+  }
+
+  movingProductId.value = product.id
+  try {
+    await reorderProducts(
+      product.id,
+      targetProduct.id,
+      direction === 'up' ? '已上移商品' : '已下移商品',
+    )
+  } finally {
+    movingProductId.value = null
+  }
+}
+
+const persistDraggedSort = async (sourceId: number, targetId: number) => {
+  await reorderProducts(sourceId, targetId, '商品排序已更新')
 }
 
 const bindProductRowDrag = () => {
@@ -442,17 +477,17 @@ void loadCategories()
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="48" />
-        <el-table-column label="商品信息" min-width="360">
+        <el-table-column label="商品信息" min-width="320">
           <template #default="{ row }">
             <div class="product-main-cell">
               <button
                 type="button"
                 class="product-main-button"
-                :title="`查看商品：${row.name}`"
+                :title="row.name"
                 @click="openProduct(row)"
               >
                 <div class="product-main-heading">
-                  <strong class="product-main-title">{{ row.name }}</strong>
+                  <strong class="product-main-title" :title="row.name">{{ row.name }}</strong>
                 </div>
                 <span class="product-main-subtitle" :title="getProductSummary(row)">
                   {{ getProductSummary(row) }}
@@ -503,6 +538,34 @@ void loadCategories()
               <div v-else class="cover-fallback" />
               <div class="image-summary-meta" :title="row.images[0]?.original_name || ''">
                 <strong>{{ row.images.length ? `${row.images.length} 张` : '暂无图片' }}</strong>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="排序" width="180">
+          <template #default="{ row, $index }">
+            <div class="sort-box">
+              <span class="sort-value">#{{ row.sort_order }}</span>
+              <div class="sort-actions">
+                <el-button
+                  link
+                  size="small"
+                  class="sort-action"
+                  :disabled="$index === 0 || loading || movingProductId === row.id"
+                  @click="moveProduct(row, 'up')"
+                >
+                  上移
+                </el-button>
+                <span class="sort-divider"></span>
+                <el-button
+                  link
+                  size="small"
+                  class="sort-action"
+                  :disabled="$index === products.length - 1 || loading || movingProductId === row.id"
+                  @click="moveProduct(row, 'down')"
+                >
+                  下移
+                </el-button>
               </div>
             </div>
           </template>
@@ -639,6 +702,8 @@ void loadCategories()
 .selection-toolbar,
 .tag-list,
 .image-summary,
+.sort-box,
+.sort-actions,
 .filter-actions,
 .pagination-bar,
 .row-actions,
@@ -708,6 +773,34 @@ void loadCategories()
 
 .tag-overflow {
   color: var(--brand-deep);
+}
+
+.sort-box {
+  justify-content: space-between;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.sort-value {
+  min-width: 46px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sort-actions {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.sort-action {
+  padding: 0;
+}
+
+.sort-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(57, 76, 64, 0.14);
 }
 
 .table-card,
@@ -918,6 +1011,9 @@ void loadCategories()
   font-size: 17px;
   font-weight: 700;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-main-subtitle {
