@@ -2,6 +2,7 @@
 // 如果前面还带了额外前缀，例如 /yr-admin-gate-9x2k/login，就可以据此反推出隐藏入口前缀。
 const topLevelRouteSegments = new Set([
   'login',
+  'home',
   'dashboard',
   'accounts',
   'categories',
@@ -10,6 +11,8 @@ const topLevelRouteSegments = new Set([
   'users',
   'settings',
 ])
+
+const mobileRouteNamespace = 'm'
 
 // 统一将后台入口前缀整理为 /xxx/ 这种格式，便于同时给 vue-router history 和登录跳转复用。
 const normalizeBasePath = (value: string) => {
@@ -32,7 +35,18 @@ export const resolveAdminBasePath = (pathname: string) => {
     return '/'
   }
 
-  const routeSegmentIndex = segments.findIndex((segment) => topLevelRouteSegments.has(segment))
+  const routeSegmentIndex = segments.findIndex((segment, index) => {
+    if (topLevelRouteSegments.has(segment)) {
+      return true
+    }
+
+    if (segment !== mobileRouteNamespace) {
+      return false
+    }
+
+    const nextSegment = segments[index + 1]
+    return !nextSegment || topLevelRouteSegments.has(nextSegment)
+  })
   if (routeSegmentIndex === 0) {
     return '/'
   }
