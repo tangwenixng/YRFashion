@@ -63,14 +63,19 @@ export const fetchMessages = async (params: MessageListParams = {}) => {
   }
 }
 
+export const fetchMessageDetail = async (id: number) => {
+  const { data } = await http.get<MessageItem>(`/admin/messages/${id}`)
+  return normalizeMessage(data)
+}
+
 export const markMessageRead = async (id: number) => {
   const { data } = await http.post<MessageItem>(`/admin/messages/${id}/read`)
-  return data
+  return normalizeMessage(data)
 }
 
 export const markMessageUnread = async (id: number) => {
   const { data } = await http.post<MessageItem>(`/admin/messages/${id}/unread`)
-  return data
+  return normalizeMessage(data)
 }
 
 export const replyMessage = async (id: number, replyContent: string) => {

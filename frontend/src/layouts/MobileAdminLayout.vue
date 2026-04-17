@@ -3,8 +3,6 @@ import { ArrowLeft, ChatLineRound, House, Promotion, SwitchButton } from '@eleme
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import AdminExperienceSwitch from '../components/AdminExperienceSwitch.vue'
-import { resolvePathForExperience, writeAdminExperienceOverride } from '../router/deviceExperience'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -28,26 +26,15 @@ const activeTab = computed(() => {
 })
 
 const currentTitle = computed(() => (route.meta.title as string) || '手机后台')
-const currentSubtitle = computed(() => {
-  if (route.path.startsWith('/m/products')) {
-    return '单列卡片 + 就近操作，更适合手机浏览器处理商品。'
-  }
-  if (route.path.startsWith('/m/messages')) {
-    return '优先未读留言与快捷回复，减少来回跳转。'
-  }
-  return '把高频运营动作压缩到手机里也依然顺手。'
-})
 const canGoBack = computed(() => route.path !== '/m/home')
 
 const goBack = () => {
   if (canGoBack.value) {
     router.back()
+    return
   }
-}
 
-const switchToDesktop = async () => {
-  writeAdminExperienceOverride('force-desktop')
-  await router.push(resolvePathForExperience(route.fullPath, 'desktop'))
+  void router.push('/m/home')
 }
 
 const logout = () => {
@@ -58,33 +45,19 @@ const logout = () => {
 
 <template>
   <div class="mobile-admin-layout">
-    <header class="shell-hero">
-      <div class="hero-top-row">
-        <button v-if="canGoBack" class="hero-icon-button subtle" type="button" @click="goBack">
-          <el-icon><ArrowLeft /></el-icon>
-        </button>
-        <span v-else class="mobile-overline">YRFashion Mobile</span>
+    <header class="mobile-topbar">
+      <button class="topbar-icon-button" :aria-label="canGoBack ? '返回上一页' : '返回首页'" type="button" @click="goBack">
+        <el-icon><ArrowLeft v-if="canGoBack" /><House v-else /></el-icon>
+      </button>
 
-        <button class="hero-icon-button" type="button" @click="logout">
-          <el-icon><SwitchButton /></el-icon>
-        </button>
-      </div>
-
-      <div class="hero-copy">
-        <p class="hero-kicker">{{ authStore.profile?.display_name ?? 'Store Admin' }}</p>
+      <div class="topbar-title-block">
         <h1>{{ currentTitle }}</h1>
-        <p>{{ currentSubtitle }}</p>
+        <p>{{ authStore.profile?.display_name || authStore.profile?.username || 'Admin' }}</p>
       </div>
 
-      <div class="hero-meta-row">
-        <div class="hero-profile-chip">
-          <strong>{{ authStore.profile?.username ?? 'admin' }}</strong>
-          <span>手机后台已启用</span>
-        </div>
-        <button class="desktop-switch-button" type="button" @click="switchToDesktop">切到桌面版</button>
-      </div>
-
-      <AdminExperienceSwitch light />
+      <button class="topbar-icon-button accent" aria-label="退出登录" type="button" @click="logout">
+        <el-icon><SwitchButton /></el-icon>
+      </button>
     </header>
 
     <main id="mobile-main-content" class="mobile-shell">
@@ -115,112 +88,66 @@ const logout = () => {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 14px 14px calc(108px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(circle at top left, rgba(192, 138, 54, 0.18), transparent 24%),
-    linear-gradient(180deg, #f6f4ee, #ecefe8 34%, #e7ece4 100%);
+  gap: 12px;
+  padding: 10px 10px calc(90px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #f3f4ef 0%, #eaeee7 42%, #e5eae2 100%);
   overscroll-behavior-y: contain;
 }
 
-.shell-hero {
-  padding: 18px 18px 16px;
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 28%),
-    linear-gradient(155deg, var(--mobile-shell-dark), var(--mobile-shell-deep));
-  box-shadow: 0 26px 48px rgba(19, 31, 27, 0.24);
-  color: #f7f3ec;
-}
-
-.hero-top-row,
-.hero-meta-row {
-  display: flex;
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
+  padding: 8px 2px 2px;
+  backdrop-filter: blur(10px);
 }
 
-.hero-copy {
-  margin: 16px 0 18px;
-}
-
-.hero-kicker {
-  margin: 0 0 8px;
-  color: rgba(247, 243, 236, 0.72);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.hero-copy h1 {
-  margin: 0;
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(28px, 9vw, 38px);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-}
-
-.hero-copy p {
-  margin: 12px 0 0;
-  color: rgba(247, 243, 236, 0.8);
-  line-height: 1.7;
-}
-
-.hero-profile-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.topbar-title-block {
   min-width: 0;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.hero-profile-chip strong {
-  font-size: 15px;
+.topbar-title-block h1,
+.topbar-title-block p {
+  margin: 0;
 }
 
-.hero-profile-chip span {
-  color: rgba(247, 243, 236, 0.68);
+.topbar-title-block h1 {
+  font-size: 26px;
+  line-height: 1.05;
+  color: #1f2320;
+  letter-spacing: -0.02em;
+}
+
+.topbar-title-block p {
+  margin-top: 4px;
   font-size: 12px;
+  color: #727a73;
 }
 
-.hero-icon-button,
-.desktop-switch-button,
-.mobile-nav-item {
-  font: inherit;
-}
-
-.hero-icon-button {
-  width: 46px;
-  height: 46px;
-  border: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff7ef;
+.topbar-icon-button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(34, 50, 44, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #2f3a34;
   display: grid;
   place-items: center;
+  box-shadow: 0 8px 20px rgba(21, 30, 26, 0.05);
 }
 
-.hero-icon-button.subtle {
-  background: rgba(255, 255, 255, 0.05);
+.topbar-icon-button.accent {
+  background: #f3f7f1;
+  color: var(--brand-deep);
 }
 
-.hero-icon-button :deep(.el-icon) {
+.topbar-icon-button :deep(.el-icon),
+.mobile-nav-icon :deep(.el-icon) {
   font-size: 18px;
-}
-
-.desktop-switch-button {
-  min-height: 44px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 16px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 231, 215, 0.98));
-  color: #1f2925;
-  font-weight: 700;
-  box-shadow: 0 12px 24px rgba(18, 25, 22, 0.18);
 }
 
 .mobile-shell {
@@ -229,63 +156,49 @@ const logout = () => {
 
 .mobile-nav {
   position: fixed;
-  left: 14px;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 10px;
+  right: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  padding: 10px;
-  border-radius: 28px;
-  background: rgba(24, 36, 31, 0.82);
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  background: rgba(24, 36, 31, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 22px 40px rgba(17, 24, 21, 0.24);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 18px 34px rgba(17, 24, 21, 0.2);
+  backdrop-filter: blur(18px);
   z-index: 20;
 }
 
 .mobile-nav-item {
-  min-height: 58px;
+  min-height: 54px;
   border: 0;
-  border-radius: 20px;
+  border-radius: 12px;
   background: transparent;
-  color: rgba(247, 243, 236, 0.62);
+  color: rgba(247, 243, 236, 0.66);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition:
-    color 180ms ease,
-    background 180ms ease,
-    transform 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.mobile-nav-item:hover,
-.mobile-nav-item:focus-visible {
-  transform: translateY(-1px);
+  gap: 4px;
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
 .mobile-nav-item.active {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 236, 224, 0.98));
+  background: #f6efe5;
   color: #1f2925;
-  box-shadow: 0 12px 24px rgba(18, 25, 22, 0.16);
 }
 
 .mobile-nav-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
 }
 
-.mobile-nav-item :deep(.el-icon) {
-  font-size: 18px;
-}
-
 .mobile-nav-item span:last-child {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 </style>

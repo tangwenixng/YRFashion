@@ -4,7 +4,6 @@ import { ElMessage } from 'element-plus'
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import AdminExperienceSwitch from '../components/AdminExperienceSwitch.vue'
 import {
   readAdminExperienceOverride,
   resolveAdminHomeRoute,
@@ -25,9 +24,7 @@ const form = reactive({
 const isMobileExperience = computed(() => route.path.startsWith('/m/'))
 const loginTitle = computed(() => (isMobileExperience.value ? '手机后台登录' : '登录'))
 const loginSubtitle = computed(() =>
-  isMobileExperience.value
-    ? '适合 Android Chrome / iPhone Safari 的单手操作节奏。'
-    : '继续使用当前桌面版管理后台。',
+  isMobileExperience.value ? '输入账号后直接进入手机后台。' : '继续使用当前桌面版管理后台。',
 )
 
 const submit = async () => {
@@ -64,27 +61,17 @@ const submit = async () => {
           <span class="hero-brand-mark">YR</span>
           <div>
             <p class="hero-kicker">YRFashion Admin</p>
-            <strong>{{ isMobileExperience ? 'Mobile Atelier' : 'Desktop Console' }}</strong>
+            <strong>{{ isMobileExperience ? 'Mobile Sign in' : 'Desktop Console' }}</strong>
           </div>
         </div>
-        <AdminExperienceSwitch compact light />
       </div>
 
       <div class="hero-copy-block">
         <span class="mobile-overline hero-overline">Fashion Ops</span>
-        <h1>{{ isMobileExperience ? '手机小屏后台' : 'SzYR OOTD' }}</h1>
+        <h1>{{ isMobileExperience ? '手机后台登录' : 'SzYR OOTD' }}</h1>
         <p class="hero-copy">
-          {{
-            isMobileExperience
-              ? '留言、商品、图片处理重新按手机节奏排布：更清晰、更好点按。'
-              : '桌面版继续保留完整信息密度，适合长时间编辑、运营与后台配置。'
-          }}
+          {{ isMobileExperience ? '登录后直接处理商品、留言与图片。' : '桌面版继续保留完整信息密度，适合长时间编辑、运营与后台配置。' }}
         </p>
-      </div>
-
-      <div class="hero-bullet-row">
-        <span class="hero-mini-card">单手更顺</span>
-        <span class="hero-mini-card">桌面保留</span>
       </div>
     </section>
 
@@ -157,8 +144,8 @@ const submit = async () => {
 }
 
 .login-hero {
-  padding: 24px;
-  border-radius: 34px;
+  padding: 20px;
+  border-radius: 22px;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 24%),
     linear-gradient(155deg, var(--mobile-shell-dark), var(--mobile-shell-deep));
@@ -172,7 +159,7 @@ const submit = async () => {
 .hero-brand-row {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .hero-brand-lockup {
@@ -216,7 +203,7 @@ const submit = async () => {
 .hero-copy-block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .hero-overline {

@@ -24,12 +24,6 @@ const statusTabs = [
 ] as const
 
 const hasMore = computed(() => page.value * pageSize.value < total.value)
-const statusSummary = computed(() => {
-  if (filters.status === 'draft') return '当前查看草稿商品'
-  if (filters.status === 'archived') return '当前查看归档商品'
-  if (filters.status === '') return '当前查看全部商品'
-  return '当前查看已发布商品'
-})
 
 const loadProducts = async () => {
   loading.value = true
@@ -95,39 +89,34 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="mobile-page">
-    <article class="mobile-card mobile-panel hero-filter-card">
-      <div class="hero-filter-head">
-        <div>
-          <span class="section-kicker">商品管理</span>
-          <h2 class="mobile-section-title">筛选、编辑与发布都留在一屏内</h2>
-          <p class="mobile-muted">{{ statusSummary }} · 共 {{ total }} 条</p>
-        </div>
-        <button class="mobile-action-button hero-create-button" type="button" @click="router.push('/m/products/create')">
-          新增商品
-        </button>
+  <section class="mobile-page products-page">
+    <article class="filter-shell">
+      <div class="filter-head">
+        <p>{{ filters.status ? statusTabs.find((tab) => tab.value === filters.status)?.label : '全部' }} · {{ total }} 条结果</p>
+        <button class="mobile-action-button" type="button" @click="router.push('/m/products/create')">新增</button>
       </div>
 
-      <div class="filter-stack">
-        <el-input v-model="filters.keyword" clearable placeholder="搜索商品名称 / 标签" @keyup.enter="applyFilters" />
-        <div class="status-chips">
-          <button
-            v-for="tab in statusTabs"
-            :key="tab.value || 'all'"
-            class="status-chip"
-            :class="{ active: filters.status === tab.value }"
-            type="button"
-            @click="filters.status = tab.value; applyFilters()"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+      <div class="search-row">
+        <el-input v-model="filters.keyword" clearable placeholder="搜索名称或标签" @keyup.enter="applyFilters" />
+      </div>
+
+      <div class="status-chips">
+        <button
+          v-for="tab in statusTabs"
+          :key="tab.value || 'all'"
+          class="status-chip"
+          :class="{ active: filters.status === tab.value }"
+          type="button"
+          @click="filters.status = tab.value; applyFilters()"
+        >
+          {{ tab.label }}
+        </button>
       </div>
     </article>
 
     <section class="product-list" v-loading="loading">
-      <article v-for="product in products" :key="product.id" class="mobile-card product-card">
-        <div class="product-card-main">
+      <article v-for="product in products" :key="product.id" class="product-card">
+        <div class="product-main">
           <div class="cover-wrap">
             <img
               v-if="product.images[0]?.thumbnail_url || product.images[0]?.image_url"
@@ -141,111 +130,109 @@ onMounted(() => {
 
           <div class="product-copy">
             <strong>{{ product.name }}</strong>
-            <p class="product-meta">{{ product.category_name || '未分类' }} · 排序 {{ product.sort_order }}</p>
-            <p class="product-summary">{{ product.description || '暂未填写描述，可进入编辑页完善。' }}</p>
-            <div v-if="product.tags.length" class="tag-row">
-              <span v-for="tag in product.tags.slice(0, 3)" :key="tag" class="tag-pill">{{ tag }}</span>
-            </div>
+            <p>{{ product.category_name || '未分类' }}</p>
+            <p class="product-desc">{{ product.description || '暂无描述' }}</p>
           </div>
         </div>
 
-        <div class="product-actions-grid">
-          <button class="mobile-action-button secondary" type="button" @click="openProductEdit(product.id)">编辑</button>
-          <button class="mobile-action-button secondary" type="button" @click="openProductImages(product.id)">图片</button>
-          <button class="mobile-action-button secondary" type="button" @click="togglePublish(product)">
-            {{ product.status === 'published' ? '撤回' : '发布' }}
-          </button>
-          <button class="mobile-action-button danger-button" type="button" @click="removeProduct(product)">删除</button>
+        <div class="product-actions">
+          <button class="action-chip primary" type="button" @click="openProductEdit(product.id)">编辑</button>
+          <button class="action-chip" type="button" @click="openProductImages(product.id)">图片</button>
+          <button class="action-chip" type="button" @click="togglePublish(product)">{{ product.status === 'published' ? '撤回' : '发布' }}</button>
+          <button class="action-chip danger" type="button" @click="removeProduct(product)">删除</button>
         </div>
       </article>
-      <el-empty v-if="!loading && !products.length" description="暂无商品" />
+      <div v-if="!loading && !products.length" class="compact-empty">暂无商品</div>
     </section>
 
-    <article v-if="products.length" class="mobile-card mobile-panel pagination-card">
-      <span class="mobile-muted">第 {{ page }} 页 · 每页 {{ pageSize }} 条</span>
-      <div class="pagination-actions">
-        <button class="mobile-action-button secondary" type="button" :disabled="page <= 1" @click="page -= 1; loadProducts()">上一页</button>
-        <button class="mobile-action-button secondary" type="button" :disabled="!hasMore" @click="page += 1; loadProducts()">下一页</button>
+    <article v-if="products.length" class="pager-shell">
+      <span>{{ total }} 条</span>
+      <div class="pager-actions">
+        <button class="ghost-action" type="button" :disabled="page <= 1" @click="page -= 1; loadProducts()">上一页</button>
+        <button class="ghost-action" type="button" :disabled="!hasMore" @click="page += 1; loadProducts()">下一页</button>
       </div>
     </article>
   </section>
 </template>
 
 <style scoped>
-.mobile-panel,
-.pagination-card {
-  padding: 18px;
+.products-page {
+  gap: 12px;
 }
 
-.hero-filter-card {
-  background:
-    radial-gradient(circle at top right, rgba(192, 138, 54, 0.14), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 244, 238, 0.96));
+.filter-shell,
+.product-card,
+.pager-shell {
+  border: 1px solid rgba(40, 55, 49, 0.08);
+  background: rgba(255, 255, 255, 0.96);
 }
 
-.hero-filter-head {
+.filter-shell {
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.filter-head {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.hero-create-button {
-  width: 100%;
+.filter-head p {
+  margin: 0;
+  margin-top: 4px;
+  color: #727973;
+  font-size: 12px;
 }
 
-.filter-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 18px;
+.search-row {
+  margin-top: 12px;
 }
 
-.filter-stack :deep(.el-input__wrapper) {
-  min-height: 52px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
+.search-row :deep(.el-input__wrapper) {
+  min-height: 46px;
+  border-radius: 12px;
+  background: rgba(248, 248, 245, 0.96);
 }
 
 .status-chips {
+  margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
 .status-chip {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid rgba(57, 76, 64, 0.1);
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(57, 76, 64, 0.12);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.84);
-  color: var(--mobile-muted);
+  background: rgba(249, 249, 247, 0.96);
+  color: #66706a;
   font-weight: 600;
-  transition: all 180ms ease;
 }
 
 .status-chip.active {
-  border-color: rgba(47, 106, 88, 0.22);
-  background: rgba(47, 106, 88, 0.1);
+  border-color: rgba(47, 106, 88, 0.16);
+  background: rgba(47, 106, 88, 0.08);
   color: var(--brand-deep);
-  box-shadow: 0 10px 18px rgba(29, 67, 56, 0.08);
 }
 
 .product-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .product-card {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  padding: 12px;
+  border-radius: 14px;
 }
 
-.product-card-main {
+.product-main {
   display: flex;
-  gap: 14px;
+  gap: 12px;
 }
 
 .cover-wrap {
@@ -254,9 +241,9 @@ onMounted(() => {
 }
 
 .product-cover {
-  width: 92px;
-  height: 118px;
-  border-radius: 22px;
+  width: 86px;
+  height: 110px;
+  border-radius: 12px;
   object-fit: cover;
   background: rgba(57, 76, 64, 0.08);
 }
@@ -264,16 +251,16 @@ onMounted(() => {
 .product-cover-fallback {
   display: grid;
   place-items: center;
-  color: var(--mobile-muted);
+  color: #727b75;
   font-size: 12px;
 }
 
 .cover-status-badge {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  min-height: 26px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  min-height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -282,71 +269,88 @@ onMounted(() => {
   color: #f9f4ec;
   font-size: 11px;
   font-weight: 700;
-  backdrop-filter: blur(10px);
 }
 
 .product-copy {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .product-copy strong {
-  font-size: 18px;
-  line-height: 1.25;
-  color: #242320;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 17px;
+  color: #242622;
+  line-height: 1.35;
 }
 
-.product-meta,
-.product-summary {
-  margin: 0;
-}
-
-.product-meta {
-  color: var(--mobile-muted);
+.product-copy p {
+  margin: 6px 0 0;
+  color: #68716b;
   font-size: 13px;
 }
 
-.product-summary {
-  color: #545d56;
-  line-height: 1.65;
+.product-desc {
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
+.product-actions {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
+.action-chip,
+.ghost-action {
+  min-height: 36px;
   padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(192, 138, 54, 0.1);
-  color: #805b2a;
-  font-size: 12px;
+  border: 1px solid rgba(57, 76, 64, 0.12);
+  border-radius: 10px;
+  background: rgba(249, 249, 247, 0.96);
+  color: #334039;
   font-weight: 600;
 }
 
-.product-actions-grid,
-.pagination-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+.action-chip.primary {
+  background: rgba(47, 106, 88, 0.08);
+  color: var(--brand-deep);
 }
 
-.danger-button {
-  background: linear-gradient(145deg, #e88d73, #cf694c);
-  color: #fff8f3;
+.action-chip.danger {
+  color: #b54d38;
+  background: rgba(214, 92, 70, 0.08);
 }
 
-.pagination-card {
+.compact-empty {
+  padding: 24px 16px;
+  border: 1px dashed rgba(57, 76, 64, 0.12);
+  border-radius: 14px;
+  color: #717972;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.pager-shell {
+  padding: 12px 14px;
+  border-radius: 14px;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #6d756e;
+  font-size: 13px;
+}
+
+.pager-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

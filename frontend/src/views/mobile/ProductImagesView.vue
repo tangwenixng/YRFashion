@@ -38,10 +38,7 @@ const loadProduct = async () => {
 
 const syncSort = async () => {
   await updateProductImagesSort(productId.value, {
-    items: images.value.map((image, index) => ({
-      id: image.id,
-      sort_order: index,
-    })),
+    items: images.value.map((image, index) => ({ id: image.id, sort_order: index })),
   })
   await loadProduct()
 }
@@ -108,79 +105,94 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="mobile-page" v-loading="loading">
-    <article class="mobile-card mobile-panel intro-card">
-      <span class="section-kicker">图片管理</span>
-      <h2 class="mobile-section-title">{{ productName || '当前商品' }}</h2>
-      <p class="mobile-muted">上传、设封面和排序都集中在这里，手机端减少来回跳转。</p>
-      <label class="upload-box">
+  <section class="mobile-page image-page" v-loading="loading">
+    <article class="image-toolbar">
+      <div>
+        <h2>图片</h2>
+        <p>{{ productName || '当前商品' }}</p>
+      </div>
+      <label class="upload-trigger">
         <input class="hidden-file-input" type="file" accept="image/*" multiple @change="uploadFiles" />
-        <strong>{{ uploading ? '上传中…' : '选择图片上传' }}</strong>
-        <span>建议一次批量上传后再决定封面与顺序</span>
+        {{ uploading ? '上传中…' : '上传' }}
       </label>
     </article>
 
     <section class="image-list">
-      <article v-for="(image, index) in images" :key="image.id" class="mobile-card image-card">
+      <article v-for="(image, index) in images" :key="image.id" class="image-card">
         <div class="image-frame">
           <img class="image-preview" :src="image.image_url" alt="" />
           <span class="image-order-badge">#{{ index + 1 }}</span>
-          <span v-if="image.is_cover" class="image-cover-badge">当前封面</span>
+          <span v-if="image.is_cover" class="image-cover-badge">封面</span>
         </div>
         <div class="image-copy">
           <strong>{{ image.original_name }}</strong>
-          <span class="mobile-muted">排序 {{ image.sort_order }} · {{ image.is_cover ? '展示优先' : '普通图片' }}</span>
+          <span>排序 {{ image.sort_order }}</span>
         </div>
         <div class="image-actions-grid">
-          <button class="mobile-action-button secondary" type="button" :disabled="image.is_cover" @click="setCover(image.id)">设封面</button>
-          <button class="mobile-action-button secondary" type="button" :disabled="index === 0" @click="moveImage(index, -1)">上移</button>
-          <button class="mobile-action-button secondary" type="button" :disabled="index === images.length - 1" @click="moveImage(index, 1)">下移</button>
-          <button class="mobile-action-button danger-button" type="button" @click="removeImage(image.id)">删除</button>
+          <button class="action-chip" type="button" :disabled="image.is_cover" @click="setCover(image.id)">设封面</button>
+          <button class="action-chip" type="button" :disabled="index === 0" @click="moveImage(index, -1)">上移</button>
+          <button class="action-chip" type="button" :disabled="index === images.length - 1" @click="moveImage(index, 1)">下移</button>
+          <button class="action-chip danger" type="button" @click="removeImage(image.id)">删除</button>
         </div>
       </article>
       <el-empty v-if="!loading && !images.length" description="还没有上传图片" />
     </section>
 
-    <button class="mobile-action-button secondary return-button" type="button" @click="router.back()">返回商品编辑页</button>
+    <button class="ghost-action full-width" type="button" @click="router.back()">返回</button>
   </section>
 </template>
 
 <style scoped>
-.mobile-panel,
-.return-button {
-  padding: 18px;
+.image-page {
+  gap: 12px;
 }
 
-.intro-card {
-  background:
-    radial-gradient(circle at top right, rgba(192, 138, 54, 0.14), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 244, 238, 0.96));
+.image-toolbar,
+.image-card,
+.full-width {
+  border: 1px solid rgba(40, 55, 49, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(20, 29, 25, 0.05);
 }
 
-.intro-card p {
-  margin: 12px 0 0;
-  line-height: 1.7;
-}
-
-.upload-box {
+.image-toolbar {
+  padding: 14px;
+  border-radius: 18px 12px 18px 12px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 18px;
-  padding: 18px;
-  border: 1px dashed rgba(57, 76, 64, 0.16);
-  border-radius: 24px;
-  background: rgba(47, 106, 88, 0.04);
-  text-align: left;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.upload-box strong {
-  color: var(--brand-deep);
+.image-toolbar h2,
+.image-toolbar p {
+  margin: 0;
 }
 
-.upload-box span {
-  color: var(--mobile-muted);
-  line-height: 1.6;
+.image-toolbar h2 {
+  font-size: 22px;
+  color: #20231f;
+}
+
+.image-toolbar p {
+  margin-top: 6px;
+  color: #68716b;
+  font-size: 13px;
+}
+
+.upload-trigger,
+.action-chip,
+.ghost-action {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(57, 76, 64, 0.12);
+  border-radius: 12px 16px 12px 16px;
+  background: rgba(249, 249, 247, 0.96);
+  color: #334039;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hidden-file-input {
@@ -190,14 +202,12 @@ onMounted(() => {
 .image-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .image-card {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  padding: 14px;
+  border-radius: 12px 22px 22px 12px;
 }
 
 .image-frame {
@@ -207,7 +217,7 @@ onMounted(() => {
 .image-preview {
   width: 100%;
   aspect-ratio: 3 / 4;
-  border-radius: 24px;
+  border-radius: 12px 22px 22px 12px;
   object-fit: cover;
   background: rgba(57, 76, 64, 0.08);
 }
@@ -215,53 +225,68 @@ onMounted(() => {
 .image-order-badge,
 .image-cover-badge {
   position: absolute;
-  min-height: 30px;
+  min-height: 28px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  padding: 0 12px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  backdrop-filter: blur(10px);
 }
 
 .image-order-badge {
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   background: rgba(21, 43, 37, 0.76);
   color: #f9f4ec;
 }
 
 .image-cover-badge {
-  right: 10px;
-  bottom: 10px;
+  right: 8px;
+  bottom: 8px;
   background: rgba(192, 138, 54, 0.92);
   color: #2b2419;
 }
 
 .image-copy {
+  margin-top: 10px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 10px;
+  color: #68716b;
+  font-size: 13px;
 }
 
 .image-copy strong {
-  font-size: 17px;
+  color: #20231f;
 }
 
 .image-actions-grid {
+  margin-top: 12px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
-.danger-button {
-  background: linear-gradient(145deg, #e88d73, #cf694c);
-  color: #fff8f3;
+.action-chip.danger {
+  color: #b54d38;
+  background: rgba(214, 92, 70, 0.08);
 }
 
-.return-button {
+.full-width {
   width: 100%;
+}
+</style>
+
+<style scoped>
+.text-truncate-wrap {
+  min-width: 0;
+}
+.text-truncate-wrap > * {
+  min-width: 0;
+}
+.text-truncate-wrap :deep(*) {
+  min-width: 0;
 }
 </style>

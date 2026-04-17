@@ -77,6 +77,10 @@ def test_message_workflow_and_dashboard() -> None:
         assert filtered_response.status_code == 200
         assert all(item["product_id"] == product_id for item in filtered_response.json()["items"])
 
+        detail_response = client.get(f"/api/admin/messages/{message_id}", headers=headers)
+        assert detail_response.status_code == 200
+        assert detail_response.json()["id"] == message_id
+
         read_response = client.post(f"/api/admin/messages/{message_id}/read", headers=headers)
         assert read_response.status_code == 200
         assert read_response.json()["status"] == "read"

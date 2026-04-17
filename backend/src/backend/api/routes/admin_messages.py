@@ -76,6 +76,16 @@ def list_messages(
     )
 
 
+@router.get("/{message_id}", response_model=MessageResponse)
+def get_message_detail(
+    message_id: int,
+    db: Session = Depends(get_db),
+    _: AdminUser = Depends(get_current_admin),
+) -> MessageResponse:
+    message = load_message_or_404(db, message_id)
+    return serialize_message(message)
+
+
 @router.post("/batch-read", response_model=MessageListResponse)
 def batch_mark_message_read(
     payload: MessageBatchReadRequest,

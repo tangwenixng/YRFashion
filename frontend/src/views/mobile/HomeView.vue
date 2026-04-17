@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, ChatLineRound, Goods, TrendCharts, User } from '@element-plus/icons-vue'
+import { ChatLineRound, Goods, Promotion, User } from '@element-plus/icons-vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -17,9 +17,10 @@ const summary = ref<DashboardSummary>({
   top_products: [],
 })
 
-const sideCards = [
-  { key: 'product_count', label: '已维护商品', icon: Goods },
-  { key: 'miniapp_user_count', label: '小程序用户', icon: User },
+const metrics = [
+  { key: 'unread_message_count', label: '未读留言', icon: ChatLineRound, tone: 'accent' },
+  { key: 'product_count', label: '商品数', icon: Goods, tone: 'plain' },
+  { key: 'miniapp_user_count', label: '用户数', icon: User, tone: 'plain' },
 ] as const
 
 const loadSummary = async () => {
@@ -37,287 +38,232 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="mobile-page mobile-home">
-    <article class="mobile-card hero-card">
-      <div class="hero-card-main">
-        <div>
-          <span class="hero-chip">今日重点</span>
-          <h2 class="mobile-section-title">先处理未读咨询，再补商品与图片</h2>
-          <p class="mobile-muted hero-copy">把最常用的动作放到一屏内：先看提醒，再快速跳到商品或留言。</p>
+  <section class="mobile-page home-page" v-loading="loading">
+    <section class="metric-grid">
+      <article v-for="metric in metrics" :key="metric.key" class="metric-card" :class="metric.tone">
+        <div class="metric-label-row">
+          <div class="metric-icon">
+            <el-icon><component :is="metric.icon" /></el-icon>
+          </div>
+          <span>{{ metric.label }}</span>
         </div>
-        <button class="mobile-action-button secondary hero-refresh" type="button" @click="loadSummary">
-          刷新数据
-        </button>
-      </div>
+        <strong>{{ summary[metric.key] }}</strong>
+      </article>
+    </section>
 
-      <div class="stats-grid" v-loading="loading">
-        <article class="unread-stat-card">
-          <div class="stat-label-row">
-            <span>未读留言</span>
-            <el-icon><ChatLineRound /></el-icon>
-          </div>
-          <strong>{{ summary.unread_message_count }}</strong>
-          <p>优先进入留言中心，减少超时未回复。</p>
-        </article>
-
-        <article v-for="card in sideCards" :key="card.key" class="mini-stat-card">
-          <div class="mini-stat-icon">
-            <el-icon><component :is="card.icon" /></el-icon>
-          </div>
-          <span>{{ card.label }}</span>
-          <strong>{{ summary[card.key] }}</strong>
-        </article>
-      </div>
-    </article>
-
-    <article class="mobile-card shortcuts-card">
-      <div class="section-row">
+    <section class="quick-grid">
+      <button class="entry-card" type="button" @click="router.push('/m/products')">
         <div>
-          <span class="section-kicker">快速入口</span>
-          <h2 class="mobile-section-title">高频动作保持一跳直达</h2>
+          <strong>商品</strong>
+          <span>列表、编辑、图片</span>
         </div>
-      </div>
+        <em>进入</em>
+      </button>
 
-      <div class="shortcut-list">
-        <button class="mobile-card-link shortcut-item" type="button" @click="router.push('/m/products')">
-          <div class="shortcut-copy">
-            <strong>商品管理</strong>
-            <span>搜索、编辑、图片维护、发布与撤回都集中在这一组流程里。</span>
-          </div>
-          <span class="shortcut-arrow"><el-icon><ArrowRight /></el-icon></span>
-        </button>
-
-        <button class="mobile-card-link shortcut-item" type="button" @click="router.push('/m/messages')">
-          <div class="shortcut-copy">
-            <strong>留言中心</strong>
-            <span>优先查看未读、进入详情并完成回复，减少反复来回切换。</span>
-          </div>
-          <span class="shortcut-arrow"><el-icon><ArrowRight /></el-icon></span>
-        </button>
-      </div>
-    </article>
-
-    <article class="mobile-card insight-card">
-      <div class="section-row">
+      <button class="entry-card muted" type="button" @click="router.push('/m/messages')">
         <div>
-          <span class="section-kicker">趋势速览</span>
-          <h2 class="mobile-section-title">最近 7 天咨询变化</h2>
+          <strong>留言</strong>
+          <span>未读、详情、回复</span>
         </div>
-        <span class="mobile-chip muted-chip">
-          <el-icon><TrendCharts /></el-icon>
-          动态
-        </span>
+        <em>查看</em>
+      </button>
+    </section>
+
+    <article class="section-block trend-block">
+      <div class="section-head compact">
+        <h2>最近 7 天</h2>
+        <button class="ghost-action" type="button" @click="loadSummary">刷新</button>
       </div>
 
       <div v-if="summary.recent_message_trend.length" class="trend-list">
         <div v-for="item in summary.recent_message_trend" :key="item.date" class="trend-row">
-          <div>
+          <span>{{ item.date }}</span>
+          <div class="trend-row-main">
+            <i class="trend-bar" :style="{ width: `${Math.min(100, Math.max(12, item.count * 14))}%` }" />
             <strong>{{ item.count }}</strong>
-            <span>{{ item.date }}</span>
-          </div>
-          <div class="trend-bar-track">
-            <span class="trend-bar-fill" :style="{ width: `${Math.min(100, Math.max(18, item.count * 14))}%` }" />
           </div>
         </div>
       </div>
-      <el-empty v-else description="暂无趋势数据" />
+      <div v-else class="compact-empty">最近 7 天暂无数据</div>
     </article>
   </section>
 </template>
 
 <style scoped>
-.hero-card,
-.shortcuts-card,
-.insight-card {
-  padding: 18px;
+.home-page {
+  gap: 12px;
 }
 
-.hero-card {
-  background:
-    radial-gradient(circle at top right, rgba(192, 138, 54, 0.16), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 245, 239, 0.96));
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.hero-card-main {
+.metric-card {
+  padding: 12px;
+  border: 1px solid rgba(40, 55, 49, 0.08);
+  background: rgba(255, 255, 255, 0.92);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.hero-chip,
-.section-kicker {
-  display: inline-flex;
-  width: fit-content;
-  margin-bottom: 10px;
-  padding: 0 12px;
-  min-height: 30px;
+.metric-card.plain {
+  border-radius: 14px;
+}
+
+.metric-card.accent {
+  border-radius: 18px 14px 14px 14px;
+  background: linear-gradient(160deg, var(--mobile-shell-dark), #27463c);
+  color: #f8f4ed;
+}
+
+.metric-label-row {
+  display: flex;
   align-items: center;
-  border-radius: 999px;
+  gap: 8px;
+}
+
+.metric-label-row span {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.84;
+}
+
+.metric-card strong {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.metric-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.metric-card.plain .metric-icon {
   background: rgba(47, 106, 88, 0.08);
   color: var(--brand-deep);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
 }
 
-.hero-copy {
-  margin: 12px 0 0;
-  line-height: 1.75;
-}
-
-.hero-refresh {
-  width: 100%;
-}
-
-.stats-grid {
-  margin-top: 18px;
+.quick-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
-.unread-stat-card {
-  grid-column: 1 / -1;
-  padding: 18px;
-  border-radius: 24px;
-  background: linear-gradient(145deg, var(--mobile-shell-dark), #29483e);
-  color: #f9f4ec;
-  box-shadow: 0 16px 30px rgba(25, 35, 31, 0.18);
-}
-
-.stat-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  color: rgba(249, 244, 236, 0.74);
-}
-
-.unread-stat-card strong {
-  display: block;
-  margin-top: 14px;
-  font-size: 42px;
-  line-height: 1;
-}
-
-.unread-stat-card p {
-  margin: 10px 0 0;
-  color: rgba(249, 244, 236, 0.78);
-  line-height: 1.7;
-}
-
-.mini-stat-card {
-  padding: 16px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(57, 76, 64, 0.08);
+.entry-card {
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid rgba(38, 55, 48, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.mini-stat-icon {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: rgba(192, 138, 54, 0.12);
-  color: #875d25;
-}
-
-.mini-stat-card span {
-  color: var(--mobile-muted);
-  font-size: 12px;
-}
-
-.mini-stat-card strong {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.section-row {
-  display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  text-align: left;
 }
 
-.shortcut-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+.entry-card.muted {
+  background: rgba(250, 250, 247, 0.92);
 }
 
-.shortcut-item {
+.entry-card strong,
+.entry-card span,
+.entry-card em {
+  display: block;
+}
+
+.entry-card strong {
+  font-size: 18px;
+  color: #232521;
+}
+
+.entry-card span {
+  margin-top: 6px;
+  color: #646d66;
+  line-height: 1.4;
+  font-size: 13px;
+}
+
+.entry-card em {
+  font-style: normal;
+  color: var(--brand-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.section-block {
+  padding: 14px;
+  border: 1px solid rgba(40, 55, 49, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
 }
 
-.shortcut-copy {
-  min-width: 0;
+.section-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #20231f;
 }
 
-.shortcut-arrow {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: rgba(47, 106, 88, 0.08);
+.ghost-action {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(47, 106, 88, 0.14);
+  border-radius: 10px;
+  background: rgba(47, 106, 88, 0.04);
   color: var(--brand-deep);
-}
-
-.muted-chip {
-  gap: 6px;
-  color: #805b2a;
-  background: rgba(192, 138, 54, 0.12);
+  font-weight: 600;
 }
 
 .trend-list {
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 10px;
 }
 
 .trend-row {
-  padding: 14px 16px;
-  border-radius: 20px;
-  background: rgba(47, 106, 88, 0.06);
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  color: #5e6761;
 }
 
-.trend-row > div:first-child {
+.trend-row-main {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
-.trend-row strong {
-  font-size: 22px;
-}
-
-.trend-row span {
-  color: var(--mobile-muted);
-}
-
-.trend-bar-track {
-  margin-top: 12px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(57, 76, 64, 0.1);
-  overflow: hidden;
-}
-
-.trend-bar-fill {
+.trend-bar {
   display: block;
-  height: 100%;
+  height: 8px;
+  min-width: 12px;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--accent-gold), var(--brand));
+}
+
+.compact-empty {
+  margin-top: 12px;
+  border-top: 1px dashed rgba(57, 76, 64, 0.12);
+  padding-top: 12px;
+  color: #717972;
+  font-size: 13px;
 }
 </style>
