@@ -74,3 +74,34 @@ def test_category_crud_and_product_category_name() -> None:
             item["id"] == category_id and item["product_count"] >= 1
             for item in list_categories_response.json()["items"]
         )
+
+
+def test_create_category_appends_sort_order_when_request_uses_default_zero() -> None:
+    first_name = f"Category-{uuid4().hex[:8]}"
+    second_name = f"Category-{uuid4().hex[:8]}"
+
+    with TestClient(app) as client:
+        headers = get_admin_headers(client)
+
+        first_response = client.post(
+            "/api/admin/categories",
+            headers=headers,
+            json={
+                "name": first_name,
+                "sort_order": 0,
+                "status": "active",
+            },
+        )
+        assert first_response.status_code == 201
+        first_sort_order = first_response.json()["sort_order"]
+
+        second_response = client.post(
+            "/api/admin/categories",
+            headers=headers,
+            json={
+                "name": second_name,
+                "status": "active",
+            },
+        )
+        assert second_response.status_code == 201
+        assert second_response.json()["sort_order"] == first_sort_order + 1

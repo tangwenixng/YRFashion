@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.api.deps import get_current_admin
@@ -47,6 +48,16 @@ def ensure_category_name_available(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category name exists")
 
 
+def resolve_category_sort_order(db: Session, requested_sort_order: int) -> int:
+    if requested_sort_order > 0:
+        return requested_sort_order
+
+    current_max_sort_order = db.query(func.max(Category.sort_order)).scalar()
+    if current_max_sort_order is None:
+        return 0
+    return int(current_max_sort_order) + 1
+
+
 @router.get("", response_model=CategoryListResponse)
 def list_categories(
     db: Session = Depends(get_db),
@@ -71,7 +82,7 @@ def create_category(
 
     category = Category(
         name=name,
-        sort_order=payload.sort_order,
+        sort_order=resolve_category_sort_order(db, payload.sort_order),
         status=payload.status,
     )
     db.add(category)
