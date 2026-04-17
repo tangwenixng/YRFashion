@@ -178,7 +178,7 @@ void loadCategories()
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="190" fixed="right">
+        <el-table-column label="操作" width="190">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button plain @click="openEdit(row)">
