@@ -4,6 +4,8 @@ const { normalizeProduct } = require("../../utils/media")
 const DEFAULT_IMAGE_RATIO = 1.28
 const MIN_IMAGE_RATIO = 0.8
 const MAX_IMAGE_RATIO = 1.6
+const FEATURED_PAGE_SIZE = 4
+const CATEGORY_PREVIEW_LIMIT = 9
 const imageRatioCache = {}
 const ALL_CATEGORY = { id: 0, name: "全部穿搭" }
 
@@ -50,9 +52,20 @@ function getCategoryName(categories = [], categoryId) {
   return currentCategory ? currentCategory.name : ""
 }
 
+function getVisibleCategories(categories = [], expanded = false) {
+  if (expanded || categories.length <= CATEGORY_PREVIEW_LIMIT) {
+    return categories
+  }
+
+  return categories.slice(0, CATEGORY_PREVIEW_LIMIT)
+}
+
 Page({
   data: {
     categories: buildCategoryOptions(),
+    visibleCategories: getVisibleCategories(buildCategoryOptions()),
+    isCategoryExpanded: false,
+    categoryToggleVisible: false,
     activeCategoryId: null,
     activeCategoryName: "",
     hasSelectedCategory: false,
@@ -103,25 +116,11 @@ Page({
     try {
       await this.loadCategories({ silent: options.silent })
       this.setData({ loadingCategories: false })
-      if (this.data.hasSelectedCategory) {
-        await this.loadProducts({
-          reset: true,
-          showLoading: options.showLoading !== false,
-          silent: options.silent,
-        })
-      } else {
-        this.productRequestToken += 1
-        this.setData({
-          items: [],
-          productColumns: [],
-          page: 1,
-          total: 0,
-          hasMore: true,
-          loading: false,
-          loadingMore: false,
-          error: "",
-        })
-      }
+      await this.loadProducts({
+        reset: true,
+        showLoading: options.showLoading !== false,
+        silent: options.silent,
+      })
     } finally {
       this.setData({ loadingCategories: false })
       wx.stopPullDownRefresh()
@@ -142,8 +141,15 @@ Page({
       }
 
       const hasSelectedCategory = hasSelectedCategoryId(activeCategoryId)
+      const shouldExpand = this.data.isCategoryExpanded
+        || categories.length <= CATEGORY_PREVIEW_LIMIT
+        || (hasSelectedCategory && categories.some((item, index) => Number(item.id) === Number(activeCategoryId) && index >= CATEGORY_PREVIEW_LIMIT))
+
       this.setData({
         categories,
+        visibleCategories: getVisibleCategories(categories, shouldExpand),
+        isCategoryExpanded: shouldExpand,
+        categoryToggleVisible: categories.length > CATEGORY_PREVIEW_LIMIT,
         activeCategoryId,
         activeCategoryName: getCategoryName(categories, activeCategoryId),
         hasSelectedCategory,
@@ -187,6 +193,9 @@ Page({
 
     this.productRequestToken += 1
     this.setData({
+      visibleCategories: getVisibleCategories(this.data.categories),
+      isCategoryExpanded: false,
+      categoryToggleVisible: this.data.categories.length > CATEGORY_PREVIEW_LIMIT,
       activeCategoryId: null,
       activeCategoryName: "",
       hasSelectedCategory: false,
@@ -199,6 +208,15 @@ Page({
       loadingMore: false,
       error: "",
     })
+    this.loadProducts({ reset: true, showLoading: false, silent: true })
+  },
+
+  toggleCategoryExpand() {
+    const isCategoryExpanded = !this.data.isCategoryExpanded
+    this.setData({
+      isCategoryExpanded,
+      visibleCategories: getVisibleCategories(this.data.categories, isCategoryExpanded),
+    })
   },
 
   reloadProducts() {
@@ -210,18 +228,16 @@ Page({
   },
 
   async loadProducts(options = {}) {
-    if (!this.data.hasSelectedCategory) {
-      return
-    }
-
+    const isCategoryMode = this.data.hasSelectedCategory
     const reset = Boolean(options.reset)
     const showLoading = options.showLoading !== false
     const nextPage = reset ? 1 : this.data.page
-    const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
+    const pageSize = isCategoryMode ? this.data.pageSize : FEATURED_PAGE_SIZE
+    const query = [`page=${nextPage}`, `page_size=${pageSize}`]
     const hasItems = this.data.items.length > 0
     const requestToken = ++this.productRequestToken
 
-    if (Number(this.data.activeCategoryId) > 0) {
+    if (isCategoryMode && Number(this.data.activeCategoryId) > 0) {
       query.push(`category_id=${this.data.activeCategoryId}`)
     }
 
@@ -253,7 +269,7 @@ Page({
         productColumns,
         page: Number(response.page || nextPage) + 1,
         total: Number(response.total || 0),
-        hasMore: Boolean(response.has_more),
+        hasMore: isCategoryMode ? Boolean(response.has_more) : false,
         loading: false,
         loadingMore: false,
         error: "",
@@ -266,7 +282,7 @@ Page({
       this.setData({
         loading: false,
         loadingMore: false,
-        error: hasItems && reset ? "" : "分类结果加载失败，请稍后重试。",
+        error: hasItems && reset ? "" : (isCategoryMode ? "分类结果加载失败，请稍后重试。" : "精选穿搭加载失败，请稍后重试。"),
       })
       if (!options.silent) {
         wx.showToast({ title: "加载失败", icon: "none" })
