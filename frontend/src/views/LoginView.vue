@@ -1,18 +1,34 @@
 <script setup lang="ts">
 import { Lock, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
+import AdminExperienceSwitch from '../components/AdminExperienceSwitch.vue'
 import { useAuthStore } from '../stores/auth'
+import {
+  readAdminExperienceOverride,
+  resolveAdminHomeRoute,
+  resolveExperienceForPath,
+  sanitizeRedirectTarget,
+} from '../router/deviceExperience'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const form = reactive({
   username: '',
   password: '',
 })
+
+const isMobileExperience = computed(() => route.path.startsWith('/m/'))
+const loginTitle = computed(() => (isMobileExperience.value ? '手机后台登录' : '登录'))
+const loginSubtitle = computed(() =>
+  isMobileExperience.value
+    ? '适合 Android Chrome / iPhone Safari 的轻量运营入口。'
+    : '继续使用当前桌面版管理后台。',
+)
 
 const submit = async () => {
   if (loading.value) {
@@ -22,8 +38,16 @@ const submit = async () => {
   loading.value = true
   try {
     await authStore.login(form.username, form.password)
-    ElMessage.success('已进入管理后台')
-    await router.push('/dashboard')
+    const redirectTarget = sanitizeRedirectTarget(
+      typeof route.query.redirect === 'string' ? route.query.redirect : undefined,
+    )
+    const fallbackExperience = resolveExperienceForPath({
+      path: route.path,
+      userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+      override: readAdminExperienceOverride(),
+    })
+    ElMessage.success(isMobileExperience.value ? '已进入手机后台' : '已进入管理后台')
+    await router.push(redirectTarget || resolveAdminHomeRoute(fallbackExperience))
   } catch {
     ElMessage.error('用户名或密码错误')
   } finally {
@@ -33,25 +57,35 @@ const submit = async () => {
 </script>
 
 <template>
-  <main class="login-page">
+  <main class="login-page" :class="{ mobile: isMobileExperience }">
     <section class="login-hero">
       <div class="hero-brand">
         <span class="hero-brand-mark">YR</span>
         <div>
           <p class="hero-kicker">YRFashion Admin</p>
-          <strong>OOTD管理后台</strong>
+          <strong>{{ isMobileExperience ? 'Mobile Console' : 'Desktop Console' }}</strong>
         </div>
       </div>
-      <h1>SzYR OOTD</h1>
-      <p class="hero-copy">
-        <a href="https://beian.miit.gov.cn/#/Integrated/index">苏ICP备19033375号-2</a>
-      </p>
+
+      <div class="hero-copy-block">
+        <h1>{{ isMobileExperience ? '手机小屏后台' : 'SzYR OOTD' }}</h1>
+        <p class="hero-copy">
+          {{
+            isMobileExperience
+              ? '更适合在手机浏览器中快速处理留言、商品与图片，不再勉强压缩桌面后台。'
+              : '桌面版继续保留完整信息密度，适合长时间编辑与运营。'
+          }}
+        </p>
+      </div>
+
+      <AdminExperienceSwitch />
     </section>
 
     <section class="login-card content-card">
       <div class="card-head">
-        <p class="card-kicker">YRFashion</p>
-        <h2>登录</h2>
+        <p class="card-kicker">{{ isMobileExperience ? 'Mobile Admin' : 'YRFashion' }}</p>
+        <h2>{{ loginTitle }}</h2>
+        <p>{{ loginSubtitle }}</p>
       </div>
 
       <el-form label-position="top" @submit.prevent="submit">
@@ -79,9 +113,13 @@ const submit = async () => {
         </el-form-item>
 
         <el-button class="submit-button" size="large" type="primary" :loading="loading" @click="submit">
-          登录并进入后台
+          {{ isMobileExperience ? '登录并进入手机后台' : '登录并进入后台' }}
         </el-button>
       </el-form>
+
+      <p class="login-footnote">
+        <a href="https://beian.miit.gov.cn/#/Integrated/index">苏ICP备19033375号-2</a>
+      </p>
     </section>
   </main>
 </template>
@@ -91,9 +129,17 @@ const submit = async () => {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.12fr 0.88fr;
   padding: 28px;
   gap: 24px;
+}
+
+.login-page.mobile {
+  grid-template-columns: 1fr;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px 16px 28px;
+  gap: 16px;
 }
 
 .login-hero,
@@ -113,6 +159,13 @@ const submit = async () => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: 24px;
+}
+
+.login-page.mobile .login-hero {
+  padding: 24px 22px;
+  border-radius: 28px;
+  gap: 18px;
 }
 
 .hero-brand {
@@ -155,13 +208,25 @@ const submit = async () => {
   color: rgba(236, 244, 239, 0.68);
 }
 
+.hero-copy-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .login-hero h1 {
   max-width: 12ch;
-  margin: 28px 0 20px;
+  margin: 0;
   font-family: 'Sora', sans-serif;
   font-size: clamp(40px, 5.6vw, 68px);
   line-height: 1.02;
   letter-spacing: -0.05em;
+}
+
+.login-page.mobile .login-hero h1 {
+  max-width: none;
+  font-size: clamp(28px, 9vw, 42px);
+  line-height: 1.08;
 }
 
 .hero-copy {
@@ -172,13 +237,24 @@ const submit = async () => {
   color: rgba(234, 243, 237, 0.84);
 }
 
+.login-page.mobile .hero-copy {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 .login-card {
   align-self: center;
+  width: 100%;
   padding: 36px 34px;
   background:
     radial-gradient(circle at top right, rgba(192, 138, 54, 0.1), transparent 22%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.34)),
     var(--bg-panel);
+}
+
+.login-page.mobile .login-card {
+  padding: 24px 20px;
+  border-radius: 24px;
 }
 
 .card-head {
@@ -196,7 +272,12 @@ const submit = async () => {
   color: var(--ink-strong);
 }
 
-.card-head p {
+.login-page.mobile .card-head h2 {
+  font-size: 28px;
+}
+
+.card-head p,
+.login-footnote {
   margin: 0;
   color: var(--ink-soft);
 }
@@ -233,6 +314,12 @@ const submit = async () => {
   background: linear-gradient(145deg, #377865, #244e42);
 }
 
+.login-footnote {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 13px;
+}
+
 @media (max-width: 1180px) {
   .login-page {
     grid-template-columns: 1fr;
@@ -247,7 +334,6 @@ const submit = async () => {
 
   .login-hero h1 {
     max-width: none;
-    margin: 16px 0 10px;
     font-size: clamp(28px, 4.6vw, 42px);
     line-height: 1.08;
   }
@@ -259,33 +345,8 @@ const submit = async () => {
     font-size: 20px;
   }
 
-  .hero-brand strong {
-    font-size: 16px;
-  }
-
-  .hero-copy {
-    max-width: none;
-    font-size: 15px;
-    line-height: 1.65;
-  }
-
   .login-card {
     padding: 28px 24px;
-  }
-}
-
-@media (max-width: 767px) {
-  .login-page {
-    padding: 16px;
-  }
-
-  .login-hero,
-  .login-card {
-    padding: 24px;
-  }
-
-  .login-hero h1 {
-    font-size: clamp(34px, 11vw, 48px);
   }
 }
 </style>

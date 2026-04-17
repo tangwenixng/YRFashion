@@ -2,6 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 import { adminBasePath } from './base'
+import {
+  readAdminExperienceOverride,
+  resolveAdminHomeRoute,
+  resolveAdminLoginRoute,
+  resolveExperienceForPath,
+  sanitizeRedirectTarget,
+} from './deviceExperience'
 import { routes } from './routes'
 
 export const router = createRouter({
@@ -16,12 +23,38 @@ router.beforeEach(async (to) => {
     await authStore.initialize()
   }
 
+  const userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent
+  const override = readAdminExperienceOverride()
+  const currentExperience = resolveExperienceForPath({
+    path: to.path,
+    userAgent,
+    override,
+  })
+
+  if (to.path === '/login' && !authStore.isAuthenticated && currentExperience === 'mobile') {
+    return {
+      path: '/m/login',
+      query: to.query,
+      hash: to.hash,
+      replace: true,
+    }
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return '/login'
+    const loginTarget = resolveAdminLoginRoute(currentExperience)
+    const redirectTarget = sanitizeRedirectTarget(to.fullPath)
+    return {
+      path: loginTarget,
+      query: redirectTarget ? { redirect: redirectTarget } : undefined,
+      replace: true,
+    }
   }
 
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return '/dashboard'
+    const redirectTarget = sanitizeRedirectTarget(
+      typeof to.query.redirect === 'string' ? to.query.redirect : undefined,
+    )
+    return redirectTarget || resolveAdminHomeRoute(currentExperience)
   }
 
   return true

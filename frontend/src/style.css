@@ -116,3 +116,28 @@ a {
 .el-button {
   font-weight: 600;
 }
+
+
+.mobile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-card {
+  border: 1px solid var(--line-soft);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(250, 250, 247, 0.96));
+  box-shadow: var(--shadow-md);
+}
+
+.mobile-section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.mobile-muted {
+  color: var(--ink-soft);
+}

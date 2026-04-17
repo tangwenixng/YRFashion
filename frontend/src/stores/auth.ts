@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 import { fetchAdminProfile, loginAdmin, type AdminProfile } from '../api/modules/auth'
 import { TOKEN_STORAGE_KEY } from '../api/http'
+import { clearAdminExperienceOverride } from '../router/deviceExperience'
 
 interface AuthState {
   token: string
@@ -28,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.profile = await fetchAdminProfile()
       } catch {
-        this.clearSession()
+        this.clearSession({ preserveExperienceOverride: true })
       } finally {
         this.initialized = true
       }
@@ -40,11 +41,14 @@ export const useAuthStore = defineStore('auth', {
       this.profile = await fetchAdminProfile()
       this.initialized = true
     },
-    clearSession() {
+    clearSession(options: { preserveExperienceOverride?: boolean } = {}) {
       this.token = ''
       this.profile = null
       this.initialized = true
       window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+      if (!options.preserveExperienceOverride) {
+        clearAdminExperienceOverride()
+      }
     },
   },
 })

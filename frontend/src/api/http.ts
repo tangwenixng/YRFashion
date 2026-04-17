@@ -1,7 +1,13 @@
 import axios from 'axios'
 
 import { apiBaseURL } from './base'
-import { adminLoginPath } from '../router/base'
+import { adminBasePath } from '../router/base'
+import {
+  readAdminExperienceOverride,
+  resolveAdminLoginRoute,
+  resolveExperienceForPath,
+  sanitizeRedirectTarget,
+} from '../router/deviceExperience'
 
 export const TOKEN_STORAGE_KEY = 'yrfasion-admin-token'
 
@@ -18,14 +24,40 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+const resolveRelativeAdminPath = (pathname: string) => {
+  const normalizedBase = adminBasePath === '/' ? '' : adminBasePath.replace(/\/$/, '')
+  if (!normalizedBase) {
+    return pathname || '/'
+  }
+
+  if (pathname.startsWith(normalizedBase)) {
+    const strippedPath = pathname.slice(normalizedBase.length)
+    return strippedPath.startsWith('/') ? strippedPath : `/${strippedPath}`
+  }
+
+  return pathname || '/'
+}
+
 http.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
       window.localStorage.removeItem(TOKEN_STORAGE_KEY)
 
-      if (window.location.pathname !== adminLoginPath) {
-        window.location.href = adminLoginPath
+      const relativePath = resolveRelativeAdminPath(window.location.pathname)
+      const currentSearch = window.location.search || ''
+      const currentPath = sanitizeRedirectTarget(`${relativePath}${currentSearch}`) || relativePath
+      const currentExperience = resolveExperienceForPath({
+        path: relativePath,
+        userAgent: window.navigator.userAgent,
+        override: readAdminExperienceOverride(),
+      })
+      const loginPath = resolveAdminLoginRoute(currentExperience)
+
+      if (relativePath !== loginPath) {
+        const redirect = sanitizeRedirectTarget(currentPath)
+        const search = redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''
+        window.location.href = `${adminBasePath.replace(/\/$/, '')}${loginPath}${search}`
       }
     }
 
