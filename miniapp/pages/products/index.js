@@ -49,8 +49,22 @@ Page({
   },
 
   onLoad() {
+    this.hasShownOnce = false
     this.setData(buildNavigationState("穿搭分享"))
     this.loadInitialData()
+  },
+
+  onShow() {
+    if (!this.hasShownOnce) {
+      this.hasShownOnce = true
+      return
+    }
+
+    this.loadProducts({
+      reset: true,
+      showLoading: false,
+      silent: true,
+    })
   },
 
   onPullDownRefresh() {
@@ -151,8 +165,10 @@ Page({
 
   async loadProducts(options = {}) {
     const reset = Boolean(options.reset)
+    const showLoading = options.showLoading !== false
     const nextPage = reset ? 1 : this.data.page
     const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
+    const hasItems = this.data.items.length > 0
     if (this.data.activeCategoryId > 0) {
       query.push(`category_id=${this.data.activeCategoryId}`)
     }
@@ -161,7 +177,7 @@ Page({
     }
 
     this.setData({
-      loading: reset,
+      loading: reset ? showLoading : this.data.loading,
       loadingMore: !reset,
       error: reset ? "" : this.data.error,
     })
@@ -189,9 +205,11 @@ Page({
       this.setData({
         loading: false,
         loadingMore: false,
-        error: "穿搭展示加载失败，请稍后重试。",
+        error: hasItems && reset ? "" : "穿搭展示加载失败，请稍后重试。",
       })
-      wx.showToast({ title: "加载失败", icon: "none" })
+      if (!options.silent) {
+        wx.showToast({ title: "加载失败", icon: "none" })
+      }
     } finally {
       wx.stopPullDownRefresh()
     }

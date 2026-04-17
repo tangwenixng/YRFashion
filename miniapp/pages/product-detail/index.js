@@ -124,6 +124,7 @@ Page({
   onLoad(query) {
     this.messagePollTimer = null
     this.messagesRequesting = false
+    this.hasShownOnce = false
     this.setData({
       productId: Number(query.id || 0),
       ...buildNavigationState("穿搭详情"),
@@ -135,7 +136,14 @@ Page({
     if (!this.data.productId) {
       return
     }
-    this.loadMessageHistory({ silent: true, background: true })
+
+    if (!this.hasShownOnce) {
+      this.hasShownOnce = true
+      this.loadMessageHistory({ silent: true, background: true })
+    } else {
+      this.loadProduct(this.data.productId, { background: true, silent: true })
+    }
+
     this.startMessagePolling()
   },
 
@@ -169,8 +177,14 @@ Page({
     this.loadProduct(this.data.productId)
   },
 
-  async loadProduct(productId = this.data.productId) {
-    this.setData({ loading: true, error: "" })
+  async loadProduct(productId = this.data.productId, options = {}) {
+    const background = Boolean(options.background && this.data.product)
+    const silent = Boolean(options.silent)
+
+    if (!background) {
+      this.setData({ loading: true, error: "" })
+    }
+
     try {
       const product = normalizeProduct(await request({ url: `/miniapp/products/${productId}` }))
       const heroHeights = await this.buildHeroHeights(product.images || [])
@@ -185,8 +199,25 @@ Page({
       })
       this.loadMessageHistory({ silent: true, background: true })
     } catch (error) {
-      this.setData({ loading: false, error: "穿搭详情加载失败，请稍后重试。" })
-      wx.showToast({ title: "加载失败", icon: "none" })
+      if (background && error && error.statusCode === 404) {
+        this.stopMessagePolling()
+        this.setData({
+          product: null,
+          messages: [],
+          hasUnreadReplies: false,
+          messagesLastUpdatedText: "",
+          loading: false,
+          error: "穿搭已下架或不存在。",
+        })
+        return
+      }
+
+      if (!background) {
+        this.setData({ loading: false, error: "穿搭详情加载失败，请稍后重试。" })
+      }
+      if (!silent) {
+        wx.showToast({ title: "加载失败", icon: "none" })
+      }
     }
   },
 

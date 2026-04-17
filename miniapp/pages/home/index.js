@@ -32,7 +32,17 @@ Page({
   onLoad() {
     this.autoSearchTimer = null
     this.productRequestToken = 0
+    this.hasShownOnce = false
     this.loadInitialData()
+  },
+
+  onShow() {
+    if (!this.hasShownOnce) {
+      this.hasShownOnce = true
+      return
+    }
+
+    this.loadInitialData({ refresh: true })
   },
 
   onUnload() {
