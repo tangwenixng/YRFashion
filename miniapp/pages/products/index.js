@@ -5,6 +5,7 @@ const DEFAULT_IMAGE_RATIO = 1.28
 const MIN_IMAGE_RATIO = 0.8
 const MAX_IMAGE_RATIO = 1.6
 const imageRatioCache = {}
+const ALL_CATEGORY = { id: 0, name: "全部穿搭" }
 
 function buildNavigationState(navTitle = "") {
   const systemInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
@@ -30,19 +31,38 @@ function buildNavigationState(navTitle = "") {
   }
 }
 
+function hasSelectedCategoryId(categoryId) {
+  return categoryId !== null && categoryId !== undefined
+}
+
+function buildCategoryOptions(items = []) {
+  return [ALL_CATEGORY].concat(
+    (items || []).map((item) => Object.assign({}, item, { id: Number(item.id) })),
+  )
+}
+
+function getCategoryName(categories = [], categoryId) {
+  if (!hasSelectedCategoryId(categoryId)) {
+    return ""
+  }
+
+  const currentCategory = categories.find((item) => Number(item.id) === Number(categoryId))
+  return currentCategory ? currentCategory.name : ""
+}
+
 Page({
   data: {
-    categories: [{ id: 0, name: "全部" }],
-    activeCategoryId: 0,
-    keyword: "",
-    draftKeyword: "",
+    categories: buildCategoryOptions(),
+    activeCategoryId: null,
+    activeCategoryName: "",
+    hasSelectedCategory: false,
     items: [],
     productColumns: [],
     page: 1,
     pageSize: 10,
     total: 0,
     hasMore: true,
-    loading: true,
+    loading: false,
     loadingCategories: true,
     loadingMore: false,
     error: "",
@@ -50,7 +70,8 @@ Page({
 
   onLoad() {
     this.hasShownOnce = false
-    this.setData(buildNavigationState("穿搭分享"))
+    this.productRequestToken = 0
+    this.setData(buildNavigationState("分类选择"))
     this.loadInitialData()
   },
 
@@ -60,120 +81,148 @@ Page({
       return
     }
 
-    this.loadProducts({
-      reset: true,
-      showLoading: false,
-      silent: true,
-    })
+    this.loadInitialData({ silent: true, showLoading: false })
   },
 
   onPullDownRefresh() {
-    this.loadProducts({ reset: true })
+    this.loadInitialData()
   },
 
   onReachBottom() {
-    if (this.data.hasMore && !this.data.loadingMore) {
+    if (this.data.hasSelectedCategory && this.data.hasMore && !this.data.loadingMore && !this.data.loading) {
       this.loadProducts()
     }
   },
 
-  reloadProducts() {
-    this.loadProducts({ reset: true })
-  },
-
-  onKeywordInput(event) {
-    this.setData({ draftKeyword: event.detail.value })
-  },
-
-  submitSearch() {
-    const keyword = (this.data.draftKeyword || "").trim()
-    if (keyword === this.data.keyword) {
-      return
-    }
-
+  async loadInitialData(options = {}) {
     this.setData({
-      keyword,
-      items: [],
-      productColumns: [],
-      page: 1,
-      total: 0,
-      hasMore: true,
-      error: "",
+      loadingCategories: true,
+      error: options.silent ? this.data.error : "",
     })
-    this.loadProducts({ reset: true })
-  },
-
-  clearSearch() {
-    if (!this.data.keyword && !this.data.draftKeyword) {
-      return
-    }
-
-    this.setData({
-      keyword: "",
-      draftKeyword: "",
-      items: [],
-      productColumns: [],
-      page: 1,
-      total: 0,
-      hasMore: true,
-      error: "",
-    })
-    this.loadProducts({ reset: true })
-  },
-
-  async loadInitialData() {
-    this.setData({ loading: true, loadingCategories: true, error: "" })
 
     try {
-      await Promise.all([this.loadCategories(), this.loadProducts({ reset: true })])
+      await this.loadCategories({ silent: options.silent })
+      this.setData({ loadingCategories: false })
+      if (this.data.hasSelectedCategory) {
+        await this.loadProducts({
+          reset: true,
+          showLoading: options.showLoading !== false,
+          silent: options.silent,
+        })
+      } else {
+        this.productRequestToken += 1
+        this.setData({
+          items: [],
+          productColumns: [],
+          page: 1,
+          total: 0,
+          hasMore: true,
+          loading: false,
+          loadingMore: false,
+          error: "",
+        })
+      }
     } finally {
       this.setData({ loadingCategories: false })
+      wx.stopPullDownRefresh()
     }
   },
 
-  async loadCategories() {
+  async loadCategories(options = {}) {
     try {
       const response = await request({ url: "/miniapp/categories" })
+      const categories = buildCategoryOptions(response.items || [])
+      let activeCategoryId = this.data.activeCategoryId
+
+      if (hasSelectedCategoryId(activeCategoryId)) {
+        const categoryExists = categories.some((item) => Number(item.id) === Number(activeCategoryId))
+        if (!categoryExists) {
+          activeCategoryId = null
+        }
+      }
+
+      const hasSelectedCategory = hasSelectedCategoryId(activeCategoryId)
       this.setData({
-        categories: [{ id: 0, name: "全部" }].concat(response.items || []),
+        categories,
+        activeCategoryId,
+        activeCategoryName: getCategoryName(categories, activeCategoryId),
+        hasSelectedCategory,
+        items: hasSelectedCategory ? this.data.items : [],
+        productColumns: hasSelectedCategory ? this.data.productColumns : [],
+        total: hasSelectedCategory ? this.data.total : 0,
+        hasMore: hasSelectedCategory ? this.data.hasMore : true,
       })
     } catch (error) {
-      this.setData({
-        categories: [{ id: 0, name: "全部" }],
-      })
-      wx.showToast({ title: "分类加载失败", icon: "none" })
+      if (!options.silent) {
+        wx.showToast({ title: "分类加载失败", icon: "none" })
+      }
     }
   },
 
   selectCategory(event) {
-    const categoryId = Number(event.currentTarget.dataset.categoryId || 0)
+    const categoryId = Number(event.currentTarget.dataset.categoryId)
     if (categoryId === this.data.activeCategoryId) {
       return
     }
 
     this.setData({
       activeCategoryId: categoryId,
+      activeCategoryName: event.currentTarget.dataset.categoryName || getCategoryName(this.data.categories, categoryId),
+      hasSelectedCategory: true,
       items: [],
       productColumns: [],
       page: 1,
       total: 0,
       hasMore: true,
+      loadingMore: false,
       error: "",
     })
     this.loadProducts({ reset: true })
   },
 
+  clearSelection() {
+    if (!this.data.hasSelectedCategory) {
+      return
+    }
+
+    this.productRequestToken += 1
+    this.setData({
+      activeCategoryId: null,
+      activeCategoryName: "",
+      hasSelectedCategory: false,
+      items: [],
+      productColumns: [],
+      page: 1,
+      total: 0,
+      hasMore: true,
+      loading: false,
+      loadingMore: false,
+      error: "",
+    })
+  },
+
+  reloadProducts() {
+    if (!this.data.hasSelectedCategory) {
+      this.loadInitialData()
+      return
+    }
+    this.loadProducts({ reset: true })
+  },
+
   async loadProducts(options = {}) {
+    if (!this.data.hasSelectedCategory) {
+      return
+    }
+
     const reset = Boolean(options.reset)
     const showLoading = options.showLoading !== false
     const nextPage = reset ? 1 : this.data.page
     const query = [`page=${nextPage}`, `page_size=${this.data.pageSize}`]
     const hasItems = this.data.items.length > 0
-    if (this.data.activeCategoryId > 0) {
+    const requestToken = ++this.productRequestToken
+
+    if (Number(this.data.activeCategoryId) > 0) {
       query.push(`category_id=${this.data.activeCategoryId}`)
-    }
-    if (this.data.keyword) {
-      query.push(`keyword=${encodeURIComponent(this.data.keyword)}`)
     }
 
     this.setData({
@@ -186,32 +235,42 @@ Page({
       const response = await request({
         url: `/miniapp/products?${query.join("&")}`,
       })
-      const nextItems = reset
-        ? response.items.map(normalizeProduct)
-        : this.data.items.concat(response.items.map(normalizeProduct))
+
+      if (requestToken !== this.productRequestToken) {
+        return
+      }
+
+      const normalizedItems = (response.items || []).map(normalizeProduct)
+      const nextItems = reset ? normalizedItems : this.data.items.concat(normalizedItems)
       const productColumns = await this.buildProductColumns(nextItems)
+
+      if (requestToken !== this.productRequestToken) {
+        return
+      }
 
       this.setData({
         items: nextItems,
         productColumns,
-        page: response.page + 1,
-        total: response.total,
-        hasMore: response.has_more,
+        page: Number(response.page || nextPage) + 1,
+        total: Number(response.total || 0),
+        hasMore: Boolean(response.has_more),
         loading: false,
         loadingMore: false,
         error: "",
       })
     } catch (error) {
+      if (requestToken !== this.productRequestToken) {
+        return
+      }
+
       this.setData({
         loading: false,
         loadingMore: false,
-        error: hasItems && reset ? "" : "穿搭展示加载失败，请稍后重试。",
+        error: hasItems && reset ? "" : "分类结果加载失败，请稍后重试。",
       })
       if (!options.silent) {
         wx.showToast({ title: "加载失败", icon: "none" })
       }
-    } finally {
-      wx.stopPullDownRefresh()
     }
   },
 
