@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <body>
+    <script>
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
+      const redirect = params.get('redirect') || '/m/home';
+      if (token) {
+        localStorage.setItem('yrfasion-admin-token', token);
+      }
+      location.replace(redirect);
+    </script>
+  </body>
+</html>

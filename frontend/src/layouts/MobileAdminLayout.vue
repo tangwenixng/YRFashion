@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ArrowLeft, ChatLineRound, House, Promotion, SwitchButton } from '@element-plus/icons-vue'
+import { ChatLineRound, House, Promotion } from '@element-plus/icons-vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
 
 const tabs = [
   { label: '首页', icon: House, path: '/m/home' },
@@ -25,40 +23,10 @@ const activeTab = computed(() => {
   return '/m/home'
 })
 
-const currentTitle = computed(() => (route.meta.title as string) || '手机后台')
-const canGoBack = computed(() => route.path !== '/m/home')
-
-const goBack = () => {
-  if (canGoBack.value) {
-    router.back()
-    return
-  }
-
-  void router.push('/m/home')
-}
-
-const logout = () => {
-  authStore.clearSession()
-  void router.push('/m/login')
-}
 </script>
 
 <template>
   <div class="mobile-admin-layout">
-    <header class="mobile-topbar">
-      <button class="topbar-icon-button" :aria-label="canGoBack ? '返回上一页' : '返回首页'" type="button" @click="goBack">
-        <el-icon><ArrowLeft v-if="canGoBack" /><House v-else /></el-icon>
-      </button>
-
-      <div class="topbar-title-block">
-        <h1>{{ currentTitle }}</h1>
-        <p>{{ authStore.profile?.display_name || authStore.profile?.username || 'Admin' }}</p>
-      </div>
-
-      <button class="topbar-icon-button accent" aria-label="退出登录" type="button" @click="logout">
-        <el-icon><SwitchButton /></el-icon>
-      </button>
-    </header>
 
     <main id="mobile-main-content" class="mobile-shell">
       <router-view />
@@ -88,67 +56,12 @@ const logout = () => {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 10px 10px calc(90px + env(safe-area-inset-bottom));
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) 10px calc(90px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, #f3f4ef 0%, #eaeee7 42%, #e5eae2 100%);
   overscroll-behavior-y: contain;
 }
 
-.mobile-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 2px 2px;
-  backdrop-filter: blur(10px);
-}
-
-.topbar-title-block {
-  min-width: 0;
-}
-
-.topbar-title-block h1,
-.topbar-title-block p {
-  margin: 0;
-}
-
-.topbar-title-block h1 {
-  font-size: 26px;
-  line-height: 1.05;
-  color: #1f2320;
-  letter-spacing: -0.02em;
-}
-
-.topbar-title-block p {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #727a73;
-}
-
-.topbar-icon-button {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(34, 50, 44, 0.08);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.82);
-  color: #2f3a34;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 8px 20px rgba(21, 30, 26, 0.05);
-}
-
-.topbar-icon-button.accent {
-  background: #f3f7f1;
-  color: var(--brand-deep);
-}
-
-.topbar-icon-button :deep(.el-icon),
-.mobile-nav-icon :deep(.el-icon) {
-  font-size: 18px;
-}
 
 .mobile-shell {
   min-height: 0;
