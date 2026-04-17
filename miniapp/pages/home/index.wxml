@@ -70,17 +70,23 @@
       <text class="search-state-clear" bindtap="clearSearch">清除</text>
     </view>
 
-    <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
-      <view
-        wx:for="{{categories}}"
-        wx:key="id"
-        class="category-chip {{item.id === activeCategoryId ? 'category-chip-active' : ''}}"
-        data-category-id="{{item.id}}"
-        bindtap="selectCategory"
-      >
-        {{item.name}}
+    <view wx:if="{{homeCategoryChips.length}}" class="category-row">
+      <view class="category-strip">
+        <view
+          wx:for="{{homeCategoryChips}}"
+          wx:key="id"
+          class="category-chip {{item.id === activeCategoryId ? 'category-chip-active' : ''}}"
+          data-category-id="{{item.id}}"
+          bindtap="selectCategory"
+        >
+          <text class="category-chip-label">{{item.name}}</text>
+        </view>
       </view>
-    </scroll-view>
+      <view class="category-chip category-chip-more category-chip-more-fixed" bindtap="goToProductsList">
+        <text class="category-chip-label">更多</text>
+        <text class="category-chip-arrow">›</text>
+      </view>
+    </view>
 
     <block wx:if="{{loadingProducts && !items.length}}">
       <view class="card skeleton"></view>

@@ -7,12 +7,26 @@ const MAX_IMAGE_RATIO = 1.6
 const imageRatioCache = {}
 const AUTO_SEARCH_DELAY = 360
 const HOME_RETURN_REFRESH_INTERVAL = 30 * 1000
+const HOME_HIGHLIGHT_CATEGORY_LIMIT = 3
+
+function createAllCategory() {
+  return { id: 0, name: "全部" }
+}
+
+function buildDefaultHomeCategoryChips() {
+  return [createAllCategory()]
+}
+
+function buildHomeCategoryChips(categories = []) {
+  return buildDefaultHomeCategoryChips().concat(categories.slice(0, HOME_HIGHLIGHT_CATEGORY_LIMIT))
+}
 
 Page({
   data: {
     home: null,
     heroBannerUrl: "",
-    categories: [{ id: 0, name: "全部" }],
+    categories: [createAllCategory()],
+    homeCategoryChips: buildDefaultHomeCategoryChips(),
     activeCategoryId: 0,
     keyword: "",
     draftKeyword: "",
@@ -68,19 +82,21 @@ Page({
   async loadInitialData(options = {}) {
     this.lastHomeReloadAt = Date.now()
     const refresh = Boolean(options.refresh)
+    const homeOptions = {
+      showLoading: !refresh || !this.data.home,
+      silent: refresh,
+    }
+    const productOptions = {
+      reset: true,
+      showLoading: !refresh || !this.data.items.length,
+      silent: refresh,
+    }
 
     await Promise.all([
-      this.loadHome({
-        showLoading: !refresh || !this.data.home,
-        silent: refresh,
-      }),
+      this.loadHome(homeOptions),
       this.loadCategories({ silent: refresh }),
-      this.loadProducts({
-        reset: true,
-        showLoading: !refresh || !this.data.items.length,
-        silent: refresh,
-      }),
     ])
+    await this.loadProducts(productOptions)
 
     wx.stopPullDownRefresh()
   },
@@ -119,12 +135,25 @@ Page({
   async loadCategories(options = {}) {
     try {
       const response = await request({ url: "/miniapp/categories" })
+      const categories = response.items || []
+      const visibleCategoryIds = new Set(
+        categories
+          .slice(0, HOME_HIGHLIGHT_CATEGORY_LIMIT)
+          .map((item) => Number(item.id)),
+      )
+      const activeCategoryId = visibleCategoryIds.has(this.data.activeCategoryId)
+        ? this.data.activeCategoryId
+        : 0
       this.setData({
-        categories: [{ id: 0, name: "全部" }].concat(response.items || []),
+        categories: [createAllCategory()].concat(categories),
+        homeCategoryChips: buildHomeCategoryChips(categories),
+        activeCategoryId,
       })
     } catch (error) {
       this.setData({
-        categories: [{ id: 0, name: "全部" }],
+        categories: [createAllCategory()],
+        homeCategoryChips: buildDefaultHomeCategoryChips(),
+        activeCategoryId: 0,
       })
       if (!options.silent) {
         wx.showToast({ title: "分类加载失败", icon: "none" })
@@ -354,6 +383,10 @@ Page({
 
   goToContact() {
     wx.navigateTo({ url: "/pages/contact/index" })
+  },
+
+  goToProductsList() {
+    wx.navigateTo({ url: "/pages/products/index" })
   },
 
   previewBanner(event) {
