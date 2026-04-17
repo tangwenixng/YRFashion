@@ -6,6 +6,8 @@ const MESSAGE_POLL_INTERVAL = 15000
 const DEFAULT_HERO_HEIGHT = 960
 const MIN_HERO_HEIGHT = 720
 const MAX_HERO_HEIGHT = 1280
+const HERO_HORIZONTAL_PADDING = 32 * 2
+const HERO_CONTENT_WIDTH_RPX = 750 - HERO_HORIZONTAL_PADDING
 const imageHeightCache = {}
 
 function buildNavigationState(navTitle = "") {
@@ -393,7 +395,7 @@ Page({
       return DEFAULT_HERO_HEIGHT
     }
 
-    const heightRpx = (height / width) * 750
+    const heightRpx = (height / width) * HERO_CONTENT_WIDTH_RPX
     return Math.round(Math.min(Math.max(heightRpx, MIN_HERO_HEIGHT), MAX_HERO_HEIGHT))
   },
 
