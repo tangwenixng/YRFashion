@@ -13,19 +13,18 @@ import {
 const props = withDefaults(
   defineProps<{
     compact?: boolean
+    light?: boolean
   }>(),
   {
     compact: false,
+    light: false,
   },
 )
 
 const route = useRoute()
 const router = useRouter()
 
-const options: Array<{
-  label: string
-  value: AdminExperienceOverride
-}> = [
+const options: Array<{ label: string; value: AdminExperienceOverride }> = [
   { label: '自动', value: 'auto' },
   { label: '手机', value: 'force-mobile' },
   { label: '桌面', value: 'force-desktop' },
@@ -37,7 +36,7 @@ const autoExperienceLabel = computed(() => {
     userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     override: 'auto',
   })
-  return experience === 'mobile' ? '自动=手机' : '自动=桌面'
+  return experience === 'mobile' ? '自动识别为手机' : '自动识别为桌面'
 })
 
 const applyOverride = async (override: AdminExperienceOverride) => {
@@ -63,15 +62,16 @@ const applyOverride = async (override: AdminExperienceOverride) => {
 </script>
 
 <template>
-  <div class="experience-switch" :class="{ compact }">
-    <p v-if="!compact" class="switch-caption">体验模式 · {{ autoExperienceLabel }}</p>
-    <div class="switch-group">
+  <div class="experience-switch" :class="{ compact, light }">
+    <p v-if="!compact" class="switch-caption">{{ autoExperienceLabel }}</p>
+    <div class="switch-group" role="tablist" aria-label="体验模式切换">
       <button
         v-for="option in options"
         :key="option.value"
         class="switch-chip"
         :class="{ active: currentOverride === option.value }"
         type="button"
+        :aria-pressed="currentOverride === option.value"
         @click="applyOverride(option.value)"
       >
         {{ option.label }}
@@ -84,7 +84,7 @@ const applyOverride = async (override: AdminExperienceOverride) => {
 .experience-switch {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .experience-switch.compact {
@@ -94,42 +94,62 @@ const applyOverride = async (override: AdminExperienceOverride) => {
 .switch-caption {
   margin: 0;
   font-size: 12px;
-  color: rgba(80, 97, 88, 0.88);
+  color: rgba(248, 244, 236, 0.72);
+}
+
+.light .switch-caption {
+  color: rgba(86, 95, 89, 0.9);
 }
 
 .switch-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.light .switch-group {
+  background: rgba(34, 48, 42, 0.08);
+  border-color: rgba(34, 48, 42, 0.08);
 }
 
 .switch-chip {
-  min-width: 64px;
-  height: 34px;
+  min-height: 40px;
   padding: 0 14px;
-  border: 1px solid rgba(57, 76, 64, 0.14);
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  color: #41544a;
-  cursor: pointer;
-  transition: all 0.18s ease;
+  background: transparent;
+  color: rgba(248, 244, 236, 0.88);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.light .switch-chip {
+  color: #526058;
 }
 
 .switch-chip.active {
-  border-color: rgba(47, 106, 88, 0.28);
-  background: rgba(47, 106, 88, 0.12);
-  color: var(--brand-deep);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 237, 228, 0.98));
+  color: #1f2925;
+  box-shadow: 0 8px 18px rgba(18, 25, 22, 0.12);
 }
 
-.switch-chip:hover {
+.switch-chip:hover,
+.switch-chip:focus-visible {
   transform: translateY(-1px);
 }
 
 .compact .switch-chip {
-  min-width: 56px;
-  height: 30px;
-  padding: 0 12px;
+  min-height: 34px;
   font-size: 12px;
 }
 </style>
