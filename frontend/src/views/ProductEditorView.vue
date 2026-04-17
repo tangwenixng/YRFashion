@@ -928,7 +928,7 @@ watch(
 
             <el-form-item label="排序值" class="sidebar-form-item">
               <div class="sort-field">
-                <span class="field-tip">数值越大越靠前</span>
+                <span class="field-tip">数值越小越靠前</span>
                 <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
               </div>
             </el-form-item>
