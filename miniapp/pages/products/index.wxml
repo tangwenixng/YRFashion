@@ -25,7 +25,7 @@
   </view>
 
   <view class="search-bar">
-    <view class="search-shell">
+    <view class="search-inline">
       <input
         class="search-input"
         placeholder="搜索穿搭名称或关键词"
@@ -34,14 +34,10 @@
         bindinput="onKeywordInput"
         bindconfirm="submitSearch"
       />
-      <view class="search-button" bindtap="submitSearch">
-        <view class="search-button-icon">
-          <view class="search-icon-circle"></view>
-          <view class="search-icon-handle"></view>
-        </view>
-      </view>
     </view>
-    <text wx:if="{{keyword || draftKeyword}}" class="search-reset" bindtap="clearSearch">清空</text>
+    <view wx:if="{{keyword || draftKeyword}}" class="search-state-bar">
+      <text class="search-reset" bindtap="clearSearch">清空</text>
+    </view>
   </view>
 
   <scroll-view wx:if="{{categories.length}}" class="category-strip" scroll-x enable-flex show-scrollbar="{{false}}">
