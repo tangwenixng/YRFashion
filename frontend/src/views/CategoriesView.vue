@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditPen, Plus, RefreshRight, Sort } from '@element-plus/icons-vue'
+import { EditPen, Plus, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 
@@ -14,6 +14,7 @@ import {
 
 const loading = ref(false)
 const categories = ref<CategoryItem[]>([])
+const movingCategoryId = ref<number | null>(null)
 const editorVisible = ref(false)
 const editingCategoryId = ref<number | null>(null)
 const form = reactive({
@@ -76,10 +77,36 @@ const saveCategory = async () => {
   await loadCategories()
 }
 
-const saveSort = async (category: CategoryItem) => {
-  await updateCategorySort(category.id, category.sort_order)
-  ElMessage.success('分类排序已更新')
-  await loadCategories()
+const moveCategory = async (category: CategoryItem, direction: 'up' | 'down') => {
+  const currentIndex = categories.value.findIndex((item) => item.id === category.id)
+  if (currentIndex < 0) {
+    return
+  }
+
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+  const targetCategory = categories.value[targetIndex]
+  if (!targetCategory) {
+    return
+  }
+
+  movingCategoryId.value = category.id
+  const sameSortOrder = category.sort_order === targetCategory.sort_order
+  const nextCategorySort = sameSortOrder
+    ? targetCategory.sort_order + (direction === 'up' ? -1 : 1)
+    : targetCategory.sort_order
+  const nextTargetSort = sameSortOrder ? targetCategory.sort_order : category.sort_order
+
+  try {
+    await Promise.all([
+      updateCategorySort(category.id, nextCategorySort),
+      updateCategorySort(targetCategory.id, nextTargetSort),
+    ])
+
+    ElMessage.success(direction === 'up' ? '已上移分类' : '已下移分类')
+    await loadCategories()
+  } finally {
+    movingCategoryId.value = null
+  }
 }
 
 const toggleStatus = async (category: CategoryItem) => {
@@ -114,7 +141,7 @@ void loadCategories()
 
     <section class="content-card table-card">
       <el-table :data="categories" v-loading="loading">
-        <el-table-column prop="name" label="分类名称" min-width="220" />
+        <el-table-column prop="name" label="分类名称" width="220" show-overflow-tooltip />
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'">
@@ -122,18 +149,36 @@ void loadCategories()
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="product_count" label="关联商品" width="120" />
-        <el-table-column label="排序" width="160">
-          <template #default="{ row }">
+        <el-table-column prop="product_count" label="关联商品" width="110" />
+        <el-table-column label="排序" width="180">
+          <template #default="{ row, $index }">
             <div class="sort-box">
-              <el-input-number v-model="row.sort_order" :min="0" :max="9999" />
-              <el-button plain circle @click="saveSort(row)">
-                <el-icon><Sort /></el-icon>
-              </el-button>
+              <span class="sort-value">#{{ row.sort_order }}</span>
+              <div class="sort-actions">
+                <el-button
+                  link
+                  size="small"
+                  class="sort-action"
+                  :disabled="$index === 0 || movingCategoryId === row.id"
+                  @click="moveCategory(row, 'up')"
+                >
+                  上移
+                </el-button>
+                <span class="sort-divider"></span>
+                <el-button
+                  link
+                  size="small"
+                  class="sort-action"
+                  :disabled="$index === categories.length - 1 || movingCategoryId === row.id"
+                  @click="moveCategory(row, 'down')"
+                >
+                  下移
+                </el-button>
+              </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="230" fixed="right">
+        <el-table-column label="操作" width="190" fixed="right">
           <template #default="{ row }">
             <div class="row-actions">
               <el-button plain @click="openEdit(row)">
@@ -197,12 +242,42 @@ void loadCategories()
 }
 
 .header-actions,
-.row-actions,
-.sort-box {
+.row-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.sort-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.sort-value {
+  min-width: 36px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sort-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-action {
+  padding: 0;
+}
+
+.sort-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--line-soft);
 }
 
 .table-card {
