@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RefreshRight } from '@element-plus/icons-vue'
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -58,7 +59,9 @@ onMounted(() => {
     <article class="toolbar-shell">
       <div class="toolbar-main-row">
         <p class="toolbar-summary">{{ total }} 条 · {{ currentStatusLabel }}</p>
-        <button class="ghost-action" type="button" @click="loadMessages">刷新</button>
+        <button class="icon-action" type="button" aria-label="刷新留言列表" @click="loadMessages">
+          <el-icon><RefreshRight /></el-icon>
+        </button>
       </div>
       <div class="status-chips">
         <button
@@ -138,6 +141,24 @@ onMounted(() => {
   margin-top: 4px;
   color: #67706a;
   font-size: 12px;
+}
+
+.icon-action {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(57, 76, 64, 0.12);
+  border-radius: 16px;
+  background: rgba(249, 249, 247, 0.96);
+  color: #526059;
+  box-shadow: 0 8px 18px rgba(25, 35, 31, 0.05);
+}
+
+.icon-action :deep(.el-icon) {
+  font-size: 18px;
 }
 
 .status-chips {

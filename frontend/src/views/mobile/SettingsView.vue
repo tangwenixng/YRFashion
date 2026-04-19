@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { reactive, ref } from 'vue'
 
@@ -273,7 +274,9 @@ void loadSettings()
     <article class="mobile-card form-card">
       <div class="card-head">
         <h3>店铺资料</h3>
-        <button class="ghost-action" type="button" @click="loadSettings">刷新</button>
+        <button class="icon-action" type="button" aria-label="刷新店铺资料" @click="loadSettings">
+          <el-icon><RefreshRight /></el-icon>
+        </button>
       </div>
 
       <div class="meta-grid">
@@ -481,6 +484,24 @@ void loadSettings()
   margin: 0;
   font-size: 18px;
   color: #232622;
+}
+
+.icon-action {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(57, 76, 64, 0.12);
+  border-radius: 16px;
+  background: rgba(249, 249, 247, 0.96);
+  color: #526059;
+  box-shadow: 0 8px 18px rgba(25, 35, 31, 0.05);
+}
+
+.icon-action :deep(.el-icon) {
+  font-size: 18px;
 }
 
 .inline-actions,
