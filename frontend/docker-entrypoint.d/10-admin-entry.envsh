@@ -43,15 +43,29 @@ else
 fi
 
 # 根路径和子路径的前端入口需要不同的 Nginx location 组合：
-# 1. 当入口是 / 时，只保留一个 location /，并回退到 index.html。
-# 2. 当入口是 /foo/ 时，额外生成一个 ^~ /foo/ 前缀规则，根路径仍保持静态资源直出。
+# 1. 当入口是 / 时，根路径保留 SPA 回退，但额外补上“任意深度路由下的相对静态资源”重写。
+# 2. 当入口是 /foo/ 时，同样补上深层路由静态资源重写，并保留 /foo/ SPA 入口。
+#
+# 背景：Vite 构建产物使用相对资源路径（./assets/...）。
+# 用户如果直接打开 /m/login、/products/12/edit 这类深层 history 路由，
+# 浏览器会把资源请求解析成 /m/assets/...、/products/12/assets/...。
+# 若不显式重写回 /assets/...，Nginx 会把这些请求误当成 SPA 路由并回退到 index.html，
+# 最终触发 “Failed to load module script ... MIME type text/html”。
 if [ "$entry_path" = "/" ]; then
   export ADMIN_ENTRY_LOCATION_BLOCK=""
   export ROOT_LOCATION_TRY_FILES_ARGS='$uri $uri/ /index.html'
   export ADMIN_SCOPED_BACKEND_LOCATION_BLOCK=""
-  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK=""
+  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK="    location ~ ^/(?!(?:api|uploads)(?:/|$))(?:.+/)?assets/(.+)$ {
+        rewrite ^/(?!(?:api|uploads)(?:/|$))(?:.+/)?assets/(.+)$ /assets/\$1 break;
+        try_files \$uri =404;
+    }
+
+    location ~ ^/(?!(?:api|uploads)(?:/|$))(?:.+/)?favicon\\.svg$ {
+        rewrite ^/(?!(?:api|uploads)(?:/|$))(?:.+/)?favicon\\.svg$ /favicon.svg break;
+        try_files \$uri =404;
+    }"
 else
-  export ADMIN_ENTRY_LOCATION_BLOCK="    location ^~ ${entry_path} {
+  export ADMIN_ENTRY_LOCATION_BLOCK="    location ${entry_path} {
         try_files \$uri \$uri/ /index.html;
     }"
   export ROOT_LOCATION_TRY_FILES_ARGS='$uri =404'
@@ -72,13 +86,13 @@ else
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
     }"
-  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK="    location ^~ ${entry_path}assets/ {
-        rewrite ^${entry_path}(.*)$ /\$1 break;
+  export ADMIN_SCOPED_STATIC_LOCATION_BLOCK="    location ~ ^${entry_path}(?:.+/)?assets/(.+)$ {
+        rewrite ^${entry_path}(?:.+/)?assets/(.+)$ /assets/\$1 break;
         try_files \$uri =404;
     }
 
-    location = ${entry_path}favicon.svg {
-        rewrite ^${entry_path}(.*)$ /\$1 break;
+    location ~ ^${entry_path}(?:.+/)?favicon\\.svg$ {
+        rewrite ^${entry_path}(?:.+/)?favicon\\.svg$ /favicon.svg break;
         try_files \$uri =404;
     }"
 fi
