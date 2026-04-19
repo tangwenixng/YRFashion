@@ -15,6 +15,15 @@ export const mobileRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'categories',
+    name: 'mobile-categories',
+    component: () => import('../views/mobile/CategoriesView.vue'),
+    meta: {
+      title: '分类管理',
+      experience: 'mobile',
+    },
+  },
+  {
     path: 'products',
     name: 'mobile-products',
     component: () => import('../views/mobile/ProductsView.vue'),
@@ -65,6 +74,15 @@ export const mobileRoutes: RouteRecordRaw[] = [
     component: () => import('../views/mobile/MessageDetailView.vue'),
     meta: {
       title: '留言详情',
+      experience: 'mobile',
+    },
+  },
+  {
+    path: 'settings',
+    name: 'mobile-settings',
+    component: () => import('../views/mobile/SettingsView.vue'),
+    meta: {
+      title: '店铺管理',
       experience: 'mobile',
     },
   },

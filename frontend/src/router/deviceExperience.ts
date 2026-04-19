@@ -127,8 +127,16 @@ export const resolvePathForExperience = (path: string, targetExperience: AdminEx
       return `/m/products${search}`
     }
 
+    if (pathname === '/categories') {
+      return `/m/categories${search}`
+    }
+
     if (pathname === '/messages') {
       return `/m/messages${search}`
+    }
+
+    if (pathname === '/settings') {
+      return `/m/settings${search}`
     }
 
     return isMobileAdminPath(pathname) ? safePath : `/m/home`
@@ -156,6 +164,14 @@ export const resolvePathForExperience = (path: string, targetExperience: AdminEx
 
   if (pathname === '/m/messages') {
     return `/messages${search}`
+  }
+
+  if (pathname === '/m/categories') {
+    return `/categories${search}`
+  }
+
+  if (pathname === '/m/settings') {
+    return `/settings${search}`
   }
 
   return isMobileAdminPath(pathname) ? '/dashboard' : safePath

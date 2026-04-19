@@ -45,8 +45,12 @@ test('detectRouteExperience treats /login as neutral and /m/* as explicit mobile
 test('resolvePathForExperience maps explicit routes between mobile and desktop families', () => {
   assert.equal(resolvePathForExperience('/login', 'mobile'), '/m/login')
   assert.equal(resolvePathForExperience('/dashboard', 'mobile'), '/m/home')
+  assert.equal(resolvePathForExperience('/categories', 'mobile'), '/m/categories')
+  assert.equal(resolvePathForExperience('/settings', 'mobile'), '/m/settings')
   assert.equal(resolvePathForExperience('/products/12/edit', 'mobile'), '/m/products/12/edit')
   assert.equal(resolvePathForExperience('/m/home', 'desktop'), '/dashboard')
+  assert.equal(resolvePathForExperience('/m/categories', 'desktop'), '/categories')
+  assert.equal(resolvePathForExperience('/m/settings', 'desktop'), '/settings')
   assert.equal(resolvePathForExperience('/m/products/12/images', 'desktop'), '/products/12/edit')
   assert.equal(resolvePathForExperience('/m/messages/18', 'desktop'), '/messages')
 })

@@ -19,10 +19,16 @@ const activeTab = computed(() => {
   if (route.path.startsWith('/m/messages')) {
     return '/m/messages'
   }
-  return '/m/home'
+  if (route.path === '/m/home' || route.path === '/m') {
+    return '/m/home'
+  }
+  return ''
 })
 
-const activeTabLabel = computed(() => tabs.find((tab) => tab.path === activeTab.value)?.label || '首页')
+const activeTabLabel = computed(() => {
+  const routeTitle = typeof route.meta.title === 'string' ? route.meta.title : ''
+  return routeTitle || tabs.find((tab) => tab.path === activeTab.value)?.label || '首页'
+})
 </script>
 
 <template>

@@ -67,6 +67,22 @@ onMounted(() => {
         </div>
         <em>查看</em>
       </button>
+
+      <button class="entry-card muted" type="button" @click="router.push('/m/categories')">
+        <div>
+          <strong>分类</strong>
+          <span>排序、启停、新增</span>
+        </div>
+        <em>管理</em>
+      </button>
+
+      <button class="entry-card" type="button" @click="router.push('/m/settings')">
+        <div>
+          <strong>店铺</strong>
+          <span>资料、横幅、提醒</span>
+        </div>
+        <em>维护</em>
+      </button>
     </section>
 
     <article class="section-block trend-block">
