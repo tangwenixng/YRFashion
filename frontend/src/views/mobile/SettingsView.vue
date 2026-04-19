@@ -270,22 +270,16 @@ void loadSettings()
 
 <template>
   <section class="mobile-page settings-page" v-loading="loading">
-    <article class="mobile-card hero-card">
-      <span class="mobile-overline">Shop console</span>
-      <h2 class="mobile-section-title">店铺管理</h2>
-      <p class="mobile-muted hero-copy">维护店铺资料、首页横幅和提醒方式，手机上也能完成保存与发布。</p>
+    <article class="mobile-card form-card">
+      <div class="card-head">
+        <h3>店铺资料</h3>
+        <button class="ghost-action" type="button" @click="loadSettings">刷新</button>
+      </div>
 
       <div class="meta-grid">
         <span class="meta-chip">{{ settingsMeta.has_unpublished_changes ? '有未发布草稿' : '已发布内容最新' }}</span>
         <span class="meta-item">草稿：{{ settingsMeta.draft_updated_at }}</span>
         <span class="meta-item">发布：{{ settingsMeta.published_at }}</span>
-      </div>
-    </article>
-
-    <article class="mobile-card form-card">
-      <div class="card-head">
-        <h3>店铺资料</h3>
-        <button class="ghost-action" type="button" @click="loadSettings">刷新</button>
       </div>
 
       <el-form label-position="top" class="mobile-form">
@@ -436,7 +430,6 @@ void loadSettings()
   gap: 12px;
 }
 
-.hero-card,
 .form-card,
 .banner-card,
 .notification-card,
@@ -444,13 +437,8 @@ void loadSettings()
   padding: 16px;
 }
 
-.hero-copy {
-  margin: 12px 0 0;
-  line-height: 1.7;
-}
-
 .meta-grid {
-  margin-top: 16px;
+  margin-top: 14px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

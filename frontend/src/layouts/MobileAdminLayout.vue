@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChatLineRound, House, Promotion } from '@element-plus/icons-vue'
+import { ChatLineRound, House, Promotion, Setting } from '@element-plus/icons-vue'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -10,6 +10,7 @@ const tabs = [
   { label: '首页', icon: House, path: '/m/home' },
   { label: '商品', icon: Promotion, path: '/m/products' },
   { label: '留言', icon: ChatLineRound, path: '/m/messages' },
+  { label: '店铺管理', icon: Setting, path: '/m/settings' },
 ]
 
 const activeTab = computed(() => {
@@ -18,6 +19,9 @@ const activeTab = computed(() => {
   }
   if (route.path.startsWith('/m/messages')) {
     return '/m/messages'
+  }
+  if (route.path.startsWith('/m/settings')) {
+    return '/m/settings'
   }
   if (route.path === '/m/home' || route.path === '/m') {
     return '/m/home'
@@ -101,7 +105,7 @@ const activeTabLabel = computed(() => {
   right: 16px;
   bottom: calc(14px + env(safe-area-inset-bottom));
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   padding: 7px;
   border-radius: 22px;
